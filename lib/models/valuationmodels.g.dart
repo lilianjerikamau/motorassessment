@@ -34,6 +34,7 @@ Valuation _$ValuationFromJson(Map<String, dynamic> json) => Valuation(
       chassisno: json['chassisno'] as String?,
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
+      custname: json['custname'] as String?,
     );
 
 Map<String, dynamic> _$ValuationToJson(Valuation instance) => <String, dynamic>{
@@ -64,4 +65,5 @@ Map<String, dynamic> _$ValuationToJson(Valuation instance) => <String, dynamic>{
       'chassisno': instance.chassisno,
       'policyno': instance.policyno,
       'location': instance.location,
+      'custname': instance.custname,
     };

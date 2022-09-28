@@ -32,6 +32,7 @@ class Supplementary {
     this.chassisno,
     this.policyno,
     this.location,
+    this.custname,
   });
 
   int? userid;
@@ -61,11 +62,13 @@ class Supplementary {
   String? chassisno;
   String? policyno;
   String? location;
+  String? custname;
 
   factory Supplementary.fromJson(Map<String, dynamic> json) => Supplementary(
         userid: json["userid"],
         regno: json['regno'],
         make: json["make"],
+        custname: json["customer"],
         drivenby: json['drivenby'],
         towed: json["towed"],
         cashinlieu: json["cashinlieu"],

@@ -18,7 +18,6 @@ class Inspection {
     this.year,
     this.mileage,
     this.color,
-    this.chasisno,
     this.pav,
     this.salvage,
     this.RHF,
@@ -32,6 +31,7 @@ class Inspection {
     this.chassisno,
     this.policyno,
     this.location,
+    this.custname,
   });
 
   int? userid;
@@ -47,7 +47,7 @@ class Inspection {
   bool? revised;
   String? mileage;
   String? color;
-  String? chasisno;
+
   String? pav;
   String? salvage;
   String? RHF;
@@ -61,21 +61,23 @@ class Inspection {
   String? chassisno;
   String? policyno;
   String? location;
+  String? custname;
 
   factory Inspection.fromJson(Map<String, dynamic> json) => Inspection(
         userid: json["userid"],
         regno: json['regno'],
         make: json["make"],
+        policyno: json["policyno"],
+        chassisno: json["chassisno"],
         drivenby: json['drivenby'],
         towed: json["towed"],
         cashinlieu: json["cashinlieu"],
         instructionno: json['companyname'],
         owner: json["owner"],
         claimno: json['claimno'],
-        chassisno: json["chasisno"],
-        policyno: json["policyno"],
         location: json['location'],
         model: json["model"],
+        custname: json["customer"],
       );
 
   Map<String, dynamic> toJson() => {};

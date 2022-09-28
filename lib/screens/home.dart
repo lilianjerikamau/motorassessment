@@ -63,6 +63,7 @@ class _HomeState extends State<Home> {
   String? _policyno;
   String? _chasisno;
   String? _make;
+  String? _custName;
   String? _carmodel;
   String? _location;
   String? _regno;
@@ -883,22 +884,6 @@ class _HomeState extends State<Home> {
     );
   }
 
-  _body1() {
-    if (_reinspections != null && _reinspections.isNotEmpty) {
-      _reinspections.forEach((reinspection) {
-        // _make = reinspection.make!;
-        // // _regno = assessment.regno!;
-        // _chasisno = reinspection.chasisno!;
-
-        // _carmodel = reinspection.model!;
-      });
-      return _listViewBuilder1(_reinspections);
-    }
-    return const Center(
-      child: Text('No Re-Inspections'),
-    );
-  }
-
   _body2() {
     if (_valuations != null && _valuations.isNotEmpty) {
       _valuations.forEach((instruction) {
@@ -953,161 +938,10 @@ class _HomeState extends State<Home> {
           Assesssment instruction = data.elementAt(i);
           _make = instruction.make!;
           // _chasisno = instruction.chasisno!;
-          // _policyno = instruction.policyno!;
-          _regno = instruction.regno!;
-          // _carmodel = instruction.model!;
-
-          print("Jobcard id :::: ${instruction.make}");
-
-          return Card(
-            margin: const EdgeInsets.all(10),
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              side: const BorderSide(color: Colors.red, width: 0),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            elevation: 8,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
-
-              // padding: const EdgeInsets.all(10.0),
-              child: Container(
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.menu_open,
-                    color: Colors.red,
-                  ),
-                  title: Text(_regno!,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      const Divider(),
-                      Text(
-                        _make != null
-                            ? 'Make: $_make'
-                            : 'Chassis No: Chassis No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
-                      Text(
-                        _policyno != null
-                            ? 'Policy No: $_policyno'
-                            : 'Policy No:',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
-                      // Text(
-                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
-                      //   style: const TextStyle(
-                      //       fontSize: 15, fontWeight: FontWeight.bold),
-                      // ),
-                      // const Divider(),
-                      Text(
-                        _carmodel != null
-                            ? 'Car Model: $_carmodel'
-                            : 'Car Model',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-        itemCount: data.length);
-  }
-
-  _listViewBuilder1(List<Inspection> data) {
-    return ListView.builder(
-        itemBuilder: (bc, i) {
-          Inspection instruction = data.elementAt(i);
-          _make = instruction.make!;
-          _chasisno = instruction.chasisno!;
-          _carmodel = instruction.model!;
-
-          print("Jobcard id :::: ${instruction.make}");
-
-          return Card(
-            margin: const EdgeInsets.all(10),
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              side: const BorderSide(color: Colors.red, width: 0),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            elevation: 8,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
-
-              // padding: const EdgeInsets.all(10.0),
-              child: Container(
-                child: ListTile(
-                  leading: const Icon(
-                    Icons.menu_open,
-                    color: Colors.red,
-                  ),
-                  title: Text(_regno!,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      const Divider(),
-                      Text(
-                        _make != null
-                            ? 'Make: $_make'
-                            : 'Chassis No: Chassis No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
-                      Text(
-                        _policyno != null
-                            ? 'Policy No: $_policyno'
-                            : 'Policy No:',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
-                      // Text(
-                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
-                      //   style: const TextStyle(
-                      //       fontSize: 15, fontWeight: FontWeight.bold),
-                      // ),
-                      // const Divider(),
-                      Text(
-                        _carmodel != null
-                            ? 'Car Model: $_carmodel'
-                            : 'Car Model',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-        itemCount: data.length);
-  }
-
-  _listViewBuilder2(List<Valuation> data) {
-    return ListView.builder(
-        itemBuilder: (bc, i) {
-          Valuation instruction = data.elementAt(i);
-          _make = instruction.make!;
-          // _chasisno = instruction.chasisno!;
-          // _policyno = instruction.policyno!;
+          _policyno = instruction.policyno!;
           _regno = instruction.regno!;
           _carmodel = instruction.model!;
+          _custName = instruction.custname;
 
           print("Jobcard id :::: ${instruction.make}");
 
@@ -1152,16 +986,18 @@ class _HomeState extends State<Home> {
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
-                      // Text(
-                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
-                      //   style: const TextStyle(
-                      //       fontSize: 15, fontWeight: FontWeight.bold),
-                      // ),
-                      // const Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
                             : 'Car Model',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Text(
+                        _custName != null
+                            ? 'Customer Name: $_custName'
+                            : 'Customer Name',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
@@ -1181,12 +1017,99 @@ class _HomeState extends State<Home> {
         itemBuilder: (bc, i) {
           Inspection inspection = data.elementAt(i);
           _make = inspection.make!;
-          // _chasisno = inspection.chasisno!;
-          // _policyno = instruction.policyno!;
+          _chasisno = inspection.chassisno!;
+          _policyno = inspection.policyno!;
           _regno = inspection.regno!;
           _carmodel = inspection.model!;
+          _custName = inspection.custname;
+          print("inspection make :::: ${inspection.make}");
 
-          print("Jobcard id :::: ${inspection.make}");
+          return Card(
+            margin: const EdgeInsets.all(10),
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: Colors.red, width: 0),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            elevation: 8,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
+
+              // padding: const EdgeInsets.all(10.0),
+              child: Container(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.menu_open,
+                    color: Colors.red,
+                  ),
+                  title: Text(_regno!,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold)),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      const Divider(),
+                      Text(
+                        _make != null
+                            ? 'Make: $_make'
+                            : 'Chassis No: Chassis No',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Text(
+                        _chasisno != null
+                            ? 'Chassis No: $_chasisno'
+                            : 'Chassis No: Chassis No',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Text(
+                        _policyno != null
+                            ? 'Policy No: $_policyno'
+                            : 'Policy No:',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Text(
+                        _carmodel != null
+                            ? 'Car Model: $_carmodel'
+                            : 'Car Model',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Text(
+                        _custName != null
+                            ? 'Customer Name: $_custName'
+                            : 'Customer Name',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+        itemCount: data.length);
+  }
+
+  _listViewBuilder2(List<Valuation> data) {
+    return ListView.builder(
+        itemBuilder: (bc, i) {
+          Valuation valuation = data.elementAt(i);
+          _make = valuation.make!;
+          // _chasisno = instruction.chasisno!;
+          _policyno = valuation.policyno!;
+          _regno = valuation.regno!;
+          _carmodel = valuation.model!;
+          _custName = valuation.custname;
+          print("valuation make :::: ${valuation.make}");
 
           return Card(
             margin: const EdgeInsets.all(10),
@@ -1229,16 +1152,18 @@ class _HomeState extends State<Home> {
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
-                      // Text(
-                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
-                      //   style: const TextStyle(
-                      //       fontSize: 15, fontWeight: FontWeight.bold),
-                      // ),
-                      // const Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
                             : 'Car Model',
+                        style: const TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      const Divider(),
+                      Text(
+                        _custName != null
+                            ? 'Customer Name: $_custName'
+                            : 'Customer Name',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),

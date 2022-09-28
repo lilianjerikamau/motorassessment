@@ -20,7 +20,6 @@ Inspection _$InspectionFromJson(Map<String, dynamic> json) => Inspection(
       year: json['year'] as String?,
       mileage: json['mileage'] as String?,
       color: json['color'] as String?,
-      chasisno: json['chasisno'] as String?,
       pav: json['pav'] as String?,
       salvage: json['salvage'] as String?,
       RHF: json['RHF'] as String?,
@@ -34,6 +33,7 @@ Inspection _$InspectionFromJson(Map<String, dynamic> json) => Inspection(
       chassisno: json['chassisno'] as String?,
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
+      custname: json['custname'] as String?,
     );
 
 Map<String, dynamic> _$InspectionToJson(Inspection instance) =>
@@ -51,7 +51,6 @@ Map<String, dynamic> _$InspectionToJson(Inspection instance) =>
       'revised': instance.revised,
       'mileage': instance.mileage,
       'color': instance.color,
-      'chasisno': instance.chasisno,
       'pav': instance.pav,
       'salvage': instance.salvage,
       'RHF': instance.RHF,
@@ -65,4 +64,5 @@ Map<String, dynamic> _$InspectionToJson(Inspection instance) =>
       'chassisno': instance.chassisno,
       'policyno': instance.policyno,
       'location': instance.location,
+      'custname': instance.custname,
     };

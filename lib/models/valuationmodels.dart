@@ -32,6 +32,7 @@ class Valuation {
     this.chassisno,
     this.policyno,
     this.location,
+    this.custname,
   });
   int? userid;
   String? make;
@@ -60,6 +61,7 @@ class Valuation {
   String? chassisno;
   String? policyno;
   String? location;
+  String? custname;
 
   factory Valuation.fromJson(Map<String, dynamic> json) => Valuation(
         userid: json["userid"],
@@ -71,6 +73,7 @@ class Valuation {
         instructionno: json['companyname'],
         owner: json["owner"],
         claimno: json['claimno'],
+        custname: json["customer"],
         chassisno: json["chassisno"],
         policyno: json["policyno"],
         location: json['location'],

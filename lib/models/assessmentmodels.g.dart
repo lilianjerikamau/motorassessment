@@ -8,6 +8,7 @@ part of 'assessmentmodels.dart';
 
 Assesssment _$AssesssmentFromJson(Map<String, dynamic> json) => Assesssment(
       userid: json['userid'] as int?,
+      custname: json['custname'] as String?,
       regno: json['regno'] as String?,
       custid: json['custid'] as int?,
       revised: json['revised'] as bool?,
@@ -48,6 +49,7 @@ Map<String, dynamic> _$AssesssmentToJson(Assesssment instance) =>
       'regno': instance.regno,
       'model': instance.model,
       'year': instance.year,
+      'custname': instance.custname,
       'revised': instance.revised,
       'mileage': instance.mileage,
       'color': instance.color,

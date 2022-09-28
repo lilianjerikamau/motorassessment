@@ -6,6 +6,7 @@ part 'assessmentmodels.g.dart';
 class Assesssment {
   Assesssment({
     this.userid,
+    this.custname,
     this.regno,
     this.custid,
     this.revised,
@@ -44,6 +45,7 @@ class Assesssment {
   String? regno;
   String? model;
   String? year;
+  String? custname;
   bool? revised;
   String? mileage;
   String? color;
@@ -66,6 +68,7 @@ class Assesssment {
         userid: json["userid"],
         regno: json['regno'],
         make: json["make"],
+        custname: json["customer"],
         drivenby: json['drivenby'],
         towed: json["towed"],
         cashinlieu: json["cashinlieu"],

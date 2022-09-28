@@ -35,6 +35,7 @@ Supplementary _$SupplementaryFromJson(Map<String, dynamic> json) =>
       chassisno: json['chassisno'] as String?,
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
+      custname: json['custname'] as String?,
     );
 
 Map<String, dynamic> _$SupplementaryToJson(Supplementary instance) =>
@@ -66,4 +67,5 @@ Map<String, dynamic> _$SupplementaryToJson(Supplementary instance) =>
       'chassisno': instance.chassisno,
       'policyno': instance.policyno,
       'location': instance.location,
+      'custname': instance.custname,
     };
