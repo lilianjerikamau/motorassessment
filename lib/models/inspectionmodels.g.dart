@@ -31,7 +31,7 @@ Inspection _$InspectionFromJson(Map<String, dynamic> json) => Inspection(
       photolist: json['photolist'] as String?,
       owner: json['owner'] as String?,
       claimno: json['claimno'] as String?,
-      chassisno: json['chasisno'] as String?,
+      chassisno: json['chassisno'] as String?,
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
     );

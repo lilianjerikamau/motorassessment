@@ -42,7 +42,7 @@ class CreateAssesment extends StatefulWidget {
 }
 
 class _CreateAssesmentState extends State<CreateAssesment> {
-  late User _loggedInUser;
+  User? _loggedInUser;
 
   int? _userid;
   int? _custid;
@@ -136,14 +136,16 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   @override
   void initState() {
     _fetchCustomers();
-
+    _instructionId = 2;
     loadCamera();
+
     SessionPreferences().getLoggedInUser().then((user) {
       setState(() {
         _loggedInUser = user;
         custId = user.custid;
         _userid = user.id;
         _hrid = user.hrid;
+        print('userid');
         print(_hrid);
       });
     });
@@ -221,9 +223,9 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   final _formKey17 = GlobalKey<FormState>();
   final _formKey18 = GlobalKey<FormState>();
   bool isLoading = false;
-  bool isOtherEnabled = false;
-  bool isOtherEnabled2 = false;
-  bool isOtherEnabled3 = false;
+  bool revised = false;
+  bool revised2 = false;
+  bool revised3 = false;
   bool? isBankSelected;
   bool? isFinancierSelected;
   bool? iscameraopen;
@@ -347,8 +349,8 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                         body: jsonEncode(<String, dynamic>{
                           "userid": _userid,
                           "custid": _custId,
-                          "revised": isOther7,
-                          "cashinlieu": isOtherEnabled2,
+                          "revised": revised,
+                          "cashinlieu": revised2,
                           "instructionno": _instructionId,
                           "driven": isOther5,
                           "drivenby": drivenby,
@@ -378,7 +380,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                       // "userid": _userid,
                       // "custid": _custId,
                       // "revised": isOther7,
-                      // "cashinlieu": isOtherEnabled2,
+                      // "cashinlieu": revised2,
                       // "instructionno": 1,
                       // "driven": isOther5,
                       // "drivenby": drivenby,
@@ -468,9 +470,11 @@ class _CreateAssesmentState extends State<CreateAssesment> {
 
     HttpClientResponse response = await Config.getRequestObject(
         url +
-            'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=false',
+            'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised',
         Config.get);
     if (response != null) {
+      print(url +
+          'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
       print(response);
       response
           .transform(utf8.decoder)
@@ -498,6 +502,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                 _policyno = instruction.policyno!;
                 _claimno = instruction.claimno!;
                 _carmodel = instruction.model!;
+                print(_make);
               });
             }
           });
@@ -855,134 +860,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         const SizedBox(
                                           height: 20,
                                         ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Transaction Date	",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.red),
-                                            )
-                                          ],
-                                        ),
-                                        const SizedBox(
-                                          height: 20,
-                                        ),
-                                        TextField(
-                                          controller:
-                                              _dateinput, //editing controller of this TextField
-                                          decoration: const InputDecoration(
-                                            icon: Icon(
-                                              Icons.calendar_today,
-                                              color: Colors.red,
-                                            ), //icon of text field
-                                          ),
-                                          readOnly:
-                                              true, //set it true, so that user will not able to edit text
-                                          onTap: () async {
-                                            DateTime? pickedDate =
-                                                await showDatePicker(
-                                                    context: context,
-                                                    initialDate: DateTime.now(),
-                                                    firstDate: DateTime(
-                                                        2000), //DateTime.now() - not to allow to choose before today.
-                                                    lastDate: DateTime(2101));
-
-                                            if (pickedDate != null) {
-                                              print(
-                                                  pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
-                                              String formattedDate =
-                                                  DateFormat('dd/MM/yyyy')
-                                                      .format(pickedDate);
-                                              print(
-                                                  formattedDate); //formatted date output using intl package =>  2021-03-16
-                                              //you can implement different kind of Date Format here according to your requirement
-
-                                              setState(() {
-                                                _dateinput.text =
-                                                    formattedDate; //set output date to TextField value.
-                                              });
-                                            } else {
-                                              print("Date is not selected");
-                                            }
-                                          },
-                                        ),
-                                        const SizedBox(
-                                          height: 30,
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Supplementary Date",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.red),
-                                            )
-                                          ],
-                                        ),
-                                        const SizedBox(
-                                          height: 20,
-                                        ),
-                                        TextField(
-                                          controller:
-                                              _dateinput, //editing controller of this TextField
-                                          decoration: const InputDecoration(
-                                            icon: Icon(
-                                              Icons.calendar_today,
-                                              color: Colors.red,
-                                            ), //icon of text field
-                                          ),
-                                          readOnly:
-                                              true, //set it true, so that user will not able to edit text
-                                          onTap: () async {
-                                            DateTime? pickedDate =
-                                                await showDatePicker(
-                                                    context: context,
-                                                    initialDate: DateTime.now(),
-                                                    firstDate: DateTime(
-                                                        2000), //DateTime.now() - not to allow to choose before today.
-                                                    lastDate: DateTime(2101));
-
-                                            if (pickedDate != null) {
-                                              print(
-                                                  pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
-                                              String formattedDate =
-                                                  DateFormat('dd/MM/yyyy')
-                                                      .format(pickedDate);
-                                              print(
-                                                  formattedDate); //formatted date output using intl package =>  2021-03-16
-                                              //you can implement different kind of Date Format here according to your requirement
-
-                                              setState(() {
-                                                _dateinput.text =
-                                                    formattedDate; //set output date to TextField value.
-                                              });
-                                            } else {
-                                              print("Date is not selected");
-                                            }
-                                          },
-                                        ),
-                                        const SizedBox(
-                                          height: 30,
-                                        ),
                                         CheckboxListTile(
                                           controlAffinity:
                                               ListTileControlAffinity.trailing,
@@ -994,13 +871,163 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
-                                          value: isOtherEnabled,
+                                          value: revised,
                                           activeColor: Colors.red,
                                           onChanged: (bool? value) {
                                             setState(() {
-                                              isOtherEnabled = value!;
+                                              if (_custId != null) {
+                                                _fetchInstructions();
+                                              } else {
+                                                Fluttertoast.showToast(
+                                                    msg:
+                                                        'Please select Customer');
+                                              }
+
+                                              revised = value!;
                                             });
                                           },
+                                        ),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "Txn Date:",
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .subtitle2!
+                                                  .copyWith(),
+                                            ),
+                                            const SizedBox(
+                                              width: 20,
+                                            ),
+                                            Expanded(
+                                              child: TextField(
+                                                controller:
+                                                    _dateinput, //editing controller of this TextField
+                                                decoration:
+                                                    const InputDecoration(
+                                                        //icon of text field
+                                                        ),
+                                                readOnly:
+                                                    true, //set it true, so that user will not able to edit text
+                                                onTap: () async {
+                                                  DateTime? pickedDate =
+                                                      await showDatePicker(
+                                                          context: context,
+                                                          initialDate:
+                                                              DateTime.now(),
+                                                          firstDate: DateTime(
+                                                              2000), //DateTime.now() - not to allow to choose before today.
+                                                          lastDate:
+                                                              DateTime(2101));
+
+                                                  if (pickedDate != null) {
+                                                    print(
+                                                        pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
+                                                    String formattedDate =
+                                                        DateFormat('dd/MM/yyyy')
+                                                            .format(pickedDate);
+                                                    print(
+                                                        formattedDate); //formatted date output using intl package =>  2021-03-16
+                                                    //you can implement different kind of Date Format here according to your requirement
+
+                                                    setState(() {
+                                                      _dateinput.text =
+                                                          formattedDate; //set output date to TextField value.
+                                                    });
+                                                  } else {
+                                                    print(
+                                                        "Date is not selected");
+                                                  }
+                                                },
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.calendar_today,
+                                              color: Colors.red,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(
+                                          height: 30,
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceAround,
+                                          children: [
+                                            Text(
+                                              "Asmt Date:",
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .subtitle2!
+                                                  .copyWith(),
+                                            ),
+                                            const SizedBox(
+                                              width: 20,
+                                            ),
+                                            Expanded(
+                                              child: TextField(
+                                                controller:
+                                                    _dateinput, //editing controller of this TextField
+                                                decoration:
+                                                    const InputDecoration(
+                                                        //icon of text field
+                                                        ),
+                                                readOnly:
+                                                    true, //set it true, so that user will not able to edit text
+                                                onTap: () async {
+                                                  DateTime? pickedDate =
+                                                      await showDatePicker(
+                                                          context: context,
+                                                          initialDate:
+                                                              DateTime.now(),
+                                                          firstDate: DateTime(
+                                                              2000), //DateTime.now() - not to allow to choose before today.
+                                                          lastDate:
+                                                              DateTime(2101));
+
+                                                  if (pickedDate != null) {
+                                                    print(
+                                                        pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
+                                                    String formattedDate =
+                                                        DateFormat('dd/MM/yyyy')
+                                                            .format(pickedDate);
+                                                    print(
+                                                        formattedDate); //formatted date output using intl package =>  2021-03-16
+                                                    //you can implement different kind of Date Format here according to your requirement
+
+                                                    setState(() {
+                                                      _dateinput.text =
+                                                          formattedDate; //set output date to TextField value.
+                                                    });
+                                                  } else {
+                                                    print(
+                                                        "Date is not selected");
+                                                  }
+                                                },
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.calendar_today,
+                                              color: Colors.red,
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        const SizedBox(
+                                          height: 20,
+                                        ),
+                                        const SizedBox(
+                                          height: 30,
                                         ),
                                         SearchableDropdown(
                                           hint: const Text(
@@ -2071,6 +2098,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                           setState(() {
                                             iscameraopen = true;
                                             image = null;
+                                            _itemDescController.clear();
                                           });
                                         },
                                         child: Row(
@@ -2255,6 +2283,8 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                 ],
               ),
               TextFormField(
+                validator: (value) =>
+                    value!.isEmpty ? "This field is required" : null,
                 controller: _itemDescController,
                 onSaved: (value) => {engineNo},
                 keyboardType: TextInputType.text,
@@ -2267,32 +2297,45 @@ class _CreateAssesmentState extends State<CreateAssesment> {
               ElevatedButton.icon(
                 //image capture button
                 onPressed: () async {
-                  try {
-                    if (controller != null) {
-                      //check if contrller is not null
-                      if (controller!.value.isInitialized) {
-                        //check if controller is initialized
-                        image = await controller!.takePicture(); //capture image
-                        setState(() {
-                          String? description = _itemDescController.text.trim();
-                          print(description);
-                          final bytes = Io.File(image!.path).readAsBytesSync();
+                  if (_itemDescController.text != '') {
+                    try {
+                      if (controller != null) {
+                        //check if contrller is not null
+                        if (controller!.value.isInitialized) {
+                          //check if controller is initialized
+                          image =
+                              await controller!.takePicture(); //capture image
+                          setState(() {
+                            String? description =
+                                _itemDescController.text.trim();
+                            print(description);
+                            final bytes =
+                                Io.File(image!.path).readAsBytesSync();
 
-                          String imageFile = base64Encode(bytes);
-                          images = Images(
-                              filename: description, attachment: imageFile);
-                          _addImage(image!);
-                          _addDescription(description);
-                          _addImages(images!);
-                        });
+                            String imageFile = base64Encode(bytes);
+                            images = Images(
+                                filename: description, attachment: imageFile);
+                            _addImage(image!);
+                            _addImages(images!);
+                            _addDescription(description);
+                          });
+                        }
                       }
+                    } catch (e) {
+                      print(e); //show error
                     }
-                  } catch (e) {
-                    print(e); //show error
+                    setState(() {
+                      iscameraopen = false;
+                    });
+                  } else {
+                    setState(() {
+                      image = null;
+                      images = null;
+                    });
+
+                    Fluttertoast.showToast(
+                        msg: 'Please fill the description to capture image');
                   }
-                  setState(() {
-                    iscameraopen = false;
-                  });
                 },
                 icon: const Icon(Icons.camera),
                 label: const Text("Capture"),

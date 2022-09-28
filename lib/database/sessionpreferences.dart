@@ -120,7 +120,7 @@ class SessionPreferences {
   Future<void> setLoggedInUser(User user) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     sharedPreferences.setInt(_userId, user.id!);
-    sharedPreferences.setInt(_custId, user.custid!);
+    // sharedPreferences.setInt(_custId, user.custid!);
     sharedPreferences.setInt(_hrId, user.hrid!);
     // sharedPreferences.setInt(_userPriceList, user.pricelist);
     sharedPreferences.setString(_email, user.email!);

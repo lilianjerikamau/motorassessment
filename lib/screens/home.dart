@@ -75,6 +75,7 @@ class _HomeState extends State<Home> {
         custId = user.custid;
         _userid = user.id;
         _hrid = user.hrid;
+        print('hrid');
         print(_hrid);
       });
     });
@@ -89,7 +90,7 @@ class _HomeState extends State<Home> {
     _fetchPendinginspection();
     _fetchPendingvaluation();
     _fetchSupplementary();
-    timer = Timer.periodic(Duration(minutes: 15), (Timer t) => checkGps());
+    timer = Timer.periodic(const Duration(minutes: 5), (Timer t) => checkGps());
   }
 
   @override
@@ -132,6 +133,13 @@ class _HomeState extends State<Home> {
     });
   }
 
+  _refresh() {
+    _fetchPendingassessment();
+    _fetchPendinginspection();
+    _fetchPendingvaluation();
+    _fetchSupplementary();
+  }
+
   getLocation() async {
     position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high);
@@ -145,7 +153,7 @@ class _HomeState extends State<Home> {
       //refresh UI
     });
 
-    LocationSettings locationSettings = LocationSettings(
+    LocationSettings locationSettings = const LocationSettings(
       accuracy: LocationAccuracy.high, //accuracy of the location data
       distanceFilter: 100, //minimum distance (measured in meters) a
       //device must move horizontally before an update event is generated;
@@ -229,7 +237,26 @@ class _HomeState extends State<Home> {
                   );
                 },
               ),
-              actions: [],
+              actions: [
+                IconButton(
+                    icon: const Icon(
+                      Icons.refresh,
+                      color: Colors.red,
+                    ),
+                    onPressed: () async {
+                      ProgressDialog dial = new ProgressDialog(context);
+                      dial.style(message: 'Refreshing dashboard data');
+                      dial.show();
+                      _refresh();
+                      ;
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Home()),
+                      );
+                      print('----------------> CALLS MADE !!!!!!!!!!!');
+                      dial.hide();
+                    }),
+              ],
               backgroundColor: Colors.white,
               elevation: 0.0,
             ),
@@ -387,7 +414,7 @@ class _HomeState extends State<Home> {
                                     context,
                                     MaterialPageRoute(
                                         builder: (context) =>
-                                            CreateAssesment()),
+                                            const CreateAssesment()),
                                   );
                                 },
                                 child: Row(
@@ -700,7 +727,10 @@ class _HomeState extends State<Home> {
         url + 'valuation/pendingassessment/?userid=$_userid', Config.get);
     if (response != null) {
       print(response);
-      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
+      response
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((data) {
         var jsonResponse = json.decode(data);
         print('assessments');
         print(jsonResponse);
@@ -723,7 +753,7 @@ class _HomeState extends State<Home> {
         }
       });
     } else {
-      print('response is null ');
+      print('response is null');
     }
   }
 
@@ -734,7 +764,10 @@ class _HomeState extends State<Home> {
         url + 'valuation/pendingpeinspection/?userid=$_userid', Config.get);
     if (response != null) {
       print(response);
-      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
+      response
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((data) {
         var jsonResponse = json.decode(data);
         print('pendingpeinspection');
         print(jsonResponse);
@@ -767,7 +800,10 @@ class _HomeState extends State<Home> {
         url + 'valuation/pendingvaluation/?userid=$_userid', Config.get);
     if (response != null) {
       print(response);
-      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
+      response
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((data) {
         var jsonResponse = json.decode(data);
         print('pendingpeinspection');
         print(jsonResponse);
@@ -842,7 +878,7 @@ class _HomeState extends State<Home> {
       });
       return _listViewBuilder(_assessments);
     }
-    return Center(
+    return const Center(
       child: Text('No Assessments'),
     );
   }
@@ -858,7 +894,7 @@ class _HomeState extends State<Home> {
       });
       return _listViewBuilder1(_reinspections);
     }
-    return Center(
+    return const Center(
       child: Text('No Re-Inspections'),
     );
   }
@@ -867,16 +903,14 @@ class _HomeState extends State<Home> {
     if (_valuations != null && _valuations.isNotEmpty) {
       _valuations.forEach((instruction) {
         _make = instruction.make!;
-        _chasisno = instruction.chasisno!;
-
-        // _regno = instruction.regno!;
+        // _chasisno = instruction.chasisno!;
         _carmodel = instruction.model!;
         print(_regno);
       });
       return _listViewBuilder2(_valuations);
     }
-    return Center(
-      child: Text('No Valuations'),
+    return const Center(
+      child: const Text('No Valuations'),
     );
   }
 
@@ -908,8 +942,8 @@ class _HomeState extends State<Home> {
       });
       return _listViewBuilder4(_reinspections);
     }
-    return Center(
-      child: Text('No Re-Inspections'),
+    return const Center(
+      child: const Text('No Re-Inspections'),
     );
   }
 
@@ -1026,7 +1060,9 @@ class _HomeState extends State<Home> {
                     children: <Widget>[
                       const Divider(),
                       Text(
-                        _make != null ? 'Make: $_make' : 'Make: ',
+                        _make != null
+                            ? 'Make: $_make'
+                            : 'Chassis No: Chassis No',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
@@ -1034,17 +1070,17 @@ class _HomeState extends State<Home> {
                       Text(
                         _policyno != null
                             ? 'Policy No: $_policyno'
-                            : 'Policy No',
+                            : 'Policy No:',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
-                      Text(
-                        _regno != null ? 'Claim No: $_regno' : 'Claim No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
+                      // Text(
+                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
+                      //   style: const TextStyle(
+                      //       fontSize: 15, fontWeight: FontWeight.bold),
+                      // ),
+                      // const Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
@@ -1068,7 +1104,7 @@ class _HomeState extends State<Home> {
         itemBuilder: (bc, i) {
           Valuation instruction = data.elementAt(i);
           _make = instruction.make!;
-          _chasisno = instruction.chasisno!;
+          // _chasisno = instruction.chasisno!;
           // _policyno = instruction.policyno!;
           _regno = instruction.regno!;
           _carmodel = instruction.model!;
@@ -1093,7 +1129,7 @@ class _HomeState extends State<Home> {
                     Icons.menu_open,
                     color: Colors.red,
                   ),
-                  title: Text(_make!,
+                  title: Text(_regno!,
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.bold)),
                   subtitle: Column(
@@ -1101,8 +1137,8 @@ class _HomeState extends State<Home> {
                     children: <Widget>[
                       const Divider(),
                       Text(
-                        _chasisno != null
-                            ? 'Chassis No: $_chasisno'
+                        _make != null
+                            ? 'Make: $_make'
                             : 'Chassis No: Chassis No',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
@@ -1111,17 +1147,17 @@ class _HomeState extends State<Home> {
                       Text(
                         _policyno != null
                             ? 'Policy No: $_policyno'
-                            : 'Policy No',
+                            : 'Policy No:',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
-                      Text(
-                        _regno != null ? 'Claim No: $_regno' : 'Claim No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const Divider(),
+                      // Text(
+                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
+                      //   style: const TextStyle(
+                      //       fontSize: 15, fontWeight: FontWeight.bold),
+                      // ),
+                      // const Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
@@ -1145,7 +1181,7 @@ class _HomeState extends State<Home> {
         itemBuilder: (bc, i) {
           Inspection inspection = data.elementAt(i);
           _make = inspection.make!;
-          _chasisno = inspection.chasisno!;
+          // _chasisno = inspection.chasisno!;
           // _policyno = instruction.policyno!;
           _regno = inspection.regno!;
           _carmodel = inspection.model!;
@@ -1170,7 +1206,7 @@ class _HomeState extends State<Home> {
                     Icons.menu_open,
                     color: Colors.red,
                   ),
-                  title: Text(_make!,
+                  title: Text(_regno!,
                       style: const TextStyle(
                           fontSize: 15, fontWeight: FontWeight.bold)),
                   subtitle: Column(
@@ -1178,8 +1214,8 @@ class _HomeState extends State<Home> {
                     children: <Widget>[
                       const Divider(),
                       Text(
-                        _chasisno != null
-                            ? 'Chassis No: $_chasisno'
+                        _make != null
+                            ? 'Make: $_make'
                             : 'Chassis No: Chassis No',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
@@ -1188,11 +1224,17 @@ class _HomeState extends State<Home> {
                       Text(
                         _policyno != null
                             ? 'Policy No: $_policyno'
-                            : 'Policy No',
+                            : 'Policy No:',
                         style: const TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const Divider(),
+                      // Text(
+                      //   _regno != null ? 'Reg No: $_regno' : 'Reg No',
+                      //   style: const TextStyle(
+                      //       fontSize: 15, fontWeight: FontWeight.bold),
+                      // ),
+                      // const Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
