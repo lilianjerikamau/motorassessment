@@ -879,8 +879,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 _fetchInstructions();
                                               } else {
                                                 Fluttertoast.showToast(
-                                                    msg:
-                                                        'Please select Customer');
+                                                    msg: 'Select Customer');
                                               }
 
                                               revised = value!;

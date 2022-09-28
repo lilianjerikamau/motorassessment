@@ -70,6 +70,7 @@ class _HomeState extends State<Home> {
   String _message = 'Search';
   @override
   void initState() {
+    checkGps();
     SessionPreferences().getLoggedInUser().then((user) {
       setState(() {
         _loggedInUser = user;
@@ -80,7 +81,6 @@ class _HomeState extends State<Home> {
         print(_hrid);
       });
     });
-
     super.initState();
     bool isAssessmentTapped = false;
     bool isReinspectionTapped = false;
@@ -117,18 +117,15 @@ class _HomeState extends State<Home> {
       } else {
         haspermission = true;
       }
-
       if (haspermission) {
         setState(() {
           //refresh the UI
         });
-
         getLocation();
       }
     } else {
       print("GPS Service is not enabled, turn on GPS location");
     }
-
     setState(() {
       //refresh the UI
     });

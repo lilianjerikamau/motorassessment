@@ -828,8 +828,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 _fetchInstructions();
                                               } else {
                                                 Fluttertoast.showToast(
-                                                    msg:
-                                                        'Please select Customer');
+                                                    msg: 'Select Customer');
                                               }
 
                                               revised = value!;
