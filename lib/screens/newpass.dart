@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
 import 'package:motorassesmentapp/models/usermodels.dart';
+import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/utils/config.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:query_params/query_params.dart';
@@ -42,7 +43,17 @@ class _NewPassState extends State<NewPass> {
   Widget build(BuildContext context) {
     _context = context;
     return Scaffold(
-      appBar: AppBar(title: Text('Change Password')),
+      appBar: AppBar(
+        title: Text('Change Password'),
+        leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const Home()),
+              );
+            }),
+      ),
       body: Container(
         color: Colors.white70,
         padding: EdgeInsets.all(10.0),
@@ -87,7 +98,7 @@ class _NewPassState extends State<NewPass> {
                 padding: const EdgeInsets.symmetric(vertical: 10.0),
                 child: Text(
                     'Enter and repeat your new password in the inputs below',
-                    style: TextStyle(fontSize: 18, color: Colors.teal)),
+                    style: TextStyle(fontSize: 18, color: Colors.redAccent)),
               ),
               TextFormField(
                 controller: _newPasswordController,
@@ -146,7 +157,7 @@ class _NewPassState extends State<NewPass> {
                             })),
                   )),
               CupertinoButton(
-                  color: Colors.blueGrey,
+                  color: Colors.redAccent,
                   child: Text('Change password'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {

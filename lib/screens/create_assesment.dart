@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -13,7 +13,6 @@ import 'package:motorassesmentapp/models/imagesmodels.dart';
 import 'package:motorassesmentapp/models/instructionmodels.dart';
 import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
-
 import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/screens/create_instruction.dart';
 import 'package:motorassesmentapp/screens/home.dart';
@@ -77,12 +76,16 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   String? _carmodel;
   String? _location;
   String? _claimno;
+  int? _insuredvalue;
+  String? _excess;
+  String? _owner;
+  String? _vehiclereg;
 
   List<Customer> _customers = [];
   List<Instruction> _instruction = [];
   List instructionsJson = [];
   static late var _custName;
-  // static late var _custEmail;
+
   static late var _custPhone;
   static late var _salesrepId = null;
   static late var _salesrepName = null;
@@ -172,7 +175,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   final _color = TextEditingController();
   final _itemDescController = TextEditingController();
   final _loanofficeremail = TextEditingController();
-  final _vehiclereg = TextEditingController();
+  // final _vehiclereg = TextEditingController();
   final _chassisno = TextEditingController();
   // final _carmodel = TextEditingController();
   final _mileage = TextEditingController();
@@ -191,13 +194,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   final _paintwork = TextEditingController();
   final _spare = TextEditingController();
   final _damagesobserved = TextEditingController();
-  final _deliveredby = TextEditingController();
-  final _owner = TextEditingController();
+  // final _deliveredby = TextEditingController();
+  // final _owner = TextEditingController();
   // final _claimno = TextEditingController();
   // final _policyno = TextEditingController();
   // final _location = TextEditingController();
-  final _insuredval = TextEditingController();
-  final _excess = TextEditingController();
+  // final _insuredvalue = TextEditingController();
+  // final _excess = TextEditingController();
 
   TextEditingController _dateinput = TextEditingController();
 // User? _loggedInUser;
@@ -312,10 +315,11 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                     Navigator.pop(ctx);
                     ProgressDialog dial = new ProgressDialog(context,
                         type: ProgressDialogType.Normal);
+                    dial.show();
                     dial.style(
                       message: 'Sending Assessment',
                     );
-                    dial.show();
+
                     // String chassisno = _chasisno.text.trim();
                     // String make = _make.text.trim();
                     String vehiclecolor = _color.text.trim();
@@ -330,7 +334,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                     String paintwork = _paintwork.text.trim();
                     String mileage = _mileage.text.trim();
                     String steering = _steering.text.trim();
-                    String drivenby = _deliveredby.text.trim();
+
                     String RHF = _RHF.text.trim();
                     String LHR = _LHR.text;
                     String RHR = _RHR.text;
@@ -353,7 +357,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           "cashinlieu": revised2,
                           "instructionno": _instructionId,
                           "driven": isOther5,
-                          "drivenby": drivenby,
+                          "drivenby": "null",
                           "towed": isOther6,
                           "make": _make,
                           "model": _carmodel,
@@ -362,8 +366,8 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           "color": vehiclecolor,
                           "engineno": engineno,
                           "chasisno": _chasisno,
-                          "pav": pav,
-                          "salvage": salvage,
+                          "pav": pav != "" ? pav : 1,
+                          "salvage": salvage != "" ? salvage : "0",
                           "brakes": brakes,
                           "paintwork": paintwork,
                           "steering": steering,
@@ -497,11 +501,8 @@ class _CreateAssesmentState extends State<CreateAssesment> {
             _instruction = result;
             if (_instruction != null && _instruction.isNotEmpty) {
               _instruction.forEach((instruction) {
-                _make = instruction.make!;
-                _chasisno = instruction.chassisno!;
-                _policyno = instruction.policyno!;
-                _claimno = instruction.claimno!;
-                _carmodel = instruction.model!;
+                setState(() {});
+
                 print(_make);
               });
             }
@@ -611,7 +612,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                 _custId != null) {
                               form.save();
                               currentForm = 2;
-                              _fetchInstructions();
+                              // _fetchInstructions();
                             } else {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
@@ -822,20 +823,21 @@ class _CreateAssesmentState extends State<CreateAssesment> {
 
                                           isExpanded: true,
                                           onChanged: (value) {
-                                            _selectedValue = value;
-                                            _custId = value != null
-                                                ? value['custid']
-                                                : null;
-                                            _custName = value != null
-                                                ? value['company']
-                                                : null;
-                                            _custPhone = value != null
-                                                ? value['mobile']
-                                                : null;
-                                            // _custEmail = value != null
-                                            //     ? ['email']
-                                            //     : null;
                                             setState(() {
+                                              _selectedValue = value;
+                                              _custId = value != null
+                                                  ? value['custid']
+                                                  : null;
+                                              _custName = value != null
+                                                  ? value['company']
+                                                  : null;
+                                              _custPhone = value != null
+                                                  ? value['mobile']
+                                                  : null;
+                                              // _custEmail = value != null
+                                              //     ? ['email']
+                                              //     : null;
+
                                               _fetchInstructions();
                                             });
                                             print(_selectedValue);
@@ -1044,6 +1046,39 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               _instructionId = value != null
                                                   ? value['id']
                                                   : null;
+                                              _make = value != null
+                                                  ? value['make']
+                                                  : null;
+                                              _chasisno = value != null
+                                                  ? value['chassisno']
+                                                  : null;
+                                              _policyno = value != null
+                                                  ? value['policyno']
+                                                  : null;
+                                              _claimno = value != null
+                                                  ? value['claimno']
+                                                  : null;
+                                              _carmodel = value != null
+                                                  ? value['model']
+                                                  : null;
+
+                                              _location = value != null
+                                                  ? value['location']
+                                                  : null;
+                                              _owner = value != null
+                                                  ? value['owner']
+                                                  : null;
+                                              _insuredvalue = value != null
+                                                  ? value['insuredvalue']
+                                                  : null;
+                                              _vehiclereg = value != null
+                                                  ? value['regno']
+                                                  : null;
+                                              _excess = value != null
+                                                  ? value['excess']
+                                                  : null;
+                                              print(_insuredvalue);
+                                              _fetchInstructions();
                                             });
                                             print(_instructionId);
                                             // print(_custName);
@@ -1131,7 +1166,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1140,10 +1175,9 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         ],
                                       ),
                                       TextFormField(
-                                        controller: _owner,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
+                                        initialValue: _owner,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
                                         decoration: const InputDecoration(
@@ -1166,7 +1200,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1175,9 +1209,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         style:
                                             const TextStyle(color: Colors.red),
                                         initialValue:
@@ -1201,7 +1232,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1210,9 +1241,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         initialValue: _policyno ?? '',
                                         style:
                                             const TextStyle(color: Colors.red),
@@ -1220,6 +1248,37 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
                                             hintText: "Policy No."),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Reg No.",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        initialValue: _vehiclereg ?? '',
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        onSaved: (value) => {vehicleColor},
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                            hintText: "Reg No."),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -1235,7 +1294,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1244,9 +1303,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         initialValue:
                                             _location != null ? _location : '',
                                         style:
@@ -1270,7 +1326,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1279,10 +1335,9 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _insuredval,
+                                        initialValue: _insuredvalue.toString(),
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1302,6 +1357,37 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        initialValue: _excess,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                            hintText: "Enter Excess"),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Chassis No",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
                                             "*",
                                             style: Theme.of(context)
                                                 .textTheme
@@ -1314,133 +1400,14 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _excess,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Enter Excess"),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      CheckboxListTile(
-                                        controlAffinity:
-                                            ListTileControlAffinity.trailing,
-                                        title: Text(
-                                          'Driven',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                        value: isOther5,
-                                        activeColor: Colors.red,
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            isOther5 = value!;
-                                          });
-                                        },
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      CheckboxListTile(
-                                        controlAffinity:
-                                            ListTileControlAffinity.trailing,
-                                        title: Text(
-                                          'Towed',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                        value: isOther6,
-                                        activeColor: Colors.red,
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            isOther6 = value!;
-                                          });
-                                        },
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Delivered By",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _deliveredby,
+                                        initialValue: _chasisno,
                                         onSaved: (value) => {engineNo},
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
-                                            hintText: "Delivered By"),
+                                            hintText: "Chassis No"),
                                       ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                    ],
-                                  ),
-                                ))
-                          ])),
-                      Form(
-                          key: _formKey17,
-                          child: Column(children: <Widget>[
-                            Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                                elevation: 0,
-                                shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 20, right: 20, top: 10, bottom: 5),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Vehicle Details",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headline6!
-                                            .copyWith(
-                                                fontWeight: FontWeight.bold),
-                                      ),
-                                      const SizedBox(
-                                        height: 1,
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                            Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                                elevation: 0,
-                                shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 20, right: 20, top: 30, bottom: 30),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
                                       Row(
                                         children: [
                                           Text(
@@ -1511,6 +1478,96 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                       const SizedBox(
                                         height: 10,
                                       ),
+                                      CheckboxListTile(
+                                        controlAffinity:
+                                            ListTileControlAffinity.trailing,
+                                        title: Text(
+                                          'Driven',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle2!
+                                              .copyWith(),
+                                        ),
+                                        value: isOther5,
+                                        activeColor: Colors.red,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            isOther5 = value!;
+                                          });
+                                        },
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      CheckboxListTile(
+                                        controlAffinity:
+                                            ListTileControlAffinity.trailing,
+                                        title: Text(
+                                          'Towed',
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle2!
+                                              .copyWith(),
+                                        ),
+                                        value: isOther6,
+                                        activeColor: Colors.red,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            isOther6 = value!;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ))
+                          ])),
+                      Form(
+                          key: _formKey17,
+                          child: Column(children: <Widget>[
+                            Card(
+                                margin:
+                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                elevation: 0,
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(10.0))),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 20, right: 20, top: 10, bottom: 5),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Vehicle Details",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headline6!
+                                            .copyWith(
+                                                fontWeight: FontWeight.bold),
+                                      ),
+                                      const SizedBox(
+                                        height: 1,
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                            Card(
+                                margin:
+                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                elevation: 0,
+                                shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.all(
+                                        Radius.circular(10.0))),
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                      left: 20, right: 20, top: 30, bottom: 30),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
                                       Row(
                                         children: [
                                           Text(
@@ -1536,7 +1593,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             : null,
                                         controller: _year,
                                         onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
+                                        keyboardType: TextInputType.number,
                                         decoration: const InputDecoration(
                                             hintText: "Year"),
                                       ),
@@ -1642,38 +1699,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Chassis No",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.red),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _chassisno,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Chassis No"),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
                                             "P.A.V",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
@@ -1682,7 +1707,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1693,9 +1718,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                       TextFormField(
                                         controller: _pav,
                                         onSaved: (value) => {engineNo},
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         keyboardType: TextInputType.number,
                                         decoration: const InputDecoration(
                                             hintText: "P.A.V"),
@@ -1714,7 +1736,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1725,9 +1747,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                       TextFormField(
                                         controller: _salvage,
                                         onSaved: (value) => {engineNo},
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         keyboardType: TextInputType.number,
                                         decoration: const InputDecoration(
                                             hintText: "Salvage"),
@@ -1754,8 +1773,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         height: 10,
                                       ),
                                       Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(
                                             "Brakes",
@@ -1797,6 +1814,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
                                         ],
                                       ),
                                       TextFormField(

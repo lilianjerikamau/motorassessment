@@ -2154,7 +2154,7 @@ void _showDialog(BuildContext context) {
   //                         "logbookowner": ,,
   //                         "capacity": ,,
   //                         "noowners": ,
-  //                         "insuredval": ,
+  //                         "insuredvalue": ,
   //                         "excess": ,
   //                         "forcedval": ,
   //                         "lossdate": ,

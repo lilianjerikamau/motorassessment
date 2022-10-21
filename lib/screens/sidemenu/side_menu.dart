@@ -9,6 +9,8 @@ import 'package:motorassesmentapp/screens/create_supplementary.dart';
 import 'package:motorassesmentapp/screens/create_valuationstd.dart';
 import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/screens/login_screen.dart';
+import 'package:motorassesmentapp/screens/newpass.dart';
+import 'package:motorassesmentapp/utils/config.dart' as Config;
 
 class SideMenu extends StatefulWidget {
   @override
@@ -181,6 +183,21 @@ class _SideMenuState extends State<SideMenu> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => CreateSupplementary()),
+                  ),
+                },
+              ),
+              ListTile(
+                leading: const Icon(
+                  Icons.lock_open,
+                  color: Colors.black,
+                ),
+                title: const Text('Change Password',
+                    style: TextStyle(color: Colors.black, fontSize: 16)),
+                onTap: () => {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => NewPass(Config.changePass)),
                   ),
                 },
               ),

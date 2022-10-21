@@ -14,6 +14,8 @@ Instruction _$InstructionFromJson(Map<String, dynamic> json) => Instruction(
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
       model: json['model'] as String?,
+      excess: json['excess'] as String?,
+      insuredvalue: json['insuredvalue'] as int?,
       make: json['make'] as String?,
     );
 
@@ -27,4 +29,6 @@ Map<String, dynamic> _$InstructionToJson(Instruction instance) =>
       'location': instance.location,
       'model': instance.model,
       'make': instance.make,
+      'excess': instance.excess,
+      'insuredvalue': instance.insuredvalue,
     };

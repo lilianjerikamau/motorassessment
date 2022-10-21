@@ -55,6 +55,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   String? vehicleReg;
   String? chassisNo;
   String? carModel;
+  int? _insuredvalue;
+  String? _excess;
+  String? _owner;
+  String? _vehiclereg;
   String? vehicleType;
   String? vehicleColor;
   String? engineNo;
@@ -84,7 +88,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   final _color = TextEditingController();
   final _itemDescController = TextEditingController();
   final _loanofficeremail = TextEditingController();
-  final _vehiclereg = TextEditingController();
+  // final _vehiclereg = TextEditingController();
   final _chassisno = TextEditingController();
   // final _carmodel = TextEditingController();
   final _mileage = TextEditingController();
@@ -105,12 +109,12 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   final _spare = TextEditingController();
   final _damagesobserved = TextEditingController();
   final _deliveredby = TextEditingController();
-  final _owner = TextEditingController();
+  // final _owner = TextEditingController();
   // final _claimno = TextEditingController();
   // final _policyno = TextEditingController();
   // final _location = TextEditingController();
-  final _insuredval = TextEditingController();
-  final _excess = TextEditingController();
+  // final _insuredvalue = TextEditingController();
+  // final _excess = TextEditingController();
   void _toggle() {
     setState(() {
       isOther5 = !isOther6;
@@ -322,6 +326,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   String? _carmodel;
   String? _location;
   String? _claimno;
+
   List<Customer> _customers = [];
   List<XFile>? imageslist = [];
   List<CameraDescription>? cameras; //list out the camera available
@@ -1080,6 +1085,37 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                               _instructionId = value != null
                                                   ? value['id']
                                                   : null;
+                                              _make = value != null
+                                                  ? value['make']
+                                                  : null;
+                                              _chasisno = value != null
+                                                  ? value['chassisno']
+                                                  : null;
+                                              _policyno = value != null
+                                                  ? value['policyno']
+                                                  : null;
+                                              _claimno = value != null
+                                                  ? value['claimno']
+                                                  : null;
+                                              _carmodel = value != null
+                                                  ? value['model']
+                                                  : null;
+
+                                              _location = value != null
+                                                  ? value['location']
+                                                  : null;
+                                              _owner = value != null
+                                                  ? value['owner']
+                                                  : null;
+                                              _insuredvalue = value != null
+                                                  ? value['insuredvalue']
+                                                  : null;
+                                              _vehiclereg = value != null
+                                                  ? value['regno']
+                                                  : null;
+                                              _excess = value != null
+                                                  ? value['excess']
+                                                  : null;
                                             });
                                             // print(_selectedValue);
                                             // print(_custName);
@@ -1153,6 +1189,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      const SizedBox(
+                                        height: 20,
+                                      ),
                                       Row(
                                         children: [
                                           Text(
@@ -1164,7 +1203,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1173,17 +1212,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ],
                                       ),
                                       TextFormField(
-                                        controller: _owner,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
+                                        initialValue: _owner,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
                                         decoration: const InputDecoration(
                                             hintText: "Insured/Owner"),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -1198,13 +1233,20 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _claimno,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        initialValue:
+                                            _claimno != null ? _claimno : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1223,13 +1265,19 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _policyno,
+                                        initialValue: _policyno ?? '',
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1249,7 +1297,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1258,10 +1306,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _location,
+                                        initialValue:
+                                            _location != null ? _location : '',
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1281,7 +1329,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1290,10 +1338,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _insuredval,
+                                        initialValue: _insuredvalue.toString(),
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1322,10 +1369,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _excess,
+                                        initialValue: _excess,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1334,46 +1380,68 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                       const SizedBox(
                                         height: 10,
                                       ),
-                                      CheckboxListTile(
-                                        controlAffinity:
-                                            ListTileControlAffinity.trailing,
-                                        title: Text(
-                                          'Driven',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                        value: isOther6,
-                                        activeColor: Colors.red,
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            isOther6 = value!;
-                                          });
-                                        },
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Chassis No",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
+                                        ],
                                       ),
-                                      const SizedBox(
-                                        height: 10,
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        initialValue: _chasisno,
+                                        onSaved: (value) => {engineNo},
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                            hintText: "Chassis No"),
                                       ),
-                                      CheckboxListTile(
-                                        controlAffinity:
-                                            ListTileControlAffinity.trailing,
-                                        title: Text(
-                                          'Towed',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                        value: isOther5,
-                                        activeColor: Colors.red,
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            isOther5 = value!;
-                                          });
-                                        },
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Make",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        initialValue:
+                                            _make != null ? _make : '',
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                            hintText: "Make"),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -1381,24 +1449,34 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Delivered By",
+                                            "Type/Model	",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
                                         ],
                                       ),
                                       TextFormField(
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _engineno,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        initialValue:
+                                            _carmodel != null ? _carmodel : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
-                                            hintText: "Delivered By"),
+                                            hintText: "Type/Model	 By"),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -2393,6 +2471,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
             'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=5&revised=$revised',
         Config.get);
     if (response != null) {
+      print(url +
+          'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
       print(response);
       response
           .transform(utf8.decoder)
@@ -2415,11 +2495,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
             _instruction = result;
             if (_instruction != null && _instruction.isNotEmpty) {
               _instruction.forEach((instruction) {
-                _make = instruction.make!;
-                _chasisno = instruction.chassisno!;
-                _policyno = instruction.policyno!;
-                _claimno = instruction.claimno!;
-                _carmodel = instruction.model!;
+                setState(() {});
+
+                print(_make);
               });
             }
           });

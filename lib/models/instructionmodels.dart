@@ -12,6 +12,8 @@ class Instruction {
   String? location;
   String? model;
   String? make;
+  String? excess;
+  int? insuredvalue;
 
   Instruction(
       {this.regno,
@@ -21,9 +23,13 @@ class Instruction {
       this.policyno,
       this.location,
       this.model,
+      this.excess,
+      this.insuredvalue,
       this.make});
   factory Instruction.fromJson(Map<String, dynamic> json) => Instruction(
         regno: json["regno"],
+        excess: json["excess"],
+        insuredvalue: json["insuredvalueue"],
         owner: json["owner"],
         claimno: json['claimno'],
         chassisno: json["chassisno"],
@@ -35,6 +41,7 @@ class Instruction {
 
   Map<String, dynamic> toJson() => {
         "regno": regno,
+        "insuredvalueue": insuredvalue,
         "owner": owner,
         "claimno": claimno,
         "chassisno": chassisno,

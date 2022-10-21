@@ -741,7 +741,6 @@ class _HomeState extends State<Home> {
             result.sort((a, b) =>
                 a.regno!.toLowerCase().compareTo(b.regno!.toLowerCase()));
             _assessments = result;
-
             assessmentCount = _assessments.length;
           });
         } else {
@@ -956,23 +955,42 @@ class _HomeState extends State<Home> {
               // padding: const EdgeInsets.all(10.0),
               child: Container(
                 child: ListTile(
-                  leading: const Icon(
-                    Icons.menu_open,
-                    color: Colors.red,
+                  leading: const SizedBox(),
+                  title: InkWell(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CreateAssesment()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_regno!,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold)),
+                        Icon(
+                          Icons.add,
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
                   ),
-                  title: Text(_regno!,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const Divider(),
-                      Text(
-                        _make != null
-                            ? 'Make: $_make'
-                            : 'Chassis No: Chassis No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
+                      Row(
+                        children: [
+                          Text(
+                            _make != null
+                                ? 'Make: $_make'
+                                : 'Chassis No: Chassis No',
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                       const Divider(),
                       Text(
@@ -1035,23 +1053,40 @@ class _HomeState extends State<Home> {
               // padding: const EdgeInsets.all(10.0),
               child: Container(
                 child: ListTile(
-                  leading: const Icon(
-                    Icons.menu_open,
-                    color: Colors.red,
+                  leading: SizedBox(),
+                  title: InkWell(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CreateReinspection()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_regno!,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold)),
+                        Icon(
+                          Icons.add,
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
                   ),
-                  title: Text(_regno!,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const Divider(),
-                      Text(
-                        _make != null
-                            ? 'Make: $_make'
-                            : 'Chassis No: Chassis No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
+                      Row(
+                        children: [
+                          Text(
+                            _make != null ? 'Make: $_make' : 'Make: Make',
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                       const Divider(),
                       Text(
@@ -1122,23 +1157,40 @@ class _HomeState extends State<Home> {
               // padding: const EdgeInsets.all(10.0),
               child: Container(
                 child: ListTile(
-                  leading: const Icon(
-                    Icons.menu_open,
-                    color: Colors.red,
+                  leading: SizedBox(),
+                  title: InkWell(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CreateValuation()),
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_regno!,
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold)),
+                        Icon(
+                          Icons.add,
+                          color: Colors.red,
+                        ),
+                      ],
+                    ),
                   ),
-                  title: Text(_regno!,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold)),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       const Divider(),
-                      Text(
-                        _make != null
-                            ? 'Make: $_make'
-                            : 'Chassis No: Chassis No',
-                        style: const TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
+                      Row(
+                        children: [
+                          Text(
+                            _make != null ? 'Make: $_make' : 'Make: Make',
+                            style: const TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
                       const Divider(),
                       Text(

@@ -55,6 +55,11 @@ class _CreateValuationState extends State<CreateValuation> {
   String? _carmodel;
   String? _location;
   String? _claimno;
+
+  int? _insuredvalue;
+  String? _excess;
+  String? _owner;
+
   String? _username;
   String? _costcenter;
   String? loanofficerName;
@@ -73,82 +78,82 @@ class _CreateValuationState extends State<CreateValuation> {
   String? installationLocation;
   List<Customer> _customers = [];
   int? customerid;
-  bool alloy = true;
-  bool alarm = true;
-  bool radiocassette = true;
-  bool cdplayer = true;
-  bool cdchanger = true;
-  bool roadworthy = true;
-  bool validinsurance = true;
-  bool centrallocking = true;
-  bool powerwindowsrhf = true;
-  bool powerwindowslhf = true;
-  bool powerwindowsrhr = true;
-  bool powerwindowslhr = true;
-  bool powermirrors = true;
-  bool powersteering = true;
-  bool airconditioner = true;
-  bool absbrakes = true;
-  bool foglights = true;
-  bool roofrails = true;
-  bool rearspoiler = true;
-  bool sidesteps = true;
-  bool sunroof = true;
-  bool frontgrilleguard = true;
-  bool rearbumperguard = true;
-  bool sparewheelcover = true;
-  bool seatcovers = true;
-  bool turbotimer = true;
-  bool dashboardairbag = true;
-  bool steeringairbag = true;
-  bool alloyrims = true;
-  bool steelrims = true;
-  bool chromerims = true;
-  bool xenonheadlights = true;
-  bool suspensionspacers = true;
-  bool heightadjustmentsystem = true;
-  bool powerslidingrhfdoor = true;
-  bool powerslidinglhfdoor = true;
-  bool powerslidingrhrdoor = true;
-  bool powerslidinglhrdoor = true;
-  bool powerbootdoor = true;
-  bool uphostryleatherseat = true;
-  bool uphostryfabricseat = true;
-  bool uphostrytwotoneseat = true;
-  bool uphostrybucketseat = true;
-  bool powerseatrhfadjustment = true;
-  bool powerseatlhfadjustment = true;
-  bool powerseatrhradjustment = true;
-  bool powerseatlhradjustment = true;
-  bool powersteeringadjustment = true;
-  bool extralargerims = true;
-  bool crackedrearwindscreen = true;
-  bool inbuiltcassette = true;
-  bool inbuiltcd = true;
-  bool inbuiltdvd = true;
-  bool inbuiltmapreader = true;
-  bool inbuilthddcardreader = true;
-  bool inbuiltminidisc = true;
-  bool inbuiltusb = true;
-  bool inbuiltbluetooth = true;
-  bool inbuilttvscreen = true;
-  bool inbuiltcdchanger = true;
-  bool inbuiltsecuritydoorlock = true;
-  bool inbuiltalarm = true;
-  bool inbuiltimmobilizer = true;
-  bool keylessignition = true;
-  bool trackingdevice = true;
-  bool gearleverlock = true;
-  bool enginecutoff = true;
-  bool musicsystemdetachable = true;
-  bool musicsysteminbuilt = true;
-  bool fittedwithamfmonly = true;
-  bool fittedwithreversecamera = true;
-  bool amfmonly = true;
-  bool locallyfittedalarm = true;
-  bool roofcarrier = true;
-  bool uphostryfabricleatherseat = true;
-  bool dutypaid = true;
+  bool alloy = false;
+  bool alarm = false;
+  bool radiocassette = false;
+  bool cdplayer = false;
+  bool cdchanger = false;
+  bool roadworthy = false;
+  bool validinsurance = false;
+  bool centrallocking = false;
+  bool powerwindowsrhf = false;
+  bool powerwindowslhf = false;
+  bool powerwindowsrhr = false;
+  bool powerwindowslhr = false;
+  bool powermirrors = false;
+  bool powersteering = false;
+  bool airconditioner = false;
+  bool absbrakes = false;
+  bool foglights = false;
+  bool roofrails = false;
+  bool rearspoiler = false;
+  bool sidesteps = false;
+  bool sunroof = false;
+  bool frontgrilleguard = false;
+  bool rearbumperguard = false;
+  bool sparewheelcover = false;
+  bool seatcovers = false;
+  bool turbotimer = false;
+  bool dashboardairbag = false;
+  bool steeringairbag = false;
+  bool alloyrims = false;
+  bool steelrims = false;
+  bool chromerims = false;
+  bool xenonheadlights = false;
+  bool suspensionspacers = false;
+  bool heightadjustmentsystem = false;
+  bool powerslidingrhfdoor = false;
+  bool powerslidinglhfdoor = false;
+  bool powerslidingrhrdoor = false;
+  bool powerslidinglhrdoor = false;
+  bool powerbootdoor = false;
+  bool uphostryleatherseat = false;
+  bool uphostryfabricseat = false;
+  bool uphostrytwotoneseat = false;
+  bool uphostrybucketseat = false;
+  bool powerseatrhfadjustment = false;
+  bool powerseatlhfadjustment = false;
+  bool powerseatrhradjustment = false;
+  bool powerseatlhradjustment = false;
+  bool powersteeringadjustment = false;
+  bool extralargerims = false;
+  bool crackedrearwindscreen = false;
+  bool inbuiltcassette = false;
+  bool inbuiltcd = false;
+  bool inbuiltdvd = false;
+  bool inbuiltmapreader = false;
+  bool inbuilthddcardreader = false;
+  bool inbuiltminidisc = false;
+  bool inbuiltusb = false;
+  bool inbuiltbluetooth = false;
+  bool inbuilttvscreen = false;
+  bool inbuiltcdchanger = false;
+  bool inbuiltsecuritydoorlock = false;
+  bool inbuiltalarm = false;
+  bool inbuiltimmobilizer = false;
+  bool keylessignition = false;
+  bool trackingdevice = false;
+  bool gearleverlock = false;
+  bool enginecutoff = false;
+  bool musicsystemdetachable = false;
+  bool musicsysteminbuilt = false;
+  bool fittedwithamfmonly = false;
+  bool fittedwithreversecamera = false;
+  bool amfmonly = false;
+  bool locallyfittedalarm = false;
+  bool roofcarrier = false;
+  bool uphostryfabricleatherseat = false;
+  bool dutypaid = false;
 
   static late var _custName;
   // static late var _custEmail;
@@ -229,7 +234,7 @@ class _CreateValuationState extends State<CreateValuation> {
   final _spare = TextEditingController();
   final _damagesobserved = TextEditingController();
   final _deliveredby = TextEditingController();
-  final _owner = TextEditingController();
+  // final _owner = TextEditingController();
   final _mechanicalcondition = TextEditingController();
   final _origin = TextEditingController();
   final _bodycondition = TextEditingController();
@@ -253,8 +258,8 @@ class _CreateValuationState extends State<CreateValuation> {
   // final _claimno = TextEditingController();
   // final _policyno = TextEditingController();
   // final _location = TextEditingController();
-  final _insuredval = TextEditingController();
-  final _excess = TextEditingController();
+  // final _insuredvalue = TextEditingController();
+  // final _excess = TextEditingController();
   final _noofextrakneebags = TextEditingController();
 
   TextEditingController _dateinput = TextEditingController();
@@ -451,7 +456,8 @@ class _CreateValuationState extends State<CreateValuation> {
                           "engineno": engineno,
                           "make": _make,
                           "inspectionplace": inspectionplace,
-                          "musicsystemvalue": musicsystemval,
+                          "musicsystemvalue":
+                              musicsystemval != "" ? musicsystemval : "0",
                           "alloy": alloy,
                           "suspensionspacers": true,
                           "noofdiscs": "three",
@@ -519,11 +525,16 @@ class _CreateValuationState extends State<CreateValuation> {
                           "powerseatlhradjustment": powerseatlhradjustment,
                           "extralargerims": extralargerims,
                           "rimsize": rimsize,
-                          "noofextracurtains": noofextracurtains,
-                          "noofextraseats": noofextraseats,
-                          "noofextrakneebags": noofextrakneebags,
-                          "frontwindscreen": frontwindscreen,
-                          "rearwindscreen": rearwindscreen,
+                          "noofextracurtains":
+                              noofextracurtains != "" ? noofextracurtains : "0",
+                          "noofextraseats":
+                              noofextraseats != "" ? noofextraseats : "0",
+                          "noofextrakneebags":
+                              noofextrakneebags != "" ? noofextrakneebags : "0",
+                          "frontwindscreen":
+                              frontwindscreen != "" ? frontwindscreen : "none",
+                          "rearwindscreen":
+                              rearwindscreen != "" ? rearwindscreen : "none",
                           "doors": doors,
                           // "yombelts": "vgvgv",
                           // "fromanyotherplace": "ggvgvhhh",
@@ -553,12 +564,20 @@ class _CreateValuationState extends State<CreateValuation> {
                           "trackingdevice": trackingdevice,
                           "gearleverlock": gearleverlock,
                           "enginecutoff": enginecutoff,
-                          "anyotherantitheftfeature": anyotherantitheftfeature,
-                          "anyotherextrafeature": anyotherextrafeature,
+                          "anyotherantitheftfeature":
+                              anyotherantitheftfeature != ""
+                                  ? anyotherantitheftfeature
+                                  : "none",
+                          "anyotherextrafeature": anyotherextrafeature != ""
+                              ? anyotherextrafeature
+                              : "none",
                           "anyothervehiclefeature": anyothervehiclefeature,
                           "anyotheraddedfeature": "fcfccf",
-                          "anyothermusicsystem": "fffffffffffcf",
-                          "noofdoorairbags": noofdoorairbags,
+                          "anyothermusicsystem": anyothermusicsystem != ""
+                              ? anyothermusicsystem
+                              : "none",
+                          "noofdoorairbags":
+                              noofdoorairbags != "" ? noofdoorairbags : "0",
                           "musicsystemdetachable": musicsystemdetachable,
                           "musicsysteminbuilt": musicsysteminbuilt,
                           "fittedwithamfmonly": fittedwithamfmonly,
@@ -1530,8 +1549,36 @@ class _CreateValuationState extends State<CreateValuation> {
                                               _instructionId = value != null
                                                   ? value['id']
                                                   : null;
+                                              _make = value != null
+                                                  ? value['make']
+                                                  : null;
+                                              _chasisno = value != null
+                                                  ? value['chassisno']
+                                                  : null;
+                                              _policyno = value != null
+                                                  ? value['policyno']
+                                                  : null;
+                                              _claimno = value != null
+                                                  ? value['claimno']
+                                                  : null;
+                                              _carmodel = value != null
+                                                  ? value['model']
+                                                  : null;
+
+                                              _location = value != null
+                                                  ? value['location']
+                                                  : null;
+                                              _owner = value != null
+                                                  ? value['owner']
+                                                  : null;
+                                              _insuredvalue = value != null
+                                                  ? value['insuredvalue']
+                                                  : null;
                                               _vehiclereg = value != null
                                                   ? value['regno']
+                                                  : null;
+                                              _excess = value != null
+                                                  ? value['excess']
                                                   : null;
                                             });
                                             // print(_selectedValue);
@@ -1609,6 +1656,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      const SizedBox(
+                                        height: 20,
+                                      ),
                                       Row(
                                         children: [
                                           Text(
@@ -1620,7 +1670,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1629,14 +1679,16 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        controller: _owner,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
+                                        initialValue: _owner,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
                                         decoration: const InputDecoration(
                                             hintText: "Insured/Owner"),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -1652,7 +1704,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1661,10 +1713,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _claimno,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        initialValue:
+                                            _claimno != null ? _claimno : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1684,7 +1736,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1693,10 +1745,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _policyno,
+                                        initialValue: _policyno ?? '',
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1716,7 +1767,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1725,10 +1776,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _location,
+                                        initialValue:
+                                            _location != null ? _location : '',
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1748,7 +1799,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1757,10 +1808,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _insuredval,
+                                        initialValue: _insuredvalue.toString(),
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1780,7 +1830,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1789,10 +1839,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _excess,
+                                        initialValue: _excess,
+                                        style:
+                                            const TextStyle(color: Colors.red),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
@@ -1804,7 +1853,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Reg No",
+                                            "Chassis No",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -1821,14 +1870,83 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        initialValue: _vehiclereg,
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        onSaved: (value) => {vehicleReg},
-                                        keyboardType: TextInputType.name,
+                                        initialValue: _chasisno,
+                                        onSaved: (value) => {engineNo},
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
-                                            hintText: "Reg No"),
+                                            hintText: "Chassis No"),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Make",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        initialValue:
+                                            _make != null ? _make : '',
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                            hintText: "Make"),
+                                      ),
+                                      const SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Type/Model	",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.red),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        style:
+                                            const TextStyle(color: Colors.red),
+                                        initialValue:
+                                            _carmodel != null ? _carmodel : '',
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: const InputDecoration(
+                                            hintText: "Type/Model	 By"),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -2124,9 +2242,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        // validator: (value) => value!.isEmpty
-                                        //     ? "This field is required"
-                                        //     : null,
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
                                         controller: _roadworthynotes,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -2182,56 +2300,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Make",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _make,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Make"),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Type/Model	",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _carmodel,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Type/Model	 By"),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
                                       Row(
                                         children: [
                                           Text(
@@ -2356,38 +2424,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         keyboardType: TextInputType.text,
                                         decoration: const InputDecoration(
                                             hintText: "Engine No."),
-                                      ),
-                                      const SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Chassis No",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.red),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _chassisno,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Chassis No"),
                                       ),
                                       const SizedBox(
                                         height: 10,
@@ -2932,29 +2968,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                           ),
                                         ]),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Any Other Feature Noted	",
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                      ],
-                                    ),
-                                    TextFormField(
-                                      controller: _anyotherextrafeature,
-                                      onSaved: (value) => {vehicleReg},
-                                      keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
-                                          hintText:
-                                              "Enter Any Other Feature Noted	"),
-                                    ),
-                                    const SizedBox(
-                                      height: 10,
-                                    ),
                                   ],
                                 ),
                               )),
@@ -3091,39 +3104,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Power Boot Door'),
-                                            selected: powerbootdoor,
-                                            value: powerbootdoor,
-                                            activeColor: Colors.red,
-                                            onChanged: (bool? value) {
-                                              setState(() {
-                                                powerbootdoor = value!;
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                        Flexible(
-                                          child: CheckboxListTile(
-                                            title: const Text(
-                                                'Leather/Fabric Seats'),
-                                            selected: uphostryleatherseat,
-                                            value: uphostryleatherseat,
-                                            activeColor: Colors.red,
-                                            onChanged: (bool? value) {
-                                              setState(() {
-                                                uphostryleatherseat = value!;
-                                              });
-                                            },
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        Flexible(
-                                          child: CheckboxListTile(
                                             title: const Text('Leather Seats'),
                                             selected: uphostryleatherseat,
                                             value: uphostryleatherseat,
@@ -3199,6 +3179,20 @@ class _CreateValuationState extends State<CreateValuation> {
                                             },
                                           ),
                                         ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title:
+                                                const Text('Power Boot Door'),
+                                            selected: powerbootdoor,
+                                            value: powerbootdoor,
+                                            activeColor: Colors.red,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                powerbootdoor = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     Row(
@@ -3212,7 +3206,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3222,11 +3216,8 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _noofextracurtains,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
-                                      keyboardType: TextInputType.name,
+                                      keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
                                           hintText: "No. of Curtains A/bags"),
                                     ),
@@ -3241,7 +3232,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3251,11 +3242,8 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _noofextraseats,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
-                                      keyboardType: TextInputType.name,
+                                      keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
                                           hintText: "No. of Seats A/bags"),
                                     ),
@@ -3270,7 +3258,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3280,11 +3268,8 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _noofextrakneebags,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
-                                      keyboardType: TextInputType.name,
+                                      keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
                                           hintText: "No. of Knee A/bags"),
                                     ),
@@ -3299,7 +3284,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3309,46 +3294,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _noofdoorairbags,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
-                                      keyboardType: TextInputType.name,
+                                      keyboardType: TextInputType.number,
                                       decoration: const InputDecoration(
                                           hintText: "No of Door Airbags"),
-                                    ),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          "Any Other Feature Noted	",
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                        Text(
-                                          "*",
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(color: Colors.red),
-                                        )
-                                      ],
-                                    ),
-                                    TextFormField(
-                                      controller: _anyotherextrafeature,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
-                                      onSaved: (value) => {vehicleReg},
-                                      keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
-                                          hintText:
-                                              "Enter Any Other Feature Noted	"),
-                                    ),
-                                    const SizedBox(
-                                      height: 10,
                                     ),
                                   ],
                                 ),
@@ -3602,7 +3551,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3612,9 +3561,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _musicsystemmodel,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -3634,7 +3580,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3644,9 +3590,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _noofdiscs,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -3666,7 +3609,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3676,9 +3619,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _anyothermusicsystem,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -3698,7 +3638,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3708,9 +3648,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _musicsystemval,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -3894,7 +3831,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3904,9 +3841,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _antitheftmake,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -3926,7 +3860,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -3936,9 +3870,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _anyotherantitheftfeature,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -3991,7 +3922,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4001,9 +3932,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _frontwindscreen,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4023,7 +3951,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4033,9 +3961,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _rearwindscreen,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4055,7 +3980,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4065,9 +3990,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _doors,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4087,7 +4009,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4097,9 +4019,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _approxmatewindscreenvalue,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4266,7 +4185,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4276,9 +4195,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _rimsize,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4298,7 +4214,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4308,9 +4224,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _anyothervehiclefeature,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4362,7 +4275,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4372,9 +4285,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _mechanicalcondition,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4394,7 +4304,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4404,9 +4314,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _bodycondition,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4426,7 +4333,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4436,9 +4343,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _tyres,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4458,7 +4362,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4468,9 +4372,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _generalcondition,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4491,7 +4392,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4501,9 +4402,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _notes,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -4523,7 +4421,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         Text(
-                                          "*",
+                                          "",
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
@@ -4533,9 +4431,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                     ),
                                     TextFormField(
                                       controller: _anyotherextrafeature,
-                                      validator: (value) => value!.isEmpty
-                                          ? "This field is required"
-                                          : null,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
                                       decoration: const InputDecoration(
@@ -5056,6 +4951,8 @@ class _CreateValuationState extends State<CreateValuation> {
             'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=3&revised=$revised',
         Config.get);
     if (response != null) {
+      print(url +
+          'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
       print(response);
       response
           .transform(utf8.decoder)
@@ -5078,11 +4975,9 @@ class _CreateValuationState extends State<CreateValuation> {
             _instruction = result;
             if (_instruction != null && _instruction.isNotEmpty) {
               _instruction.forEach((instruction) {
-                _make = instruction.make!;
-                _chasisno = instruction.chassisno!;
-                _policyno = instruction.policyno!;
-                _claimno = instruction.claimno!;
-                _carmodel = instruction.model!;
+                setState(() {});
+
+                print(_owner);
               });
             }
           });

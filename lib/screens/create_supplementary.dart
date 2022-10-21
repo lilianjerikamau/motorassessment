@@ -193,7 +193,7 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
   // final _claimno = TextEditingController();
   // final _policyno = TextEditingController();
   // final _location = TextEditingController();
-  final _insuredval = TextEditingController();
+  final _insuredvalue = TextEditingController();
   final _excess = TextEditingController();
 
   TextEditingController _dateinput = TextEditingController();
