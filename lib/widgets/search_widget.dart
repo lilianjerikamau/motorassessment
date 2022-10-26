@@ -26,7 +26,7 @@ class SearchWidget extends StatelessWidget {
       height: 40.0,
       child: Theme(
         data: ThemeData(
-          primaryColor: Colors.red,
+          primaryColor: Colors.blue,
         ),
         child: TextField(
           controller: _searchController,
@@ -34,7 +34,7 @@ class SearchWidget extends StatelessWidget {
           decoration: InputDecoration(
               hintText: "Search finance topic",
               hintStyle: TextStyle(
-                  fontSize: 16.0, fontFamily: "Roboto", color: Colors.red),
+                  fontSize: 16.0, fontFamily: "Roboto", color: Colors.blue),
               prefixIcon: Icon(Icons.search),
               suffixIcon: _searchFocusNode.hasFocus
                   ? IconButton(
@@ -48,7 +48,7 @@ class SearchWidget extends StatelessWidget {
           style: TextStyle(
             fontSize: 16.0,
             fontFamily: "Roboto",
-            color: Colors.red,
+            color: Colors.blue,
           ),
           textAlign: TextAlign.justify,
         ),

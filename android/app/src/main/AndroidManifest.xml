@@ -7,7 +7,7 @@
    <application
         android:label="Motor Valuation App"
         android:name="${applicationName}"
-        android:roundIcon ="@mipmap/round_launcher"
+       android:icon="@mipmap/ic_launcher"
         >
         <activity
             android:name=".MainActivity"

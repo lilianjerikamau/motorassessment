@@ -50,7 +50,7 @@ class _NewPassState extends State<NewPass> {
             onPressed: () {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const Home()),
+                MaterialPageRoute(builder: (context) => Home()),
               );
             }),
       ),
@@ -62,7 +62,7 @@ class _NewPassState extends State<NewPass> {
           child: ListView(
             children: <Widget>[
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 5.0),
+                padding: EdgeInsets.symmetric(vertical: 5.0),
                 child: Visibility(
                     visible: widget.status == changePass,
                     child: Text('Enter Your old password below')),
@@ -95,10 +95,10 @@ class _NewPassState extends State<NewPass> {
                     obscureText: _showOldPass,
                   )),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
+                padding: EdgeInsets.symmetric(vertical: 10.0),
                 child: Text(
                     'Enter and repeat your new password in the inputs below',
-                    style: TextStyle(fontSize: 18, color: Colors.redAccent)),
+                    style: TextStyle(fontSize: 18, color: Colors.blueAccent)),
               ),
               TextFormField(
                 controller: _newPasswordController,
@@ -157,7 +157,7 @@ class _NewPassState extends State<NewPass> {
                             })),
                   )),
               CupertinoButton(
-                  color: Colors.redAccent,
+                  color: Colors.blueAccent,
                   child: Text('Change password'),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {

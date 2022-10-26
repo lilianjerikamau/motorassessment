@@ -21,13 +21,15 @@ class _ChooseCompanyState extends State<ChooseCompany> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _companyUrlKey,
-      appBar: AppBar(title: const Text('Configure you current Company')),
+      appBar: AppBar(
+          title: Text('Configure you current Company'),
+          automaticallyImplyLeading: false),
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: EdgeInsets.all(20.0),
         child: Column(
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: EdgeInsets.all(10.0),
               child: TextFormField(
                 controller: _companysettingurl,
                 validator: (input) {
@@ -36,8 +38,8 @@ class _ChooseCompanyState extends State<ChooseCompany> {
                   }
                   return null;
                 },
-                decoration: const InputDecoration(
-                    border: OutlineInputBorder(borderSide: const BorderSide()),
+                decoration: InputDecoration(
+                    border: OutlineInputBorder(borderSide: BorderSide()),
                     labelText: 'Enter Company URL'),
               ),
             ),
@@ -48,7 +50,7 @@ class _ChooseCompanyState extends State<ChooseCompany> {
                       msg: "Please enter company url....",
                       toastLength: Toast.LENGTH_SHORT,
                       gravity: ToastGravity.BOTTOM,
-                      backgroundColor: Colors.red,
+                      backgroundColor: Colors.blue,
                       textColor: Colors.white,
                       fontSize: 16.0);
                   'Enter Company URL';
@@ -74,7 +76,7 @@ class _ChooseCompanyState extends State<ChooseCompany> {
                   );
                 }
               },
-              child: const Text('Update Company'),
+              child: Text('Update Company'),
             ),
           ],
         ),

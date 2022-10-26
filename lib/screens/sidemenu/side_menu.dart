@@ -70,10 +70,10 @@ class _SideMenuState extends State<SideMenu> {
                     Expanded(
                       child: Container(
                           alignment: Alignment.center,
-                          padding: const EdgeInsets.fromLTRB(2, 0, 2, 0),
+                          padding: EdgeInsets.fromLTRB(2, 0, 2, 0),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8.0),
-                            child: const Icon(
+                            child: Icon(
                               Icons.person,
                               color: Colors.grey,
                               size: 100,
@@ -82,22 +82,22 @@ class _SideMenuState extends State<SideMenu> {
                           color: Theme.of(context).primaryColorDark),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(2, 1, 2, 1),
+                      padding: EdgeInsets.fromLTRB(2, 1, 2, 1),
                       child: _username != null
                           ? Text('User Name : ' + _loggedInUser.username!,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16))
-                          : const Text("user",
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16)),
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16))
+                          : Text("user",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16)),
                     ),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(2, 1, 2, 1),
+                      padding: EdgeInsets.fromLTRB(2, 1, 2, 1),
                       child: _company != null
                           ? Text('Company Name : ' + _company!,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 16))
-                          : const Text("Company Name",
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 16))
+                          : Text("Company Name",
                               style:
                                   TextStyle(color: Colors.white, fontSize: 16)),
                     )
@@ -107,12 +107,11 @@ class _SideMenuState extends State<SideMenu> {
                     BoxDecoration(color: Theme.of(context).primaryColorDark),
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.home,
                   color: Colors.black,
                 ),
-                title:
-                    const Text('Home', style: TextStyle(color: Colors.black)),
+                title: Text('Home', style: TextStyle(color: Colors.black)),
                 onTap: () => {
                   Navigator.pushReplacement(
                     context,
@@ -121,11 +120,11 @@ class _SideMenuState extends State<SideMenu> {
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.assessment,
                   color: Colors.black,
                 ),
-                title: const Text('Create Assessment',
+                title: Text('Create Assessment',
                     style: TextStyle(
                       color: Colors.black,
                     )),
@@ -137,11 +136,11 @@ class _SideMenuState extends State<SideMenu> {
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.check_circle,
                   color: Colors.black,
                 ),
-                title: const Text('Create Valuation',
+                title: Text('Create Valuation',
                     style: TextStyle(
                       color: Colors.black,
                     )),
@@ -153,11 +152,11 @@ class _SideMenuState extends State<SideMenu> {
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.inventory_sharp,
                   color: Colors.black,
                 ),
-                title: const Text('Create Re-Inspection',
+                title: Text('Create Re-Inspection',
                     style: TextStyle(
                       color: Colors.black,
                     )),
@@ -170,11 +169,11 @@ class _SideMenuState extends State<SideMenu> {
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.work,
                   color: Colors.black,
                 ),
-                title: const Text('Create Supplementary',
+                title: Text('Create Supplementary',
                     style: TextStyle(
                       color: Colors.black,
                     )),
@@ -187,11 +186,11 @@ class _SideMenuState extends State<SideMenu> {
                 },
               ),
               ListTile(
-                leading: const Icon(
+                leading: Icon(
                   Icons.lock_open,
                   color: Colors.black,
                 ),
-                title: const Text('Change Password',
+                title: Text('Change Password',
                     style: TextStyle(color: Colors.black, fontSize: 16)),
                 onTap: () => {
                   Navigator.pushReplacement(
@@ -201,7 +200,7 @@ class _SideMenuState extends State<SideMenu> {
                   ),
                 },
               ),
-              const SizedBox(
+              SizedBox(
                 height: 150,
               ),
               Align(
@@ -209,12 +208,12 @@ class _SideMenuState extends State<SideMenu> {
                 child: ListTile(
                   hoverColor: Colors.black,
                   dense: true,
-                  visualDensity: const VisualDensity(vertical: -4),
-                  leading: const Icon(
+                  visualDensity: VisualDensity(vertical: -4),
+                  leading: Icon(
                     Icons.power_settings_new,
                     color: Colors.black,
                   ),
-                  title: const Text('Logout'),
+                  title: Text('Logout'),
                   onTap: () {
                     Navigator.pushReplacement(
                       context,

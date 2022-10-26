@@ -104,7 +104,7 @@ class _CheckUserState extends State<CheckUser> with RouteAware {
                       Padding(
                           padding: EdgeInsets.all(20.0),
                           child: CupertinoButton(
-                              color: Colors.red,
+                              color: Colors.blue,
                               child: Text('Check user'),
                               onPressed: () async {
                                 if (_formKey.currentState!.validate()) {
@@ -151,7 +151,7 @@ class _CheckUserState extends State<CheckUser> with RouteAware {
                                                   content: Text(
                                                       'Your user account username is not Available'),
                                                   actions: <Widget>[
-                                                    FlatButton(
+                                                    MaterialButton(
                                                         onPressed: () {
                                                           Navigator.pop(bc);
                                                         },

@@ -33,7 +33,6 @@ class CreateInstruction extends StatefulWidget {
   _CreateInstruction createState() => _CreateInstruction();
 }
 
-const TWO_PI = 3.14 * .6;
 List<String> selectedCategory = [];
 
 List<String> listOfCustomers = [
@@ -309,7 +308,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                     },
                     icon: Icon(
                       currentForm == 0 ? Icons.error : Icons.arrow_back,
-                      color: Colors.redAccent,
+                      color: Colors.blueAccent,
                     ),
                     label: Text(currentForm == 0 ? "Invalid" : "Prev"),
                     heroTag: null,
@@ -332,7 +331,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                               currentForm = 2;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -345,7 +344,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                               percentageComplete = 25;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -363,7 +362,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -387,13 +386,13 @@ class _CreateInstruction extends State<CreateInstruction> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.black),
+              iconTheme: IconThemeData(color: Colors.black),
               leading: Builder(
                 builder: (BuildContext context) {
                   return RotatedBox(
                     quarterTurns: 1,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back,
                         color: Colors.black,
                       ),
@@ -416,9 +415,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                     Stack(
                       clipBehavior: Clip.none,
                       children: <Widget>[
-                        isLoading
-                            ? const LinearProgressIndicator()
-                            : const SizedBox(),
+                        isLoading ? LinearProgressIndicator() : SizedBox(),
                         Diagonal(
                           position: position,
                           clipHeight: clipHeight,
@@ -430,7 +427,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              const Text(
+                              Text(
                                 'Create Instruction',
                                 style: TextStyle(
                                   fontSize: 20.0,
@@ -439,13 +436,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 1.0),
+                              SizedBox(height: 1.0),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 0,
                     ),
                     [
@@ -453,14 +450,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                           key: _formKey,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 20),
                                   child: Column(
                                     crossAxisAlignment:
@@ -473,21 +469,20 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             .subtitle2!
                                             .copyWith(),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 30),
                                   child: SizedBox(
                                     child: Column(
@@ -509,12 +504,12 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         DropdownButtonFormField(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Select Customer",
                                           ),
                                           isExpanded: true,
@@ -557,7 +552,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 10,
                                         ),
                                         Row(
@@ -575,12 +570,12 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         DropdownButtonFormField(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Instruction Type",
                                           ),
                                           // value: _selectedAccount,
@@ -624,7 +619,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 10,
                                         ),
                                         Row(
@@ -642,13 +637,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         DropdownButtonFormField(
                                           // value: _selectedValue,
-                                          hint: const Text(
+                                          hint: Text(
                                             "Broker",
                                           ),
                                           // value: _selectedAccount,
@@ -707,13 +702,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         DropdownButtonFormField(
                                           // value: _selectedValue,
-                                          hint: const Text(
+                                          hint: Text(
                                             "Motor Class",
                                           ),
                                           // value: _selectedAccount,
@@ -772,13 +767,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         DropdownButtonFormField(
                                           // value: _selectedValue,
-                                          hint: const Text(
+                                          hint: Text(
                                             "Drive Type",
                                           ),
                                           // value: _selectedAccount,
@@ -837,13 +832,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         DropdownButtonFormField(
                                           // value: _selectedValue,
-                                          hint: const Text(
+                                          hint: Text(
                                             "Transmission Type",
                                           ),
                                           // value: _selectedAccount,
@@ -887,7 +882,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 10,
                                         ),
                                         Row(
@@ -905,7 +900,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
@@ -916,10 +911,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               : null,
                                           onSaved: (value) => {vehicleReg},
                                           keyboardType: TextInputType.name,
-                                          decoration: const InputDecoration(
+                                          decoration: InputDecoration(
                                               hintText: "Enter Description"),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 10,
                                         ),
                                         Row(
@@ -937,7 +932,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
@@ -948,11 +943,11 @@ class _CreateInstruction extends State<CreateInstruction> {
                                               : null,
                                           onSaved: (value) => {vehicleReg},
                                           keyboardType: TextInputType.name,
-                                          decoration: const InputDecoration(
+                                          decoration: InputDecoration(
                                               hintText:
                                                   "Enter Vehicle Registration No"),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 10,
                                         ),
                                       ],
@@ -964,14 +959,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                           key: _formKey16,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -985,21 +979,20 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1020,7 +1013,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1031,10 +1024,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             : null,
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured/Owner"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1052,7 +1045,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1063,10 +1056,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             : null,
                                         onSaved: (value) => {carModel},
                                         keyboardType: TextInputType.name,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured PIN"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1085,10 +1078,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _chassisno,
                                         onSaved: (value) => {chassisNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Address"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1107,10 +1100,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _engineno,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Claim No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1129,10 +1122,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _vehiclecolor,
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Policy No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1150,7 +1143,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1162,10 +1155,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         onSaved: (value) =>
                                             {installationLocation},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Chassis No*"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1183,7 +1176,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1194,10 +1187,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             : null,
                                         onSaved: (value) => {noTracker},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Cert No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1215,7 +1208,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1224,10 +1217,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         initialValue: _costcenter,
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Vehicle Location"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       // Row(
@@ -1245,7 +1238,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                       //       style: Theme.of(context)
                                       //           .textTheme
                                       //           .subtitle2!
-                                      //           .copyWith(color: Colors.red),
+                                      //           .copyWith(color: Colors.blue),
                                       //     )
                                       //   ],
                                       // ),
@@ -1254,11 +1247,11 @@ class _CreateInstruction extends State<CreateInstruction> {
                                       //   initialValue: _costcenter,
                                       //   onSaved: (value) => {},
                                       //   keyboardType: TextInputType.number,
-                                      //   decoration: const InputDecoration(
+                                      //   decoration:  InputDecoration(
                                       //       hintText:
                                       //           "Enter Vehicle No of Trackers"),
                                       // ),
-                                      // const SizedBox(
+                                      //  SizedBox(
                                       //   height: 10,
                                       // ),
 
@@ -1277,7 +1270,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1285,10 +1278,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Broker"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1306,7 +1299,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1314,10 +1307,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Reg No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1335,7 +1328,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1343,10 +1336,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Make"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1364,7 +1357,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1372,10 +1365,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Model"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1393,7 +1386,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1401,10 +1394,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Class of Use"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1422,7 +1415,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1430,10 +1423,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Log Book No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1451,7 +1444,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1459,11 +1452,11 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText:
                                                 "Enter Log Book Free of Endorsement"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1481,7 +1474,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1489,10 +1482,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Log Book Owner"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1510,7 +1503,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1518,10 +1511,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "No of Owners/Logbook"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1539,7 +1532,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1547,10 +1540,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "0"),
+                                        decoration:
+                                            InputDecoration(hintText: "0"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1568,7 +1561,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1577,7 +1570,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1595,7 +1588,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1603,10 +1596,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "0.0"),
+                                        decoration:
+                                            InputDecoration(hintText: "0.0"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
 
@@ -1625,17 +1618,17 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextField(
                                         controller:
                                             _dateinput, //editing controller of this TextField
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                           icon: Icon(
                                             Icons.calendar_today,
-                                            color: Colors.red,
+                                            color: Colors.blue,
                                           ), //icon of text field
                                         ),
                                         readOnly:
@@ -1668,7 +1661,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                           }
                                         },
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1686,7 +1679,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1695,10 +1688,10 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration:
-                                            const InputDecoration(hintText: ""),
+                                            InputDecoration(hintText: ""),
                                       ),
                                       SearchableDropdown(
-                                        hint: const Text(
+                                        hint: Text(
                                           "Assigned To",
                                         ),
                                         isExpanded: true,
@@ -1735,7 +1728,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                           );
                                         }).toList(),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1753,7 +1746,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1761,11 +1754,11 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         controller: _remarks,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Instructed by"),
                                       ),
                                       SearchableDropdown(
-                                        hint: const Text(
+                                        hint: Text(
                                           "Instruction Mode	",
                                         ),
                                         isExpanded: true,
@@ -1802,7 +1795,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                           );
                                         }).toList(),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1820,17 +1813,17 @@ class _CreateInstruction extends State<CreateInstruction> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextField(
                                         controller:
                                             _dateinput, //editing controller of this TextField
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                           icon: Icon(
                                             Icons.calendar_today,
-                                            color: Colors.red,
+                                            color: Colors.blue,
                                           ), //icon of text field
                                         ),
                                         readOnly:
@@ -1863,7 +1856,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                           }
                                         },
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                     ],
@@ -1872,13 +1865,13 @@ class _CreateInstruction extends State<CreateInstruction> {
                           ])),
                       Column(children: <Widget>[
                         Card(
-                            margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                            margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                             elevation: 0,
-                            shape: const RoundedRectangleBorder(
+                            shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10.0))),
                             child: Padding(
-                              padding: const EdgeInsets.only(
+                              padding: EdgeInsets.only(
                                   left: 20, right: 20, top: 30, bottom: 30),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1890,7 +1883,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                         .headline6!
                                         .copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(
+                                  SizedBox(
                                     height: 10,
                                   ),
                                 ],
@@ -1971,7 +1964,7 @@ class _CreateInstruction extends State<CreateInstruction> {
                                   _searchString = value;
                                 });
                               })
-                          : const Text(
+                          : Text(
                               'Search Financier by company name,email or phone number'),
                       actions: <Widget>[
                         Visibility(
@@ -2047,7 +2040,7 @@ void showAlertDialog(BuildContext context, String message) {
           title: Text('Error'),
           content: Text('$message'),
           actions: <Widget>[
-            FlatButton(
+            MaterialButton(
                 onPressed: () {
                   Navigator.pop(bc);
                 },
@@ -2089,15 +2082,15 @@ void _showDialog(BuildContext context) {
   //       context: this.context,
   //       builder: (ctx) {
   //         return AlertDialog(
-  //           title: const Text('Submit?'),
-  //           content: const Text('Are you sure you want to submit'),
+  //           title:  Text('Submit?'),
+  //           content:  Text('Are you sure you want to submit'),
   //           actions: <Widget>[
-  //             FlatButton(
-  //                 child: const Text('No'),
+  //             MaterialButton(
+  //                 child:  Text('No'),
   //                 onPressed: () {
   //                   Navigator.pop(ctx);
   //                 }),
-  //             FlatButton(
+  //             MaterialButton(
   //                 onPressed: () async {
   //                   Navigator.pop(ctx);
   //                   log(images.toString());
@@ -2111,7 +2104,7 @@ void _showDialog(BuildContext context) {
   //                   String remarks = _remarks.text.trim();
   //                   String dateinput = _dateinput.text;
   //                   LinearProgressIndicator dial =
-  //                       const LinearProgressIndicator();
+  //                        LinearProgressIndicator();
 
   //                   String demoUrl = await Config.getBaseUrl();
   //                   Uri url = Uri.parse(demoUrl + 'tracker/');
@@ -2234,7 +2227,7 @@ void _showDialog(BuildContext context) {
   //                         msg: 'There was no response from the server');
   //                   }
   //                 },
-  //                 child: const Text('Yes'))
+  //                 child:  Text('Yes'))
   //           ],
   //         );
   //       });

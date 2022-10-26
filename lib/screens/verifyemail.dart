@@ -1,4 +1,4 @@
-// ignore_for_file: use_key_in_widget_constructors
+// ignore_for_file: use_key_in_widget_ructors
 
 import 'dart:convert';
 import 'dart:io';
@@ -42,7 +42,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
         centerTitle: true,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(15.0),
+        padding: EdgeInsets.all(15.0),
         child: Container(
           color: Colors.white70,
           child: _body(),
@@ -118,7 +118,7 @@ class _VerifyEmailState extends State<VerifyEmail> {
     }
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(15.0),
+        padding: EdgeInsets.all(15.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[

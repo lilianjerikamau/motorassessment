@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -32,9 +33,12 @@ import 'package:query_params/query_params.dart';
 import 'package:camera/camera.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'dart:io' as Io;
+import 'package:gallery_saver/gallery_saver.dart';
+import '../main.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class CreateValuation extends StatefulWidget {
-  const CreateValuation({Key? key}) : super(key: key);
+  CreateValuation({Key? key}) : super(key: key);
 
   @override
   State<CreateValuation> createState() => _CreateValuationState();
@@ -272,6 +276,23 @@ class _CreateValuationState extends State<CreateValuation> {
   List<Images>? newimages = [];
   List<Instruction> _instruction = [];
   List instructionsJson = [];
+  Future<XFile?> takePicture() async {
+    final CameraController? cameraController = controller;
+
+    if (cameraController!.value.isTakingPicture) {
+      // A capture is already pending, do nothing.
+      return null;
+    }
+
+    try {
+      XFile file = await cameraController.takePicture();
+      return file;
+    } on CameraException catch (e) {
+      print('Error occured while taking picture: $e');
+      return null;
+    }
+  }
+
   void _toggle() {
     setState(() {
       isExistingClient = !isExistingClient;
@@ -347,15 +368,15 @@ class _CreateValuationState extends State<CreateValuation> {
         context: this.context,
         builder: (ctx) {
           return AlertDialog(
-            title: const Text('Submit?'),
-            content: const Text('Are you sure you want to submit'),
+            title: Text('Submit?'),
+            content: Text('Are you sure you want to submit'),
             actions: <Widget>[
-              FlatButton(
-                  child: const Text('No'),
+              MaterialButton(
+                  child: Text('No'),
                   onPressed: () {
                     Navigator.pop(ctx);
                   }),
-              FlatButton(
+              MaterialButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
                     // log(images.toString());
@@ -748,7 +769,7 @@ class _CreateValuationState extends State<CreateValuation> {
                           msg: 'There was no response from the server');
                     }
                   },
-                  child: const Text('Yes'))
+                  child: Text('Yes'))
             ],
           );
         });
@@ -756,20 +777,20 @@ class _CreateValuationState extends State<CreateValuation> {
 
   void _showDialog(BuildContext context) {
     Widget okButton = TextButton(
-      child: const Text("OK"),
+      child: Text("OK"),
       onPressed: () {
         Navigator.of(context).pop();
         Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => const Home()));
+            .push(MaterialPageRoute(builder: (context) => Home()));
       },
     );
 
     AlertDialog alert = AlertDialog(
-      title: const Text(
+      title: Text(
         "Success!",
-        style: const TextStyle(color: Colors.green),
+        style: TextStyle(color: Colors.green),
       ),
-      content: const Text("Successful!"),
+      content: Text("Successful!"),
       actions: [
         okButton,
       ],
@@ -785,7 +806,7 @@ class _CreateValuationState extends State<CreateValuation> {
 
   List<XFile>? imageslist = [];
   List<XFile>? logbooklist = [];
-  List<CameraDescription>? cameras; //list out the camera available
+
   CameraController? controller; //controller for camera
   XFile? image;
   XFile? logbbok;
@@ -831,8 +852,113 @@ class _CreateValuationState extends State<CreateValuation> {
     );
   }
 
+  bool _isCameraInitialized = false;
+  bool _isCameraPermissionGranted = false;
+
+  bool _isRearCameraSelected = true;
+  bool _isVideoCameraSelected = false;
+  bool _isRecordingInProgress = false;
+  double _minAvailableExposureOffset = 0.0;
+  double _maxAvailableExposureOffset = 0.0;
+  double _minAvailableZoom = 1.0;
+  double _maxAvailableZoom = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _currentExposureOffset = 0.0;
+  FlashMode? _currentFlashMode;
+  final resolutionPresets = ResolutionPreset.values;
+  ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
+  //for captured image
+  void resetCameraValues() async {
+    _currentZoomLevel = 1.0;
+    _currentExposureOffset = 0.0;
+  }
+
+  void onNewCameraSelected(CameraDescription cameraDescription) async {
+    final previousCameraController = controller;
+
+    final CameraController cameraController = CameraController(
+      cameraDescription,
+      currentResolutionPreset,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    await previousCameraController?.dispose();
+
+    resetCameraValues();
+
+    if (mounted) {
+      setState(() {
+        controller = cameraController;
+      });
+    }
+
+    // Update UI if controller updated
+    cameraController.addListener(() {
+      if (mounted) setState(() {});
+    });
+
+    try {
+      await cameraController.initialize();
+      await Future.wait([
+        cameraController
+            .getMinExposureOffset()
+            .then((value) => _minAvailableExposureOffset = value),
+        cameraController
+            .getMaxExposureOffset()
+            .then((value) => _maxAvailableExposureOffset = value),
+        cameraController
+            .getMaxZoomLevel()
+            .then((value) => _maxAvailableZoom = value),
+        cameraController
+            .getMinZoomLevel()
+            .then((value) => _minAvailableZoom = value),
+      ]);
+
+      _currentFlashMode = controller!.value.flashMode;
+    } on CameraException catch (e) {
+      print('Error initializing camera: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = controller!.value.isInitialized;
+      });
+    }
+  }
+
+  void onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
+    if (controller == null) {
+      return;
+    }
+
+    final offset = Offset(
+      details.localPosition.dx / constraints.maxWidth,
+      details.localPosition.dy / constraints.maxHeight,
+    );
+    controller!.setExposurePoint(offset);
+    controller!.setFocusPoint(offset);
+  }
+
+  getPermissionStatus() async {
+    await Permission.camera.request();
+    var status = await Permission.camera.status;
+
+    if (status.isGranted) {
+      log('Camera Permission: GRANTED');
+      setState(() {
+        _isCameraPermissionGranted = true;
+      });
+      // Set and initialize the new camera
+      onNewCameraSelected(cameras[0]);
+    } else {
+      log('Camera Permission: DENIED');
+    }
+  }
+
   @override
   void initState() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    onNewCameraSelected(cameras[0]);
     loadCamera();
     DateTime dateTime = DateTime.now();
     String formattedDate = DateFormat('yyyy/MM/dd').format(dateTime);
@@ -888,7 +1014,7 @@ class _CreateValuationState extends State<CreateValuation> {
   loadCamera() async {
     cameras = await availableCameras();
     if (cameras != null) {
-      controller = CameraController(cameras![0], ResolutionPreset.max);
+      controller = CameraController(cameras[0], ResolutionPreset.max);
       //cameras[0] = first camera, change to 1 to another camera
 
       controller!.initialize().then((_) {
@@ -1065,7 +1191,7 @@ class _CreateValuationState extends State<CreateValuation> {
                     },
                     icon: Icon(
                       currentForm == 0 ? Icons.error : Icons.arrow_back,
-                      color: Colors.redAccent,
+                      color: Colors.blueAccent,
                     ),
                     label: Text(currentForm == 0 ? "Invalid" : "Prev"),
                     heroTag: null,
@@ -1090,7 +1216,7 @@ class _CreateValuationState extends State<CreateValuation> {
                               currentForm = 2;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -1106,7 +1232,7 @@ class _CreateValuationState extends State<CreateValuation> {
                             } else {
                               Fluttertoast.showToast(
                                   msg: 'Select customer and attach instruction',
-                                  textColor: Colors.red);
+                                  textColor: Colors.blue);
                             }
 
                             break;
@@ -1118,7 +1244,7 @@ class _CreateValuationState extends State<CreateValuation> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -1135,7 +1261,7 @@ class _CreateValuationState extends State<CreateValuation> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -1151,7 +1277,7 @@ class _CreateValuationState extends State<CreateValuation> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -1175,13 +1301,13 @@ class _CreateValuationState extends State<CreateValuation> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.black),
+              iconTheme: IconThemeData(color: Colors.black),
               leading: Builder(
                 builder: (BuildContext context) {
                   return RotatedBox(
                     quarterTurns: 0,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back,
                         color: Colors.black,
                       ),
@@ -1204,9 +1330,7 @@ class _CreateValuationState extends State<CreateValuation> {
                     Stack(
                       clipBehavior: Clip.none,
                       children: <Widget>[
-                        isLoading
-                            ? const LinearProgressIndicator()
-                            : const SizedBox(),
+                        isLoading ? LinearProgressIndicator() : SizedBox(),
                         Diagonal(
                           position: position,
                           clipHeight: clipHeight,
@@ -1218,7 +1342,7 @@ class _CreateValuationState extends State<CreateValuation> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              const Text(
+                              Text(
                                 'Create Valuation',
                                 style: TextStyle(
                                   fontSize: 20.0,
@@ -1227,13 +1351,13 @@ class _CreateValuationState extends State<CreateValuation> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 1.0),
+                              SizedBox(height: 1.0),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 0,
                     ),
                     [
@@ -1241,14 +1365,13 @@ class _CreateValuationState extends State<CreateValuation> {
                           key: _formKey,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 20),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1261,21 +1384,20 @@ class _CreateValuationState extends State<CreateValuation> {
                                             .subtitle2!
                                             .copyWith(),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 30),
                                   child: SizedBox(
                                     child: Column(
@@ -1297,12 +1419,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         SearchableDropdown(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Select Customer",
                                           ),
 
@@ -1333,7 +1455,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           },
 
                                           // isCaseSensitiveSearch: true,
-                                          searchHint: const Text(
+                                          searchHint: Text(
                                             'Select Customer ',
                                             style: TextStyle(fontSize: 20),
                                           ),
@@ -1356,7 +1478,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           value: revised,
-                                          activeColor: Colors.red,
+                                          activeColor: Colors.blue,
                                           onChanged: (bool? value) {
                                             setState(() {
                                               if (_custId != null) {
@@ -1370,10 +1492,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                             });
                                           },
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                         Row(
@@ -1386,17 +1508,16 @@ class _CreateValuationState extends State<CreateValuation> {
                                                   .subtitle2!
                                                   .copyWith(),
                                             ),
-                                            const SizedBox(
+                                            SizedBox(
                                               width: 20,
                                             ),
                                             Expanded(
                                               child: TextField(
                                                 controller:
                                                     _dateinput, //editing controller of this TextField
-                                                decoration:
-                                                    const InputDecoration(
-                                                        //icon of text field
-                                                        ),
+                                                decoration: InputDecoration(
+                                                    //icon of text field
+                                                    ),
                                                 readOnly:
                                                     true, //set it true, so that user will not able to edit text
                                                 onTap: () async {
@@ -1433,11 +1554,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                             Icon(
                                               Icons.calendar_today,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 30,
                                         ),
                                         Row(
@@ -1452,17 +1573,16 @@ class _CreateValuationState extends State<CreateValuation> {
                                                   .subtitle2!
                                                   .copyWith(),
                                             ),
-                                            const SizedBox(
+                                            SizedBox(
                                               width: 20,
                                             ),
                                             Expanded(
                                               child: TextField(
                                                 controller:
                                                     _dateinput, //editing controller of this TextField
-                                                decoration:
-                                                    const InputDecoration(
-                                                        //icon of text field
-                                                        ),
+                                                decoration: InputDecoration(
+                                                    //icon of text field
+                                                    ),
                                                 readOnly:
                                                     true, //set it true, so that user will not able to edit text
                                                 onTap: () async {
@@ -1499,17 +1619,17 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                             Icon(
                                               Icons.calendar_today,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                         Row(
@@ -1527,12 +1647,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         SearchableDropdown(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Attach Instruction",
                                           ),
 
@@ -1589,7 +1709,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           },
 
                                           // isCaseSensitiveSearch: true,
-                                          searchHint: const Text(
+                                          searchHint: Text(
                                             'Attach Instruction',
                                             style: TextStyle(fontSize: 20),
                                           ),
@@ -1600,10 +1720,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                       ],
@@ -1615,14 +1735,13 @@ class _CreateValuationState extends State<CreateValuation> {
                           key: _formKey16,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1636,27 +1755,26 @@ class _CreateValuationState extends State<CreateValuation> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 20,
                                       ),
                                       Row(
@@ -1674,23 +1792,22 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _owner,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured/Owner"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1708,21 +1825,20 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _claimno != null ? _claimno : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Claim No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1740,20 +1856,19 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _policyno ?? '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Policy No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1771,21 +1886,20 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue:
                                             _location != null ? _location : '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Vehicle Location"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1803,20 +1917,19 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _insuredvalue.toString(),
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured Value"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1834,20 +1947,19 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _excess,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Excess"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1865,7 +1977,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1875,10 +1987,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                             : null,
                                         initialValue: _chasisno,
                                         onSaved: (value) => {engineNo},
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Chassis No"),
                                       ),
                                       Row(
@@ -1896,7 +2007,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1904,16 +2015,15 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _make != null ? _make : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Make"),
+                                        decoration:
+                                            InputDecoration(hintText: "Make"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1931,7 +2041,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1939,16 +2049,15 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _carmodel != null ? _carmodel : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Type/Model	 By"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1966,7 +2075,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1977,10 +2086,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _drivetype,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Drive Type"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1998,7 +2107,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2009,10 +2118,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _transmission,
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Transmission	"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2030,7 +2139,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2041,10 +2150,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _classofuse,
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Class of Use"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2062,7 +2171,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2073,10 +2182,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _logbookno,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Log Book No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2094,7 +2203,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2105,10 +2214,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _endorsement,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Endorsement"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2126,7 +2235,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2137,10 +2246,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _lbookowner,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter LBook Owner"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2158,7 +2267,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2169,10 +2278,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _loadcapacity,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Load Capacity"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2190,7 +2299,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2201,7 +2310,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _noofowners,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "No of Owners"),
                                       ),
                                       CheckboxListTile(
@@ -2216,17 +2325,17 @@ class _CreateValuationState extends State<CreateValuation> {
                                               .copyWith(),
                                         ),
                                         value: isOther6,
-                                        activeColor: Colors.red,
+                                        activeColor: Colors.blue,
                                         onChanged: (bool? value) {
                                           setState(() {
                                             isOther6 = value!;
                                           });
                                         },
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2248,7 +2357,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _roadworthynotes,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "No of Owners"),
                                       ),
                                     ],
@@ -2259,14 +2368,13 @@ class _CreateValuationState extends State<CreateValuation> {
                           key: _formKey17,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -2280,21 +2388,20 @@ class _CreateValuationState extends State<CreateValuation> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
@@ -2315,7 +2422,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2326,10 +2433,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _year,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
-                                            hintText: "Year"),
+                                        decoration:
+                                            InputDecoration(hintText: "Year"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2347,7 +2454,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2358,10 +2465,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _mileage,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Mileage"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2379,7 +2486,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2390,10 +2497,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _color,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Color"),
+                                        decoration:
+                                            InputDecoration(hintText: "Color"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2411,7 +2518,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2422,10 +2529,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _engineno,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Engine No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2443,7 +2550,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2454,10 +2561,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _bodytype,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Body Type"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2475,7 +2582,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2486,10 +2593,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _enginecap,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Engine Capacity"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2507,7 +2614,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2518,10 +2625,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _poi,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Place of inspection"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2539,7 +2646,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2550,10 +2657,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _fuelby,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Fuel by"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2571,7 +2678,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -2582,13 +2689,13 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _origin,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Country of origin"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2597,10 +2704,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         children: [
                                           Flexible(
                                             child: CheckboxListTile(
-                                              title: const Text('Road Worthy?'),
+                                              title: Text('Road Worthy?'),
                                               selected: roadworthy,
                                               value: roadworthy,
-                                              activeColor: Colors.red,
+                                              activeColor: Colors.blue,
                                               onChanged: (bool? value) {
                                                 setState(() {
                                                   roadworthy = value!;
@@ -2610,10 +2717,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                           ),
                                           Flexible(
                                             child: CheckboxListTile(
-                                              title: const Text('Duty Paid?'),
+                                              title: Text('Duty Paid?'),
                                               selected: dutypaid,
                                               value: dutypaid,
-                                              activeColor: Colors.red,
+                                              activeColor: Colors.blue,
                                               onChanged: (bool? value) {
                                                 setState(() {
                                                   dutypaid = value!;
@@ -2623,7 +2730,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 30,
                                       ),
                                     ],
@@ -2635,15 +2742,15 @@ class _CreateValuationState extends State<CreateValuation> {
                         key: _formKey19,
                         child: Column(children: <Widget>[
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
+                              shape: RoundedRectangleBorder(
                                   side: BorderSide(
-                                      color: Colors.redAccent, width: 1),
+                                      color: Colors.blueAccent, width: 1),
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -2656,11 +2763,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -2668,11 +2775,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Central Locking'),
+                                            title: Text('Central Locking'),
                                             selected: centrallocking,
                                             value: centrallocking,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 centrallocking = value!;
@@ -2682,11 +2788,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Power Windows RHF'),
+                                            title: Text('Power Windows RHF'),
                                             selected: powerwindowsrhf,
                                             value: powerwindowsrhf,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerwindowsrhf = value!;
@@ -2701,11 +2806,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Power Windows LHF'),
+                                            title: Text('Power Windows LHF'),
                                             selected: powerwindowslhf,
                                             value: powerwindowslhf,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerwindowslhf = value!;
@@ -2715,11 +2819,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Power Windows RHR'),
+                                            title: Text('Power Windows RHR'),
                                             selected: powerwindowsrhr,
                                             value: powerwindowsrhr,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerwindowsrhr = value!;
@@ -2734,11 +2837,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Power Windows LHR'),
+                                            title: Text('Power Windows LHR'),
                                             selected: powerwindowslhr,
                                             value: powerwindowslhr,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerwindowslhr = value!;
@@ -2748,10 +2850,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Power Mirrors'),
+                                            title: Text('Power Mirrors'),
                                             selected: powermirrors,
                                             value: powermirrors,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powermirrors = value!;
@@ -2766,10 +2868,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Power Steering'),
+                                            title: Text('Power Steering'),
                                             selected: powersteering,
                                             value: powersteering,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powersteering = value!;
@@ -2779,10 +2881,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('A/Conditioner'),
+                                            title: Text('A/Conditioner'),
                                             selected: airconditioner,
                                             value: airconditioner,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 airconditioner = value!;
@@ -2797,10 +2899,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('ABS Brakes'),
+                                            title: Text('ABS Brakes'),
                                             selected: absbrakes,
                                             value: absbrakes,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 absbrakes = value!;
@@ -2810,10 +2912,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Fog Lights'),
+                                            title: Text('Fog Lights'),
                                             selected: foglights,
                                             value: foglights,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 foglights = value!;
@@ -2828,10 +2930,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Roof Rails'),
+                                            title: Text('Roof Rails'),
                                             selected: roofrails,
                                             value: roofrails,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 roofrails = value!;
@@ -2841,10 +2943,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Rear Spoiler'),
+                                            title: Text('Rear Spoiler'),
                                             selected: rearspoiler,
                                             value: rearspoiler,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 rearspoiler = value!;
@@ -2859,10 +2961,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Side Steps'),
+                                            title: Text('Side Steps'),
                                             selected: sidesteps,
                                             value: sidesteps,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 sidesteps = value!;
@@ -2872,10 +2974,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Fabric Seats'),
+                                            title: Text('Fabric Seats'),
                                             selected: uphostryfabricseat,
                                             value: uphostryfabricseat,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 uphostryfabricseat = value!;
@@ -2890,11 +2992,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Spare Wheel Cover'),
+                                            title: Text('Spare Wheel Cover'),
                                             selected: sparewheelcover,
                                             value: sparewheelcover,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 sparewheelcover = value!;
@@ -2904,11 +3005,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Dashboard A/Bag'),
+                                            title: Text('Dashboard A/Bag'),
                                             selected: dashboardairbag,
                                             value: dashboardairbag,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 dashboardairbag = value!;
@@ -2923,11 +3023,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Steering Airbag'),
+                                            title: Text('Steering Airbag'),
                                             selected: steeringairbag,
                                             value: steeringairbag,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 steeringairbag = value!;
@@ -2937,10 +3036,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Alloy Rims'),
+                                            title: Text('Alloy Rims'),
                                             selected: alloyrims,
                                             value: alloyrims,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 alloyrims = value!;
@@ -2956,10 +3055,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         children: [
                                           Flexible(
                                             child: CheckboxListTile(
-                                              title: const Text('Chrome Rims'),
+                                              title: Text('Chrome Rims'),
                                               selected: chromerims,
                                               value: chromerims,
-                                              activeColor: Colors.red,
+                                              activeColor: Colors.blue,
                                               onChanged: (bool? value) {
                                                 setState(() {
                                                   chromerims = value!;
@@ -2972,15 +3071,15 @@ class _CreateValuationState extends State<CreateValuation> {
                                 ),
                               )),
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
+                              shape: RoundedRectangleBorder(
                                   side: BorderSide(
-                                      color: Colors.redAccent, width: 1),
+                                      color: Colors.blueAccent, width: 1),
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -2993,11 +3092,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3005,11 +3104,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Xenon Headlights'),
+                                            title: Text('Xenon Headlights'),
                                             selected: xenonheadlights,
                                             value: xenonheadlights,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 xenonheadlights = value!;
@@ -3019,11 +3117,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
+                                            title: Text(
                                                 'Height Adjustment System'),
                                             selected: heightadjustmentsystem,
                                             value: heightadjustmentsystem,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 heightadjustmentsystem = value!;
@@ -3038,11 +3136,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Power Sliding Door RHF'),
+                                            title:
+                                                Text('Power Sliding Door RHF'),
                                             selected: powerslidingrhfdoor,
                                             value: powerslidinglhfdoor,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerslidinglhrdoor = value!;
@@ -3052,11 +3150,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Power Sliding Door LHF'),
+                                            title:
+                                                Text('Power Sliding Door LHF'),
                                             selected: powerwindowsrhr,
                                             value: powerwindowsrhr,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerwindowsrhr = value!;
@@ -3071,11 +3169,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Power Sliding Door RHR'),
+                                            title:
+                                                Text('Power Sliding Door RHR'),
                                             selected: powerwindowslhr,
                                             value: powerwindowslhr,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerwindowslhr = value!;
@@ -3085,11 +3183,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Power Sliding Door LHR'),
+                                            title:
+                                                Text('Power Sliding Door LHR'),
                                             selected: powermirrors,
                                             value: powermirrors,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powermirrors = value!;
@@ -3104,10 +3202,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Leather Seats'),
+                                            title: Text('Leather Seats'),
                                             selected: uphostryleatherseat,
                                             value: uphostryleatherseat,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 uphostryleatherseat = value!;
@@ -3117,10 +3215,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('	Sunroof'),
+                                            title: Text('	Sunroof'),
                                             selected: sunroof,
                                             value: sunroof,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 sunroof = value!;
@@ -3135,10 +3233,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Bucket Seats'),
+                                            title: Text('Bucket Seats'),
                                             selected: roofrails,
                                             value: roofrails,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 roofrails = value!;
@@ -3148,11 +3246,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
+                                            title: Text(
                                                 'Power Seat Adjustment RHF'),
                                             selected: rearspoiler,
                                             value: rearspoiler,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 rearspoiler = value!;
@@ -3167,11 +3265,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
+                                            title: Text(
                                                 'Power Seat Adjustment LHF'),
                                             selected: sidesteps,
                                             value: sidesteps,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 sidesteps = value!;
@@ -3181,11 +3279,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Power Boot Door'),
+                                            title: Text('Power Boot Door'),
                                             selected: powerbootdoor,
                                             value: powerbootdoor,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 powerbootdoor = value!;
@@ -3210,7 +3307,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3218,7 +3315,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _noofextracurtains,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "No. of Curtains A/bags"),
                                     ),
                                     Row(
@@ -3236,7 +3333,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3244,7 +3341,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _noofextraseats,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "No. of Seats A/bags"),
                                     ),
                                     Row(
@@ -3262,7 +3359,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3270,7 +3367,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _noofextrakneebags,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "No. of Knee A/bags"),
                                     ),
                                     Row(
@@ -3288,7 +3385,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3296,22 +3393,22 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _noofdoorairbags,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.number,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "No of Door Airbags"),
                                     ),
                                   ],
                                 ),
                               )),
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
+                              shape: RoundedRectangleBorder(
                                   side: BorderSide(
-                                      color: Colors.redAccent, width: 1),
-                                  borderRadius: const BorderRadius.all(
-                                      const Radius.circular(10.0))),
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -3324,11 +3421,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3336,10 +3433,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Detachable'),
+                                            title: Text('Detachable'),
                                             selected: musicsystemdetachable,
                                             value: musicsystemdetachable,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 musicsystemdetachable = value!;
@@ -3349,10 +3446,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Inbuilt'),
+                                            title: Text('Inbuilt'),
                                             selected: inbuiltcd,
                                             value: inbuiltcd,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltcd = value!;
@@ -3367,11 +3464,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Fitted with AM/FM only'),
+                                            title:
+                                                Text('Fitted with AM/FM only'),
                                             selected: fittedwithamfmonly,
                                             value: fittedwithamfmonly,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 fittedwithamfmonly = value!;
@@ -3381,11 +3478,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Cassette player'),
+                                            title: Text('Cassette player'),
                                             selected: radiocassette,
                                             value: radiocassette,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 radiocassette = value!;
@@ -3400,11 +3496,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Mini Disc player'),
+                                            title: Text('Mini Disc player'),
                                             selected: inbuiltminidisc,
                                             value: inbuiltminidisc,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltminidisc = value!;
@@ -3414,10 +3509,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Map Reader'),
+                                            title: Text('Map Reader'),
                                             selected: inbuiltmapreader,
                                             value: inbuiltmapreader,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltmapreader = value!;
@@ -3432,11 +3527,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('HDD Card Reader'),
+                                            title: Text('HDD Card Reader'),
                                             selected: inbuilthddcardreader,
                                             value: inbuilthddcardreader,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuilthddcardreader = value!;
@@ -3446,10 +3540,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('USB Reader'),
+                                            title: Text('USB Reader'),
                                             selected: inbuiltusb,
                                             value: inbuiltusb,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltusb = value!;
@@ -3464,10 +3558,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Bluetooth'),
+                                            title: Text('Bluetooth'),
                                             selected: inbuiltbluetooth,
                                             value: inbuiltbluetooth,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltbluetooth = value!;
@@ -3477,10 +3571,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('TV/LCD Screen'),
+                                            title: Text('TV/LCD Screen'),
                                             selected: inbuilttvscreen,
                                             value: inbuilttvscreen,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuilttvscreen = value!;
@@ -3495,10 +3589,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('CD Changer'),
+                                            title: Text('CD Changer'),
                                             selected: cdchanger,
                                             value: cdchanger,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 cdchanger = value!;
@@ -3508,10 +3602,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Reverse Camera'),
+                                            title: Text('Reverse Camera'),
                                             selected: fittedwithreversecamera,
                                             value: fittedwithreversecamera,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 fittedwithreversecamera =
@@ -3527,10 +3621,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('CD/DVD Player'),
+                                            title: Text('CD/DVD Player'),
                                             selected: inbuiltcd,
                                             value: inbuiltcd,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltcd = value!;
@@ -3555,7 +3649,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3563,10 +3657,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _musicsystemmodel,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Make/Model"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3584,7 +3678,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3592,10 +3686,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _noofdiscs,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "No. of Discs"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3613,7 +3707,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3621,10 +3715,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _anyothermusicsystem,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Any Other Feature"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3642,7 +3736,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3650,26 +3744,26 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _musicsystemval,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText:
                                               "Enter Music System Approx Value"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                   ],
                                 ),
                               )),
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
-                                  side: const BorderSide(
-                                      color: Colors.redAccent, width: 1),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(10.0))),
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -3682,11 +3776,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3694,11 +3788,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Locally Fitted Alarm'),
+                                            title: Text('Locally Fitted Alarm'),
                                             selected: locallyfittedalarm,
                                             value: locallyfittedalarm,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 locallyfittedalarm = value!;
@@ -3708,11 +3801,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
+                                            title: Text(
                                                 'Inbuilt Security Door Locks'),
                                             selected: inbuiltsecuritydoorlock,
                                             value: inbuiltsecuritydoorlock,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltsecuritydoorlock =
@@ -3728,10 +3821,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Inbuilt Alarm'),
+                                            title: Text('Inbuilt Alarm'),
                                             selected: inbuiltalarm,
                                             value: inbuiltalarm,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltalarm = value!;
@@ -3741,11 +3834,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Inbuilt Immobilizer'),
+                                            title: Text('Inbuilt Immobilizer'),
                                             selected: inbuiltimmobilizer,
                                             value: inbuiltimmobilizer,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 inbuiltimmobilizer = value!;
@@ -3761,10 +3853,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         Flexible(
                                           child: CheckboxListTile(
                                             selected: keylessignition,
-                                            title:
-                                                const Text('Keyless Ignition'),
+                                            title: Text('Keyless Ignition'),
                                             value: keylessignition,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 keylessignition = value!;
@@ -3774,11 +3865,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Tracking Device'),
+                                            title: Text('Tracking Device'),
                                             selected: trackingdevice,
                                             value: trackingdevice,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 trackingdevice = value!;
@@ -3793,11 +3883,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Geer Lever Lock'),
+                                            title: Text('Geer Lever Lock'),
                                             selected: gearleverlock,
                                             value: gearleverlock,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 gearleverlock = value!;
@@ -3807,10 +3896,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Engine Cut Off'),
+                                            title: Text('Engine Cut Off'),
                                             selected: enginecutoff,
                                             value: enginecutoff,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 enginecutoff = value!;
@@ -3835,7 +3924,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3843,10 +3932,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _antitheftmake,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Make"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3864,7 +3953,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3872,26 +3961,26 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _anyotherantitheftfeature,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText:
                                               "Enter Any Other Anti-Theft Feature"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                   ],
                                 ),
                               )),
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
-                                  side: const BorderSide(
-                                      color: Colors.redAccent, width: 1),
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(10.0))),
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -3904,11 +3993,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3926,7 +4015,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3934,10 +4023,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _frontwindscreen,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Front"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3955,7 +4044,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3963,10 +4052,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _rearwindscreen,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Rear"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -3984,7 +4073,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -3992,10 +4081,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _doors,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Doors"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4013,7 +4102,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4021,25 +4110,25 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _approxmatewindscreenvalue,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Approxmate Value"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                   ],
                                 ),
                               )),
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
+                              shape: RoundedRectangleBorder(
                                   side: BorderSide(
-                                      color: Colors.redAccent, width: 1),
-                                  borderRadius: const BorderRadius.all(
-                                      const Radius.circular(10.0))),
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -4052,11 +4141,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4064,10 +4153,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Seat Covers'),
+                                            title: Text('Seat Covers'),
                                             selected: seatcovers,
                                             value: seatcovers,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 seatcovers = value!;
@@ -4077,10 +4166,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Turbo Timer'),
+                                            title: Text('Turbo Timer'),
                                             selected: turbotimer,
                                             value: turbotimer,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 turbotimer = value!;
@@ -4095,11 +4184,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Front Grill/Bull Bar'),
+                                            title: Text('Front Grill/Bull Bar'),
                                             selected: frontgrilleguard,
                                             value: frontgrilleguard,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 frontgrilleguard = value!;
@@ -4109,10 +4197,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text('Roof Carrier'),
+                                            title: Text('Roof Carrier'),
                                             selected: roofcarrier,
                                             value: roofcarrier,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 roofcarrier = value!;
@@ -4127,11 +4215,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title:
-                                                const Text('Rear Bumper Guard'),
+                                            title: Text('Rear Bumper Guard'),
                                             selected: rearbumperguard,
                                             value: rearbumperguard,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 rearbumperguard = value!;
@@ -4141,11 +4228,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
-                                                'Suspension Spacers'),
+                                            title: Text('Suspension Spacers'),
                                             selected: suspensionspacers,
                                             value: suspensionspacers,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 suspensionspacers = value!;
@@ -4160,11 +4246,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: const Text(
+                                            title: Text(
                                                 'Special/Extra Large Rims'),
                                             selected: extralargerims,
                                             value: extralargerims,
-                                            activeColor: Colors.red,
+                                            activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
                                                 extralargerims = value!;
@@ -4189,7 +4275,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4197,10 +4283,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _rimsize,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Rims Size"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4218,7 +4304,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4226,25 +4312,25 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _anyothervehiclefeature,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Any Other Feature"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                   ],
                                 ),
                               )),
                           Card(
-                              margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                               elevation: 0.9,
-                              shape: const RoundedRectangleBorder(
+                              shape: RoundedRectangleBorder(
                                   side: BorderSide(
-                                      color: Colors.redAccent, width: 1),
-                                  borderRadius: const BorderRadius.all(
-                                      const Radius.circular(10.0))),
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
                               child: Padding(
-                                padding: const EdgeInsets.only(
+                                padding: EdgeInsets.only(
                                     left: 0, right: 0, top: 30, bottom: 30),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -4257,11 +4343,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                           .copyWith(
                                               fontWeight: FontWeight.bold),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 20,
                                     ),
-                                    const Divider(color: Colors.red),
-                                    const SizedBox(
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4279,7 +4365,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4287,10 +4373,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _mechanicalcondition,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Mechanical Condition"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4308,7 +4394,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4316,10 +4402,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _bodycondition,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Body Condition"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4337,7 +4423,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4345,10 +4431,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _tyres,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Tyres Findings"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4366,7 +4452,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4374,11 +4460,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _generalcondition,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText:
                                               "Enter Genral Condition Findings"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4396,7 +4482,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4404,10 +4490,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _notes,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Notes"),
                                     ),
-                                    const SizedBox(
+                                    SizedBox(
                                       height: 10,
                                     ),
                                     Row(
@@ -4425,7 +4511,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                           style: Theme.of(context)
                                               .textTheme
                                               .subtitle2!
-                                              .copyWith(color: Colors.red),
+                                              .copyWith(color: Colors.blue),
                                         )
                                       ],
                                     ),
@@ -4433,7 +4519,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       controller: _anyotherextrafeature,
                                       onSaved: (value) => {vehicleReg},
                                       keyboardType: TextInputType.name,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                           hintText: "Enter Any Other Feature"),
                                     ),
                                   ],
@@ -4445,14 +4531,13 @@ class _CreateValuationState extends State<CreateValuation> {
                           key: _formKey18,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -4466,21 +4551,20 @@ class _CreateValuationState extends State<CreateValuation> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
@@ -4509,7 +4593,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                             Icon(
                                               Icons.camera_enhance,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             )
                                           ],
                                         ),
@@ -4605,7 +4689,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                             Icon(
                                               Icons.camera_enhance,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             )
                                           ],
                                         ),
@@ -4679,7 +4763,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                   },
                                                 )
                                               : Container()),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 80,
                                       ),
                                     ],
@@ -4688,13 +4772,13 @@ class _CreateValuationState extends State<CreateValuation> {
                           ])),
                       Column(children: <Widget>[
                         Card(
-                            margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                            margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                             elevation: 0,
-                            shape: const RoundedRectangleBorder(
+                            shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10.0))),
                             child: Padding(
-                              padding: const EdgeInsets.only(
+                              padding: EdgeInsets.only(
                                   left: 20, right: 20, top: 30, bottom: 30),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -4706,7 +4790,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         .headline6!
                                         .copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(
+                                  SizedBox(
                                     height: 10,
                                   ),
                                 ],
@@ -4720,224 +4804,1094 @@ class _CreateValuationState extends State<CreateValuation> {
             ))
         : iscameraopen == true
             ? Scaffold(
-                appBar: AppBar(
-                  title: const Text("Capture Image from Camera"),
-                  backgroundColor: Colors.red,
-                  leading: Builder(
-                    builder: (BuildContext context) {
-                      return RotatedBox(
-                        quarterTurns: 0,
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back,
-                            color: Colors.black,
-                          ),
-                          onPressed: () {
-                            setState(() {
-                              iscameraopen = false;
-                            });
-                          },
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                body: SingleChildScrollView(
-                  child: Container(
-                      child: Column(children: [
-                    Container(
-                      height: 500,
-                      width: 500,
-                      child: controller == null
-                          ? const Center(child: Text("Loading Camera..."))
-                          : !controller!.value.isInitialized
-                              ? const Center(
-                                  child: CircularProgressIndicator(),
-                                )
-                              : CameraPreview(controller!),
-                    ),
-                    SizedBox(
-                      height: 50,
-                    ),
-                    Row(
-                      children: [
-                        Text(
-                          "Image Description",
-                          overflow: TextOverflow.ellipsis,
-                          style:
-                              Theme.of(context).textTheme.subtitle2!.copyWith(),
-                        ),
-                      ],
-                    ),
-                    TextFormField(
-                      controller: _itemDescController,
-                      onSaved: (value) => {engineNo},
-                      keyboardType: TextInputType.text,
-                      decoration: const InputDecoration(
-                          hintText: "Enter Image Description"),
-                    ),
-                    SizedBox(
-                      height: 50,
-                    ),
-                    ElevatedButton.icon(
-                      //image capture button
-                      onPressed: () async {
-                        if (_itemDescController.text != '') {
-                          try {
-                            if (controller != null) {
-                              //check if contrller is not null
-                              if (controller!.value.isInitialized) {
-                                //check if controller is initialized
-                                image = await controller!
-                                    .takePicture(); //capture image
-                                setState(() {
-                                  String? description =
-                                      _itemDescController.text.trim();
-                                  print(description);
-                                  final bytes =
-                                      Io.File(image!.path).readAsBytesSync();
+                backgroundColor: Colors.black,
+                body: Container(
+                  child: _isCameraPermissionGranted
+                      ? _isCameraInitialized
+                          ? Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AspectRatio(
+                                  aspectRatio:
+                                      1 / controller!.value.aspectRatio,
+                                  child: Stack(
+                                    children: [
+                                      CameraPreview(
+                                        controller!,
+                                        child: LayoutBuilder(builder:
+                                            (BuildContext context,
+                                                BoxConstraints constraints) {
+                                          return GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTapDown: (details) =>
+                                                onViewFinderTap(
+                                                    details, constraints),
+                                          );
+                                        }),
+                                      ),
+                                      // TODO: Uncomment to preview the overlay
+                                      // Center(
+                                      //   child: Image.asset(
+                                      //     'assets/camera_aim.png',
+                                      //     color: Colors.greenAccent,
+                                      //     width: 150,
+                                      //     height: 150,
+                                      //   ),
+                                      // ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16.0,
+                                          8.0,
+                                          16.0,
+                                          8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Align(
+                                              alignment: Alignment.topRight,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black87,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                    left: 8.0,
+                                                    right: 8.0,
+                                                  ),
+                                                  child: DropdownButton<
+                                                      ResolutionPreset>(
+                                                    dropdownColor:
+                                                        Colors.black87,
+                                                    underline: Container(),
+                                                    value:
+                                                        currentResolutionPreset,
+                                                    items: [
+                                                      for (ResolutionPreset preset
+                                                          in resolutionPresets)
+                                                        DropdownMenuItem(
+                                                          child: Text(
+                                                            preset
+                                                                .toString()
+                                                                .split('.')[1]
+                                                                .toUpperCase(),
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                          value: preset,
+                                                        )
+                                                    ],
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        currentResolutionPreset =
+                                                            value!;
+                                                        _isCameraInitialized =
+                                                            false;
+                                                      });
+                                                      onNewCameraSelected(
+                                                          controller!
+                                                              .description);
+                                                    },
+                                                    hint: Text("Select item"),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0, top: 16.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Text(
+                                                    _currentExposureOffset
+                                                            .toStringAsFixed(
+                                                                1) +
+                                                        'x',
+                                                    style: TextStyle(
+                                                        color: Colors.black),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: RotatedBox(
+                                                quarterTurns: 3,
+                                                child: Container(
+                                                  height: 30,
+                                                  child: Slider(
+                                                    value:
+                                                        _currentExposureOffset,
+                                                    min:
+                                                        _minAvailableExposureOffset,
+                                                    max:
+                                                        _maxAvailableExposureOffset,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentExposureOffset =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setExposureOffset(
+                                                              value);
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Slider(
+                                                    value: _currentZoomLevel,
+                                                    min: _minAvailableZoom,
+                                                    max: _maxAvailableZoom,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentZoomLevel =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setZoomLevel(value);
+                                                    },
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black87,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        _currentZoomLevel
+                                                                .toStringAsFixed(
+                                                                    1) +
+                                                            'x',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () async {
+                                                    image = await takePicture();
+                                                    File image1 =
+                                                        File(image!.path);
 
-                                  String imageFile = base64Encode(bytes);
-                                  images = Images(
-                                      filename: description,
-                                      attachment: imageFile);
-                                  _addImage(image!);
-                                  _addImages(images!);
-                                  _addDescription(description);
-                                });
-                              }
-                            }
-                          } catch (e) {
-                            print(e); //show error
-                          }
-                          setState(() {
-                            iscameraopen = false;
-                          });
-                        } else {
-                          setState(() {
-                            image = null;
-                            images = null;
-                          });
+                                                    int currentUnix = DateTime
+                                                            .now()
+                                                        .millisecondsSinceEpoch;
 
-                          Fluttertoast.showToast(
-                              msg:
-                                  'Please fill the description to capture image');
-                        }
-                      },
-                      icon: const Icon(Icons.camera),
-                      label: const Text("Capture"),
-                    ),
-                  ])),
+                                                    String fileFormat = image1
+                                                        .path
+                                                        .split('.')
+                                                        .last;
+                                                    setState(() {
+                                                      iscameraopen = false;
+                                                    });
+                                                    iscameraopen = false;
+                                                    GallerySaver.saveImage(
+                                                            image!.path)
+                                                        .then((path) {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext
+                                                            context) {
+                                                          return _SystemPadding(
+                                                            child: AlertDialog(
+                                                              contentPadding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      16.0),
+                                                              content: Row(
+                                                                children: <
+                                                                    Widget>[
+                                                                  Expanded(
+                                                                    child:
+                                                                        TextFormField(
+                                                                      controller:
+                                                                          _itemDescController,
+                                                                      keyboardType:
+                                                                          TextInputType
+                                                                              .text,
+                                                                      autofocus:
+                                                                          true,
+                                                                      decoration: const InputDecoration(
+                                                                          labelText:
+                                                                              'Enter Description',
+                                                                          hintText:
+                                                                              'Description'),
+                                                                    ),
+                                                                  )
+                                                                ],
+                                                              ),
+                                                              actions: <Widget>[
+                                                                TextButton(
+                                                                    child: const Text(
+                                                                        'CANCEL'),
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    }),
+                                                                TextButton(
+                                                                    child: const Text(
+                                                                        'OKAY'),
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                      setState(
+                                                                          () {
+                                                                        String?
+                                                                            description =
+                                                                            _itemDescController.text.trim();
+                                                                        print(
+                                                                            description);
+                                                                        final bytes =
+                                                                            Io.File(image!.path).readAsBytesSync();
+
+                                                                        String
+                                                                            imageFile =
+                                                                            base64Encode(bytes);
+                                                                        images = Images(
+                                                                            filename:
+                                                                                description,
+                                                                            attachment:
+                                                                                imageFile);
+                                                                        _addImage(
+                                                                            image!);
+                                                                        _addImages(
+                                                                            images!);
+                                                                        _addDescription(
+                                                                            description);
+                                                                      });
+                                                                    })
+                                                              ],
+                                                            ),
+                                                          );
+                                                        },
+                                                      );
+                                                    });
+                                                    print(fileFormat);
+                                                  },
+                                                  child: Stack(
+                                                    alignment: Alignment.center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.white
+                                                                : Colors
+                                                                    .white38,
+                                                        size: 80,
+                                                      ),
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.blue
+                                                                : Colors.white,
+                                                        size: 65,
+                                                      ),
+                                                      _isVideoCameraSelected &&
+                                                              _isRecordingInProgress
+                                                          ? Icon(
+                                                              Icons
+                                                                  .stop_rounded,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 32,
+                                                            )
+                                                          : Container(),
+                                                    ],
+                                                  ),
+                                                ),
+                                                InkWell(
+                                                  onTap: image != null
+                                                      ? () {
+                                                          // Navigator.of(context)
+                                                          //     .push(
+                                                          //   MaterialPageRoute(
+                                                          //     builder: (context) =>
+                                                          //         PreviewScreen(
+                                                          //       image: image!,
+                                                          //       fileList:
+                                                          //           imageslist,
+                                                          //     ),
+                                                          //   ),
+                                                          // );
+                                                        }
+                                                      : null,
+                                                  child: Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                      border: Border.all(
+                                                        color: Colors.white,
+                                                        width: 2,
+                                                      ),
+                                                      image: image != null
+                                                          ? DecorationImage(
+                                                              image: FileImage(
+                                                                File(image!
+                                                                    .path),
+                                                              ),
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    physics: BouncingScrollPhysics(),
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8.0),
+                                          child: Row(
+                                            children: [],
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              16.0, 8.0, 16.0, 8.0),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.off;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.off,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.flash_off,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.off
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.auto;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.auto,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.flash_auto,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.auto
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.always;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.always,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.flash_on,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.always
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.torch;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.torch,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.highlight,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.torch
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Center(
+                              child: Text(
+                                'LOADING',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(),
+                            Text(
+                              'Permission denied',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                              ),
+                            ),
+                            SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () {
+                                getPermissionStatus();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Give permission',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                 ),
               )
             : islogbookcameraopen == true
                 ? Scaffold(
-                    appBar: AppBar(
-                      title: const Text("Capture Logbook from Camera"),
-                      backgroundColor: Colors.red,
-                      leading: Builder(
-                        builder: (BuildContext context) {
-                          return RotatedBox(
-                            quarterTurns: 0,
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.black,
-                              ),
-                              onPressed: () {
-                                setState(() {
-                                  iscameraopen = false;
-                                });
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    body: SingleChildScrollView(
-                      child: Container(
-                          child: Column(children: [
-                        Container(
-                          height: 500,
-                          width: 500,
-                          child: controller == null
-                              ? const Center(child: Text("Loading Camera..."))
-                              : !controller!.value.isInitialized
-                                  ? const Center(
-                                      child: CircularProgressIndicator(),
-                                    )
-                                  : CameraPreview(controller!),
-                        ),
-                        SizedBox(
-                          height: 50,
-                        ),
-                        Row(
-                          children: [
-                            Text(
-                              "Image Description",
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .subtitle2!
-                                  .copyWith(),
-                            ),
-                          ],
-                        ),
-                        TextFormField(
-                          controller: _logBookDescController,
-                          onSaved: (value) => {engineNo},
-                          keyboardType: TextInputType.text,
-                          decoration: const InputDecoration(
-                              hintText: "Enter Image Description"),
-                        ),
-                        SizedBox(
-                          height: 50,
-                        ),
-                        ElevatedButton.icon(
-                          //image capture button
-                          onPressed: () async {
-                            try {
-                              if (controller != null) {
-                                //check if contrller is not null
-                                if (controller!.value.isInitialized) {
-                                  //check if controller is initialized
-                                  image = await controller!.takePicture();
-                                  String? description =
-                                      _logBookDescController.text.trim();
-                                  final bytes =
-                                      Io.File(image!.path).readAsBytesSync();
+                    backgroundColor: Colors.black,
+                    body: Container(
+                      child: _isCameraPermissionGranted
+                          ? _isCameraInitialized
+                              ? Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    AspectRatio(
+                                      aspectRatio:
+                                          1 / controller!.value.aspectRatio,
+                                      child: Stack(
+                                        children: [
+                                          CameraPreview(
+                                            controller!,
+                                            child: LayoutBuilder(builder:
+                                                (BuildContext context,
+                                                    BoxConstraints
+                                                        constraints) {
+                                              return GestureDetector(
+                                                behavior:
+                                                    HitTestBehavior.opaque,
+                                                onTapDown: (details) =>
+                                                    onViewFinderTap(
+                                                        details, constraints),
+                                              );
+                                            }),
+                                          ),
+                                          // TODO: Uncomment to preview the overlay
+                                          // Center(
+                                          //   child: Image.asset(
+                                          //     'assets/camera_aim.png',
+                                          //     color: Colors.greenAccent,
+                                          //     width: 150,
+                                          //     height: 150,
+                                          //   ),
+                                          // ),
+                                          Padding(
+                                            padding: const EdgeInsets.fromLTRB(
+                                              16.0,
+                                              8.0,
+                                              16.0,
+                                              8.0,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Align(
+                                                  alignment: Alignment.topRight,
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black87,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                        left: 8.0,
+                                                        right: 8.0,
+                                                      ),
+                                                      child: DropdownButton<
+                                                          ResolutionPreset>(
+                                                        dropdownColor:
+                                                            Colors.black87,
+                                                        underline: Container(),
+                                                        value:
+                                                            currentResolutionPreset,
+                                                        items: [
+                                                          for (ResolutionPreset preset
+                                                              in resolutionPresets)
+                                                            DropdownMenuItem(
+                                                              child: Text(
+                                                                preset
+                                                                    .toString()
+                                                                    .split(
+                                                                        '.')[1]
+                                                                    .toUpperCase(),
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                              value: preset,
+                                                            )
+                                                        ],
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            currentResolutionPreset =
+                                                                value!;
+                                                            _isCameraInitialized =
+                                                                false;
+                                                          });
+                                                          onNewCameraSelected(
+                                                              controller!
+                                                                  .description);
+                                                        },
+                                                        hint:
+                                                            Text("Select item"),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Spacer(),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0,
+                                                          top: 16.0),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        _currentExposureOffset
+                                                                .toStringAsFixed(
+                                                                    1) +
+                                                            'x',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.black),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: RotatedBox(
+                                                    quarterTurns: 3,
+                                                    child: Container(
+                                                      height: 30,
+                                                      child: Slider(
+                                                        value:
+                                                            _currentExposureOffset,
+                                                        min:
+                                                            _minAvailableExposureOffset,
+                                                        max:
+                                                            _maxAvailableExposureOffset,
+                                                        activeColor:
+                                                            Colors.white,
+                                                        inactiveColor:
+                                                            Colors.white30,
+                                                        onChanged:
+                                                            (value) async {
+                                                          setState(() {
+                                                            _currentExposureOffset =
+                                                                value;
+                                                          });
+                                                          await controller!
+                                                              .setExposureOffset(
+                                                                  value);
+                                                        },
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Slider(
+                                                        value:
+                                                            _currentZoomLevel,
+                                                        min: _minAvailableZoom,
+                                                        max: _maxAvailableZoom,
+                                                        activeColor:
+                                                            Colors.white,
+                                                        inactiveColor:
+                                                            Colors.white30,
+                                                        onChanged:
+                                                            (value) async {
+                                                          setState(() {
+                                                            _currentZoomLevel =
+                                                                value;
+                                                          });
+                                                          await controller!
+                                                              .setZoomLevel(
+                                                                  value);
+                                                        },
+                                                      ),
+                                                    ),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              right: 8.0),
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black87,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      10.0),
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8.0),
+                                                          child: Text(
+                                                            _currentZoomLevel
+                                                                    .toStringAsFixed(
+                                                                        1) +
+                                                                'x',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    InkWell(
+                                                      onTap: () async {
+                                                        image =
+                                                            await takePicture();
+                                                        File image1 =
+                                                            File(image!.path);
 
-                                  String imageFile = base64Encode(bytes);
-                                  logbooks = Images(
-                                      filename: description,
-                                      attachment: imageFile); //capture image
-                                  setState(() {
-                                    String? description =
-                                        _logBookDescController.text.trim();
-                                    print(description);
-                                    _addLogBookImage(image!);
-                                    _addLogBookImages(logbooks!);
-                                    _addLogBookDescription(description);
-                                  });
-                                }
-                              }
-                            } catch (e) {
-                              print(e); //show error
-                            }
+                                                        int currentUnix = DateTime
+                                                                .now()
+                                                            .millisecondsSinceEpoch;
 
-                            if (_itemDescController != null) {
-                              setState(() {
-                                islogbookcameraopen = false;
-                              });
-                            } else {
-                              Fluttertoast.showToast(
-                                  msg: 'Please fill description');
-                            }
-                          },
-                          icon: const Icon(Icons.camera),
-                          label: const Text("Capture"),
-                        ),
-                      ])),
+                                                        String fileFormat =
+                                                            image1.path
+                                                                .split('.')
+                                                                .last;
+                                                        setState(() {
+                                                          iscameraopen = false;
+                                                        });
+                                                        iscameraopen = false;
+                                                        GallerySaver.saveImage(
+                                                                image!.path)
+                                                            .then((path) {
+                                                          showDialog(
+                                                            context: context,
+                                                            builder:
+                                                                (BuildContext
+                                                                    context) {
+                                                              return _SystemPadding(
+                                                                child:
+                                                                    AlertDialog(
+                                                                  contentPadding:
+                                                                      const EdgeInsets
+                                                                              .all(
+                                                                          16.0),
+                                                                  content: Row(
+                                                                    children: <
+                                                                        Widget>[
+                                                                      Expanded(
+                                                                        child:
+                                                                            TextFormField(
+                                                                          controller:
+                                                                              _itemDescController,
+                                                                          keyboardType:
+                                                                              TextInputType.text,
+                                                                          autofocus:
+                                                                              true,
+                                                                          decoration: const InputDecoration(
+                                                                              labelText: 'Enter Description',
+                                                                              hintText: 'Description'),
+                                                                        ),
+                                                                      )
+                                                                    ],
+                                                                  ),
+                                                                  actions: <
+                                                                      Widget>[
+                                                                    TextButton(
+                                                                        child: const Text(
+                                                                            'CANCEL'),
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                        }),
+                                                                    TextButton(
+                                                                        child: const Text(
+                                                                            'OKAY'),
+                                                                        onPressed:
+                                                                            () {
+                                                                          Navigator.pop(
+                                                                              context);
+                                                                          setState(
+                                                                              () {
+                                                                            String?
+                                                                                description =
+                                                                                _itemDescController.text.trim();
+                                                                            print(description);
+                                                                            final bytes =
+                                                                                Io.File(image!.path).readAsBytesSync();
+
+                                                                            String
+                                                                                imageFile =
+                                                                                base64Encode(bytes);
+                                                                            images =
+                                                                                Images(filename: description, attachment: imageFile);
+                                                                            _addImage(image!);
+                                                                            _addImages(images!);
+                                                                            _addDescription(description);
+                                                                          });
+                                                                        })
+                                                                  ],
+                                                                ),
+                                                              );
+                                                            },
+                                                          );
+                                                        });
+                                                        print(fileFormat);
+                                                      },
+                                                      child: Stack(
+                                                        alignment:
+                                                            Alignment.center,
+                                                        children: [
+                                                          Icon(
+                                                            Icons.circle,
+                                                            color:
+                                                                _isVideoCameraSelected
+                                                                    ? Colors
+                                                                        .white
+                                                                    : Colors
+                                                                        .white38,
+                                                            size: 80,
+                                                          ),
+                                                          Icon(
+                                                            Icons.circle,
+                                                            color:
+                                                                _isVideoCameraSelected
+                                                                    ? Colors
+                                                                        .blue
+                                                                    : Colors
+                                                                        .white,
+                                                            size: 65,
+                                                          ),
+                                                          _isVideoCameraSelected &&
+                                                                  _isRecordingInProgress
+                                                              ? Icon(
+                                                                  Icons
+                                                                      .stop_rounded,
+                                                                  color: Colors
+                                                                      .white,
+                                                                  size: 32,
+                                                                )
+                                                              : Container(),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: image != null
+                                                          ? () {
+                                                              // Navigator.of(context)
+                                                              //     .push(
+                                                              //   MaterialPageRoute(
+                                                              //     builder: (context) =>
+                                                              //         PreviewScreen(
+                                                              //       image: image!,
+                                                              //       fileList:
+                                                              //           imageslist,
+                                                              //     ),
+                                                              //   ),
+                                                              // );
+                                                            }
+                                                          : null,
+                                                      child: Container(
+                                                        width: 60,
+                                                        height: 60,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      10.0),
+                                                          border: Border.all(
+                                                            color: Colors.white,
+                                                            width: 2,
+                                                          ),
+                                                          image: image != null
+                                                              ? DecorationImage(
+                                                                  image:
+                                                                      FileImage(
+                                                                    File(image!
+                                                                        .path),
+                                                                  ),
+                                                                  fit: BoxFit
+                                                                      .cover,
+                                                                )
+                                                              : null,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: SingleChildScrollView(
+                                        physics: BouncingScrollPhysics(),
+                                        child: Column(
+                                          children: [
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  top: 8.0),
+                                              child: Row(
+                                                children: [],
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      16.0, 8.0, 16.0, 8.0),
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.off;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.off,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.flash_off,
+                                                      color:
+                                                          _currentFlashMode ==
+                                                                  FlashMode.off
+                                                              ? Colors.amber
+                                                              : Colors.white,
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.auto;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.auto,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.flash_auto,
+                                                      color:
+                                                          _currentFlashMode ==
+                                                                  FlashMode.auto
+                                                              ? Colors.amber
+                                                              : Colors.white,
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.always;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.always,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.flash_on,
+                                                      color:
+                                                          _currentFlashMode ==
+                                                                  FlashMode
+                                                                      .always
+                                                              ? Colors.amber
+                                                              : Colors.white,
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.torch;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.torch,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.highlight,
+                                                      color:
+                                                          _currentFlashMode ==
+                                                                  FlashMode
+                                                                      .torch
+                                                              ? Colors.amber
+                                                              : Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Center(
+                                  child: Text(
+                                    'LOADING',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(),
+                                Text(
+                                  'Permission denied',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                                SizedBox(height: 24),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    getPermissionStatus();
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Give permission',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 24,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                     ),
                   )
                 : Container();
@@ -4945,7 +5899,6 @@ class _CreateValuationState extends State<CreateValuation> {
 
   _fetchInstructions() async {
     String url = await Config.getBaseUrl();
-
     HttpClientResponse response = await Config.getRequestObject(
         url +
             'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=3&revised=$revised',
@@ -4954,10 +5907,7 @@ class _CreateValuationState extends State<CreateValuation> {
       print(url +
           'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         setState(() {
           instructionsJson = jsonResponse;
@@ -4998,5 +5948,20 @@ class _CreateValuationState extends State<CreateValuation> {
       title: Text(val['owner'] ?? ''),
       trailing: Text(val['location'] ?? ''),
     );
+  }
+}
+
+class _SystemPadding extends StatelessWidget {
+  final Widget child;
+
+  _SystemPadding({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var mediaQuery = MediaQuery.of(context);
+    return AnimatedContainer(
+        padding: mediaQuery.padding,
+        duration: const Duration(milliseconds: 300),
+        child: child);
   }
 }

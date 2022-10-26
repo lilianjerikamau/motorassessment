@@ -23,13 +23,16 @@ import 'package:motorassesmentapp/screens/create_assesment.dart';
 import 'package:motorassesmentapp/screens/create_reinspection.dart';
 import 'package:motorassesmentapp/screens/create_supplementary.dart';
 import 'package:motorassesmentapp/screens/create_valuationstd.dart';
+import 'package:motorassesmentapp/screens/assessment_history_screen.dart';
+import 'package:motorassesmentapp/screens/reinspection_history_screen.dart';
 import 'package:motorassesmentapp/screens/sidemenu/side_menu.dart';
+import 'package:motorassesmentapp/screens/valuation_history_screen.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:geolocator/geolocator.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  Home({Key? key}) : super(key: key);
 
   @override
   State<Home> createState() => _HomeState();
@@ -91,7 +94,7 @@ class _HomeState extends State<Home> {
     _fetchPendinginspection();
     _fetchPendingvaluation();
     _fetchSupplementary();
-    timer = Timer.periodic(const Duration(minutes: 5), (Timer t) => checkGps());
+    timer = Timer.periodic(Duration(minutes: 5), (Timer t) => checkGps());
   }
 
   @override
@@ -151,7 +154,7 @@ class _HomeState extends State<Home> {
       //refresh UI
     });
 
-    LocationSettings locationSettings = const LocationSettings(
+    LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high, //accuracy of the location data
       distanceFilter: 100, //minimum distance (measured in meters) a
       //device must move horizontally before an update event is generated;
@@ -206,18 +209,20 @@ class _HomeState extends State<Home> {
   bool isStandardValuationTapped = false;
   bool isSpecialValuationTapped = false;
   bool isInstructionTapped = false;
+  bool isAssessmentHistTapped = false;
+  bool isReinspectionHistTapped = false;
+  bool isStandardValuationHistTapped = false;
+
   @override
   Widget build(BuildContext context) {
     return isAssessmentTapped == false &&
             isInstructionTapped == false &&
-            isReinspectionTapped == false &&
-            isSpecialValuationTapped == false &&
-            isStandardValuationTapped == false
+            isReinspectionTapped == false
         ? Scaffold(
             backgroundColor: Colors.grey[200],
             drawer: SideMenu(),
             appBar: AppBar(
-              title: const Text(
+              title: Text(
                 'Home',
                 style: TextStyle(color: Colors.black),
               ),
@@ -226,7 +231,7 @@ class _HomeState extends State<Home> {
                   return RotatedBox(
                     quarterTurns: 1,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.bar_chart_rounded,
                         color: Colors.black,
                       ),
@@ -237,9 +242,9 @@ class _HomeState extends State<Home> {
               ),
               actions: [
                 IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.refresh,
-                      color: Colors.red,
+                      color: Colors.blue,
                     ),
                     onPressed: () async {
                       ProgressDialog dial = new ProgressDialog(context);
@@ -249,7 +254,7 @@ class _HomeState extends State<Home> {
                       ;
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const Home()),
+                        MaterialPageRoute(builder: (context) => Home()),
                       );
                       print('----------------> CALLS MADE !!!!!!!!!!!');
                       dial.hide();
@@ -264,26 +269,26 @@ class _HomeState extends State<Home> {
                   SizedBox(
                     width: MediaQuery.of(context).size.width,
                     child: Card(
-                      shape: const RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(15.0)),
                         side: BorderSide(
-                          color: Colors.red,
+                          color: Colors.blue,
                           width: 1, //<-- SEE HERE
                         ),
                       ),
                       elevation: 2,
-                      margin: const EdgeInsets.all(12.0),
+                      margin: EdgeInsets.all(12.0),
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: EdgeInsets.all(8.0),
                         child: Column(
                           children: [
-                            const SizedBox(),
+                            SizedBox(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
-                                  children: const [
+                                  children: [
                                     Text('TASKS TO DO',
                                         style: TextStyle(
                                           fontSize: 20.0,
@@ -292,13 +297,13 @@ class _HomeState extends State<Home> {
                                         )),
                                     Icon(
                                       Icons.notifications_active,
-                                      color: Colors.red,
+                                      color: Colors.blue,
                                     ),
                                   ]),
                             ),
-                            const Divider(),
+                            Divider(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
                                   setState(() {
@@ -308,8 +313,8 @@ class _HomeState extends State<Home> {
                                 },
                                 child: Row(
                                   children: <Widget>[
-                                    const Icon(Icons.pending),
-                                    const SizedBox(
+                                    Icon(Icons.pending),
+                                    SizedBox(
                                       width: 10,
                                     ),
                                     Text(
@@ -325,9 +330,9 @@ class _HomeState extends State<Home> {
                                 ),
                               ),
                             ),
-                            const Divider(),
+                            Divider(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
                                   setState(() {
@@ -337,8 +342,8 @@ class _HomeState extends State<Home> {
                                 },
                                 child: Row(
                                   children: <Widget>[
-                                    const Icon(Icons.pending),
-                                    const SizedBox(
+                                    Icon(Icons.pending),
+                                    SizedBox(
                                       width: 10,
                                     ),
                                     Text(
@@ -354,9 +359,9 @@ class _HomeState extends State<Home> {
                                 ),
                               ),
                             ),
-                            const Divider(),
+                            Divider(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
                                   setState(() {
@@ -366,8 +371,8 @@ class _HomeState extends State<Home> {
                                 },
                                 child: Row(
                                   children: <Widget>[
-                                    const Icon(Icons.pending),
-                                    const SizedBox(
+                                    Icon(Icons.pending),
+                                    SizedBox(
                                       width: 10,
                                     ),
                                     Text(
@@ -388,201 +393,334 @@ class _HomeState extends State<Home> {
                       ),
                     ),
                   ),
+                  // SizedBox(
+                  //   width: MediaQuery.of(context).size.width,
+                  //   child: Card(
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                  //       side: BorderSide(
+                  //         color: Colors.blue,
+                  //         width: 1, //<-- SEE HERE
+                  //       ),
+                  //     ),
+                  //     elevation: 2,
+                  //     margin: EdgeInsets.all(12.0),
+                  //     child: Padding(
+                  //       padding: EdgeInsets.all(8.0),
+                  //       child: Column(
+                  //         children: [
+                  //           Padding(
+                  //             padding: EdgeInsets.all(8.0),
+                  //             child: InkWell(
+                  //               onTap: () {
+                  //                 Navigator.push(
+                  //                   context,
+                  //                   MaterialPageRoute(
+                  //                       builder: (context) =>
+                  //                           CreateAssesment()),
+                  //                 );
+                  //               },
+                  //               child: Row(
+                  //                   mainAxisAlignment:
+                  //                       MainAxisAlignment.spaceBetween,
+                  //                   children: [
+                  //                     Text('Create Assessment',
+                  //                         style: TextStyle(
+                  //                           fontSize: 20.0,
+                  //                           color: Colors.black,
+                  //                           fontWeight: FontWeight.bold,
+                  //                         )),
+                  //                     Icon(
+                  //                       Icons.add,
+                  //                       color: Colors.blue,
+                  //                     ),
+                  //                   ]),
+                  //             ),
+                  //           ),
+                  //           SizedBox(),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  // SizedBox(
+                  //   width: MediaQuery.of(context).size.width,
+                  //   child: Card(
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                  //       side: BorderSide(
+                  //         color: Colors.blue,
+                  //         width: 1, //<-- SEE HERE
+                  //       ),
+                  //     ),
+                  //     elevation: 2,
+                  //     margin: EdgeInsets.all(12.0),
+                  //     child: Padding(
+                  //       padding: EdgeInsets.all(8.0),
+                  //       child: Column(
+                  //         children: [
+                  //           Padding(
+                  //             padding: EdgeInsets.all(8.0),
+                  //             child: InkWell(
+                  //               onTap: () {
+                  //                 Navigator.push(
+                  //                   context,
+                  //                   MaterialPageRoute(
+                  //                       builder: (context) =>
+                  //                           CreateValuation()),
+                  //                 );
+                  //               },
+                  //               child: Row(
+                  //                   mainAxisAlignment:
+                  //                       MainAxisAlignment.spaceBetween,
+                  //                   children: [
+                  //                     Text('Create Valuation',
+                  //                         style: TextStyle(
+                  //                           fontSize: 20.0,
+                  //                           color: Colors.black,
+                  //                           fontWeight: FontWeight.bold,
+                  //                         )),
+                  //                     Icon(
+                  //                       Icons.add,
+                  //                       color: Colors.blue,
+                  //                     ),
+                  //                   ]),
+                  //             ),
+                  //           ),
+                  //           SizedBox(),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  // SizedBox(
+                  //   width: MediaQuery.of(context).size.width,
+                  //   child: Card(
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                  //       side: BorderSide(
+                  //         color: Colors.blue,
+                  //         width: 1, //<-- SEE HERE
+                  //       ),
+                  //     ),
+                  //     elevation: 2,
+                  //     margin: EdgeInsets.all(12.0),
+                  //     child: Padding(
+                  //       padding: EdgeInsets.all(8.0),
+                  //       child: Column(
+                  //         children: [
+                  //           Padding(
+                  //             padding: EdgeInsets.all(8.0),
+                  //             child: InkWell(
+                  //               onTap: () {
+                  //                 Navigator.push(
+                  //                   context,
+                  //                   MaterialPageRoute(
+                  //                       builder: (context) =>
+                  //                           CreateReinspection()),
+                  //                 );
+                  //               },
+                  //               child: Row(
+                  //                   mainAxisAlignment:
+                  //                       MainAxisAlignment.spaceBetween,
+                  //                   children: [
+                  //                     Text('Create Re-Inspection',
+                  //                         style: TextStyle(
+                  //                           fontSize: 20.0,
+                  //                           color: Colors.black,
+                  //                           fontWeight: FontWeight.bold,
+                  //                         )),
+                  //                     Icon(
+                  //                       Icons.add,
+                  //                       color: Colors.blue,
+                  //                     ),
+                  //                   ]),
+                  //             ),
+                  //           ),
+                  //           SizedBox(),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
+                  // SizedBox(
+                  //   width: MediaQuery.of(context).size.width,
+                  //   child: Card(
+                  //     shape: RoundedRectangleBorder(
+                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
+                  //       side: BorderSide(
+                  //         color: Colors.blue,
+                  //         width: 1, //<-- SEE HERE
+                  //       ),
+                  //     ),
+                  //     elevation: 2,
+                  //     margin: EdgeInsets.all(12.0),
+                  //     child: Padding(
+                  //       padding: EdgeInsets.all(8.0),
+                  //       child: Column(
+                  //         children: [
+                  //           Padding(
+                  //             padding: EdgeInsets.all(8.0),
+                  //             child: InkWell(
+                  //               onTap: () {
+                  //                 Navigator.push(
+                  //                   context,
+                  //                   MaterialPageRoute(
+                  //                       builder: (context) =>
+                  //                           CreateSupplementary()),
+                  //                 );
+                  //               },
+                  //               child: Row(
+                  //                   mainAxisAlignment:
+                  //                       MainAxisAlignment.spaceBetween,
+                  //                   children: [
+                  //                     Text('Create Supplementary',
+                  //                         style: TextStyle(
+                  //                           fontSize: 20.0,
+                  //                           color: Colors.black,
+                  //                           fontWeight: FontWeight.bold,
+                  //                         )),
+                  //                     Icon(
+                  //                       Icons.add,
+                  //                       color: Colors.blue,
+                  //                     ),
+                  //                   ]),
+                  //             ),
+                  //           ),
+                  //           SizedBox(),
+                  //         ],
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width,
                     child: Card(
-                      shape: const RoundedRectangleBorder(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(15.0)),
                         side: BorderSide(
-                          color: Colors.red,
+                          color: Colors.blue,
                           width: 1, //<-- SEE HERE
                         ),
                       ),
                       elevation: 2,
-                      margin: const EdgeInsets.all(12.0),
+                      margin: EdgeInsets.all(12.0),
                       child: Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: EdgeInsets.all(8.0),
                         child: Column(
                           children: [
+                            SizedBox(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
+                              child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('HISTORY',
+                                        style: TextStyle(
+                                          fontSize: 20.0,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                                    Icon(
+                                      Icons.history,
+                                      color: Colors.blue,
+                                    ),
+                                  ]),
+                            ),
+                            Divider(),
+                            Padding(
+                              padding: EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const CreateAssesment()),
-                                  );
+                                  setState(() {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              AssesssmentHistoryScreen()),
+                                    );
+                                  });
                                 },
                                 child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Create Assessment',
-                                          style: TextStyle(
-                                            fontSize: 20.0,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                      const Icon(
-                                        Icons.add,
-                                        color: Colors.red,
-                                      ),
-                                    ]),
+                                  children: <Widget>[
+                                    Icon(Icons.pending),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      "Assessments Histoy",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle2!
+                                          .copyWith(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Card(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                        side: BorderSide(
-                          color: Colors.red,
-                          width: 1, //<-- SEE HERE
-                        ),
-                      ),
-                      elevation: 2,
-                      margin: const EdgeInsets.all(12.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
+                            Divider(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const CreateValuation()),
-                                  );
+                                  setState(() {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              ValuationHistoryScreen()),
+                                    );
+                                  });
                                 },
                                 child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Create Valuation',
-                                          style: TextStyle(
-                                            fontSize: 20.0,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                      const Icon(
-                                        Icons.add,
-                                        color: Colors.red,
-                                      ),
-                                    ]),
+                                  children: <Widget>[
+                                    Icon(Icons.pending),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      "Valuations History",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle2!
+                                          .copyWith(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Card(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                        side: BorderSide(
-                          color: Colors.red,
-                          width: 1, //<-- SEE HERE
-                        ),
-                      ),
-                      elevation: 2,
-                      margin: const EdgeInsets.all(12.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
+                            Divider(),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: EdgeInsets.all(8.0),
                               child: InkWell(
                                 onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const CreateReinspection()),
-                                  );
+                                  setState(() {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              ReinspectionHistoryScreen()),
+                                    );
+                                  });
                                 },
                                 child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Create Re-Inspection',
-                                          style: TextStyle(
-                                            fontSize: 20.0,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                      const Icon(
-                                        Icons.add,
-                                        color: Colors.red,
-                                      ),
-                                    ]),
+                                  children: <Widget>[
+                                    Icon(Icons.pending),
+                                    SizedBox(
+                                      width: 10,
+                                    ),
+                                    Text(
+                                      "Reinspections History",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .subtitle2!
+                                          .copyWith(),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            const SizedBox(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    child: Card(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                        side: BorderSide(
-                          color: Colors.red,
-                          width: 1, //<-- SEE HERE
-                        ),
-                      ),
-                      elevation: 2,
-                      margin: const EdgeInsets.all(12.0),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const CreateSupplementary()),
-                                  );
-                                },
-                                child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text('Create Supplementary',
-                                          style: TextStyle(
-                                            fontSize: 20.0,
-                                            color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          )),
-                                      const Icon(
-                                        Icons.add,
-                                        color: Colors.red,
-                                      ),
-                                    ]),
-                              ),
-                            ),
-                            const SizedBox(),
                           ],
                         ),
                       ),
@@ -595,19 +733,19 @@ class _HomeState extends State<Home> {
             ? Scaffold(
                 backgroundColor: Colors.grey[200],
                 appBar: AppBar(
-                  title: const Text(
+                  title: Text(
                     'Assessments',
                     style: TextStyle(color: Colors.black),
                   ),
                   leading: IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back,
-                      color: Colors.red,
+                      color: Colors.blue,
                     ),
                     onPressed: () {
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const Home()),
+                        MaterialPageRoute(builder: (context) => Home()),
                       );
                     },
                   ),
@@ -619,20 +757,19 @@ class _HomeState extends State<Home> {
                 ? Scaffold(
                     backgroundColor: Colors.grey[200],
                     appBar: AppBar(
-                      title: const Text(
+                      title: Text(
                         'Supplementary',
                         style: TextStyle(color: Colors.black),
                       ),
                       leading: IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_back,
-                          color: Colors.red,
+                          color: Colors.blue,
                         ),
                         onPressed: () {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(
-                                builder: (context) => const Home()),
+                            MaterialPageRoute(builder: (context) => Home()),
                           );
                         },
                       ),
@@ -644,20 +781,19 @@ class _HomeState extends State<Home> {
                     ? Scaffold(
                         backgroundColor: Colors.grey[200],
                         appBar: AppBar(
-                          title: const Text(
+                          title: Text(
                             'Reinspections',
                             style: TextStyle(color: Colors.black),
                           ),
                           leading: IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.arrow_back,
-                              color: Colors.red,
+                              color: Colors.blue,
                             ),
                             onPressed: () {
                               Navigator.pushReplacement(
                                 context,
-                                MaterialPageRoute(
-                                    builder: (context) => const Home()),
+                                MaterialPageRoute(builder: (context) => Home()),
                               );
                             },
                           ),
@@ -669,20 +805,20 @@ class _HomeState extends State<Home> {
                         ? Scaffold(
                             backgroundColor: Colors.grey[200],
                             appBar: AppBar(
-                              title: const Text(
+                              title: Text(
                                 'Valuations',
                                 style: TextStyle(color: Colors.black),
                               ),
                               leading: IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.arrow_back,
-                                  color: Colors.red,
+                                  color: Colors.blue,
                                 ),
                                 onPressed: () {
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => const Home()),
+                                        builder: (context) => Home()),
                                   );
                                 },
                               ),
@@ -694,20 +830,20 @@ class _HomeState extends State<Home> {
                             ? Scaffold(
                                 backgroundColor: Colors.grey[200],
                                 appBar: AppBar(
-                                  title: const Text(
+                                  title: Text(
                                     'Valuations',
                                     style: TextStyle(color: Colors.black),
                                   ),
                                   leading: IconButton(
-                                    icon: const Icon(
+                                    icon: Icon(
                                       Icons.arrow_back,
-                                      color: Colors.red,
+                                      color: Colors.blue,
                                     ),
                                     onPressed: () {
                                       Navigator.pushReplacement(
                                         context,
                                         MaterialPageRoute(
-                                            builder: (context) => const Home()),
+                                            builder: (context) => Home()),
                                       );
                                     },
                                   ),
@@ -725,10 +861,7 @@ class _HomeState extends State<Home> {
         url + 'valuation/pendingassessment/?userid=$_userid', Config.get);
     if (response != null) {
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         print('assessments');
         print(jsonResponse);
@@ -761,10 +894,7 @@ class _HomeState extends State<Home> {
         url + 'valuation/pendingpeinspection/?userid=$_userid', Config.get);
     if (response != null) {
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         print('pendingpeinspection');
         print(jsonResponse);
@@ -797,10 +927,7 @@ class _HomeState extends State<Home> {
         url + 'valuation/pendingvaluation/?userid=$_userid', Config.get);
     if (response != null) {
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         print('pendingpeinspection');
         print(jsonResponse);
@@ -875,7 +1002,7 @@ class _HomeState extends State<Home> {
       });
       return _listViewBuilder(_assessments);
     }
-    return const Center(
+    return Center(
       child: Text('No Assessments'),
     );
   }
@@ -890,8 +1017,8 @@ class _HomeState extends State<Home> {
       });
       return _listViewBuilder2(_valuations);
     }
-    return const Center(
-      child: const Text('No Valuations'),
+    return Center(
+      child: Text('No Valuations'),
     );
   }
 
@@ -923,8 +1050,8 @@ class _HomeState extends State<Home> {
       });
       return _listViewBuilder4(_reinspections);
     }
-    return const Center(
-      child: const Text('No Re-Inspections'),
+    return Center(
+      child: Text('No Re-Inspections'),
     );
   }
 
@@ -942,37 +1069,37 @@ class _HomeState extends State<Home> {
           print("Jobcard id :::: ${instruction.make}");
 
           return Card(
-            margin: const EdgeInsets.all(10),
+            margin: EdgeInsets.all(10),
             color: Colors.white,
             shape: RoundedRectangleBorder(
-              side: const BorderSide(color: Colors.red, width: 0),
+              side: BorderSide(color: Colors.blue, width: 0),
               borderRadius: BorderRadius.circular(15),
             ),
             elevation: 8,
             child: Padding(
-              padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
+              padding: EdgeInsets.only(left: 15, right: 15, top: 10),
 
-              // padding: const EdgeInsets.all(10.0),
+              // padding:  EdgeInsets.all(10.0),
               child: Container(
                 child: ListTile(
-                  leading: const SizedBox(),
+                  leading: SizedBox(),
                   title: InkWell(
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CreateAssesment()),
+                            builder: (context) => CreateAssesment()),
                       );
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(_regno!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold)),
                         Icon(
                           Icons.add,
-                          color: Colors.red,
+                          color: Colors.blue,
                         ),
                       ],
                     ),
@@ -980,43 +1107,43 @@ class _HomeState extends State<Home> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Divider(),
+                      Divider(),
                       Row(
                         children: [
                           Text(
                             _make != null
                                 ? 'Make: $_make'
                                 : 'Chassis No: Chassis No',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _policyno != null
                             ? 'Policy No: $_policyno'
                             : 'Policy No:',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
                             : 'Car Model',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _custName != null
                             ? 'Customer Name: $_custName'
                             : 'Customer Name',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                     ],
                   ),
                 ),
@@ -1040,17 +1167,17 @@ class _HomeState extends State<Home> {
           print("inspection make :::: ${inspection.make}");
 
           return Card(
-            margin: const EdgeInsets.all(10),
+            margin: EdgeInsets.all(10),
             color: Colors.white,
             shape: RoundedRectangleBorder(
-              side: const BorderSide(color: Colors.red, width: 0),
+              side: BorderSide(color: Colors.blue, width: 0),
               borderRadius: BorderRadius.circular(15),
             ),
             elevation: 8,
             child: Padding(
-              padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
+              padding: EdgeInsets.only(left: 15, right: 15, top: 10),
 
-              // padding: const EdgeInsets.all(10.0),
+              // padding:  EdgeInsets.all(10.0),
               child: Container(
                 child: ListTile(
                   leading: SizedBox(),
@@ -1059,18 +1186,18 @@ class _HomeState extends State<Home> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CreateReinspection()),
+                            builder: (context) => CreateReinspection()),
                       );
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(_regno!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold)),
                         Icon(
                           Icons.add,
-                          color: Colors.red,
+                          color: Colors.blue,
                         ),
                       ],
                     ),
@@ -1078,49 +1205,49 @@ class _HomeState extends State<Home> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Divider(),
+                      Divider(),
                       Row(
                         children: [
                           Text(
                             _make != null ? 'Make: $_make' : 'Make: Make',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _chasisno != null
                             ? 'Chassis No: $_chasisno'
                             : 'Chassis No: Chassis No',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _policyno != null
                             ? 'Policy No: $_policyno'
                             : 'Policy No:',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
                             : 'Car Model',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _custName != null
                             ? 'Customer Name: $_custName'
                             : 'Customer Name',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                     ],
                   ),
                 ),
@@ -1144,17 +1271,17 @@ class _HomeState extends State<Home> {
           print("valuation make :::: ${valuation.make}");
 
           return Card(
-            margin: const EdgeInsets.all(10),
+            margin: EdgeInsets.all(10),
             color: Colors.white,
             shape: RoundedRectangleBorder(
-              side: const BorderSide(color: Colors.red, width: 0),
+              side: BorderSide(color: Colors.blue, width: 0),
               borderRadius: BorderRadius.circular(15),
             ),
             elevation: 8,
             child: Padding(
-              padding: const EdgeInsets.only(left: 15, right: 15, top: 10),
+              padding: EdgeInsets.only(left: 15, right: 15, top: 10),
 
-              // padding: const EdgeInsets.all(10.0),
+              // padding:  EdgeInsets.all(10.0),
               child: Container(
                 child: ListTile(
                   leading: SizedBox(),
@@ -1163,18 +1290,18 @@ class _HomeState extends State<Home> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CreateValuation()),
+                            builder: (context) => CreateValuation()),
                       );
                     },
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(_regno!,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold)),
                         Icon(
                           Icons.add,
-                          color: Colors.red,
+                          color: Colors.blue,
                         ),
                       ],
                     ),
@@ -1182,41 +1309,41 @@ class _HomeState extends State<Home> {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      const Divider(),
+                      Divider(),
                       Row(
                         children: [
                           Text(
                             _make != null ? 'Make: $_make' : 'Make: Make',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 15, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _policyno != null
                             ? 'Policy No: $_policyno'
                             : 'Policy No:',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _carmodel != null
                             ? 'Car Model: $_carmodel'
                             : 'Car Model',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                       Text(
                         _custName != null
                             ? 'Customer Name: $_custName'
                             : 'Customer Name',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15, fontWeight: FontWeight.bold),
                       ),
-                      const Divider(),
+                      Divider(),
                     ],
                   ),
                 ),

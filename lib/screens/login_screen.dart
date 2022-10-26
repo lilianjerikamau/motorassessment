@@ -101,13 +101,13 @@ class _State extends State<LoginPage> {
               child: ListView(
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    padding: EdgeInsets.symmetric(vertical: 10.0),
                     child: FutureBuilder(
                         future: loadCompanyURL,
-                        // ignore: non_constant_identifier_names
+                        // ignore: non_ant_identifier_names
                         builder: (context, ImageUrl) {
                           if ((ImageUrl == null
-                                  ? const Center(
+                                  ? Center(
                                       child: Text('Loading Logo image ... '))
                                   : CachedNetworkImage(
                                           imageUrl: imageHttp +
@@ -131,7 +131,7 @@ class _State extends State<LoginPage> {
                           );
                         }),
                   ),
-                  const SizedBox(
+                  SizedBox(
                     height: 20,
                   ),
                   FractionallySizedBox(
@@ -143,28 +143,27 @@ class _State extends State<LoginPage> {
                           child: Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.all(8.0),
+                                padding: EdgeInsets.all(8.0),
                                 child: Text('Login',
                                     style: TextStyle(
                                         color: Theme.of(context)
                                             .primaryColorDark)),
                               ),
                               Container(
-                                padding: const EdgeInsets.all(10),
+                                padding: EdgeInsets.all(10),
                                 child: TextFormField(
                                   controller: _userNameInput,
-                                  decoration: const InputDecoration(
+                                  decoration: InputDecoration(
                                       border: OutlineInputBorder(),
                                       labelText: 'User Name',
-                                      focusColor: Colors.red),
+                                      focusColor: Colors.blue),
                                   validator: (value) => value!.isEmpty
                                       ? "This field is required"
                                       : null,
                                 ),
                               ),
                               Container(
-                                padding:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                                padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
                                 child: TextFormField(
                                   obscureText: !_passwordVisible,
                                   controller: _passWordInput,
@@ -184,15 +183,15 @@ class _State extends State<LoginPage> {
                                           });
                                         },
                                       ),
-                                      border: const OutlineInputBorder(),
+                                      border: OutlineInputBorder(),
                                       labelText: 'Password',
-                                      focusColor: Colors.red),
+                                      focusColor: Colors.blue),
                                   validator: (value) => value!.isEmpty
                                       ? "This field is required"
                                       : null,
                                 ),
                               ),
-                              FlatButton(
+                              MaterialButton(
                                 onPressed: () {
                                   Navigator.pushReplacement(
                                     context,
@@ -200,22 +199,20 @@ class _State extends State<LoginPage> {
                                         builder: (ctx) => CheckUser()),
                                   );
                                 },
-                                textColor: Colors.red,
-                                child: const Text('Forgot Password'),
+                                textColor: Colors.blue,
+                                child: Text('Forgot Password'),
                               ),
                               Padding(
-                                  padding: const EdgeInsets.all(10.0),
+                                  padding: EdgeInsets.all(10.0),
                                   child: CupertinoButton(
                                     color: Theme.of(context).primaryColorDark,
                                     child: _loggingIn
                                         ? Container(
-                                            child:
-                                                const CircularProgressIndicator(
-                                                    backgroundColor:
-                                                        Colors.white),
+                                            child: CircularProgressIndicator(
+                                                backgroundColor: Colors.white),
                                             height: 20,
                                             width: 20)
-                                        : const Text('Login'),
+                                        : Text('Login'),
                                     onPressed: () async {
                                       print(_userNameInput.text);
                                       print(_passWordInput.text);
@@ -318,19 +315,18 @@ class _State extends State<LoginPage> {
                                                       builder:
                                                           (BuildContext bc) {
                                                         return CupertinoAlertDialog(
-                                                          title: const Text(
+                                                          title: Text(
                                                               'Account Action Needed'),
-                                                          content: const Text(
+                                                          content: Text(
                                                               'Your user account is not attached to any Hr_Employee account. Please contact the administrator with this information'),
                                                           actions: <Widget>[
-                                                            FlatButton(
+                                                            MaterialButton(
                                                                 onPressed: () {
                                                                   Navigator.pop(
                                                                       bc);
                                                                 },
                                                                 child:
-                                                                    const Text(
-                                                                        'Ok'))
+                                                                    Text('Ok'))
                                                           ],
                                                         );
                                                       });
@@ -356,17 +352,16 @@ class _State extends State<LoginPage> {
                                                 context: context,
                                                 builder: (BuildContext bc) {
                                                   return CupertinoAlertDialog(
-                                                    title: const Text(
+                                                    title: Text(
                                                         'Connection Error'),
-                                                    content: const Text(
+                                                    content: Text(
                                                         'There is a connection issue with the server! Please try again later'),
                                                     actions: <Widget>[
-                                                      FlatButton(
+                                                      MaterialButton(
                                                           onPressed: () {
                                                             Navigator.pop(bc);
                                                           },
-                                                          child:
-                                                              const Text('Ok'))
+                                                          child: Text('Ok'))
                                                     ],
                                                   );
                                                 });
@@ -384,10 +379,10 @@ class _State extends State<LoginPage> {
                                   )),
                               Row(
                                 children: <Widget>[
-                                  const Text('Change company URL?'),
-                                  FlatButton(
-                                    textColor: Colors.red,
-                                    child: const Text(
+                                  Text('Change company URL?'),
+                                  MaterialButton(
+                                    textColor: Colors.blue,
+                                    child: Text(
                                       'Company URL',
                                       style: TextStyle(fontSize: 20),
                                     ),
@@ -418,9 +413,9 @@ class _State extends State<LoginPage> {
       }
     } else {
       return Scaffold(
-        appBar: AppBar(title: const Text('Load Company Settings')),
-        body: const Center(
-          child: const Text('Loading your settings. Please wait ... '),
+        appBar: AppBar(title: Text('Load Company Settings')),
+        body: Center(
+          child: Text('Loading your settings. Please wait ... '),
         ),
       );
     }

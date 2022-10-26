@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:motorassesmentapp/screens/create_instruction.dart';
 import 'package:motorassesmentapp/screens/login_screen.dart';
+import 'package:camera/camera.dart';
 
-void main() {
+List<CameraDescription> cameras = [];
+Future<void> main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    cameras = await availableCameras();
+  } on CameraException catch (e) {
+    print('Error in fetching the cameras: $e');
+  }
   runApp(MyApp());
 }
 

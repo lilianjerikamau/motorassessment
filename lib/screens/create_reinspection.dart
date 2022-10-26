@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
+import 'package:motorassesmentapp/models/assessmentmodels.dart';
 import 'package:motorassesmentapp/models/imagesmodels.dart';
 import 'package:motorassesmentapp/models/instructionmodels.dart';
 import 'package:motorassesmentapp/models/usermodels.dart';
@@ -32,9 +34,14 @@ import 'package:query_params/query_params.dart';
 import 'package:camera/camera.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'dart:io' as Io;
+import 'package:gallery_saver/gallery_saver.dart';
+import '../main.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+import '../main.dart';
 
 class CreateReinspection extends StatefulWidget {
-  const CreateReinspection({Key? key}) : super(key: key);
+  CreateReinspection({Key? key}) : super(key: key);
 
   @override
   State<CreateReinspection> createState() => _CreateReinspectionState();
@@ -115,6 +122,22 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   // final _location = TextEditingController();
   // final _insuredvalue = TextEditingController();
   // final _excess = TextEditingController();
+  CameraController? controller; //controller for camera
+  bool _isCameraInitialized = false;
+  bool _isCameraPermissionGranted = false;
+
+  bool _isRearCameraSelected = true;
+  bool _isVideoCameraSelected = false;
+  bool _isRecordingInProgress = false;
+  double _minAvailableExposureOffset = 0.0;
+  double _maxAvailableExposureOffset = 0.0;
+  double _minAvailableZoom = 1.0;
+  double _maxAvailableZoom = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _currentExposureOffset = 0.0;
+  FlashMode? _currentFlashMode;
+  final resolutionPresets = ResolutionPreset.values;
+  ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
   void _toggle() {
     setState(() {
       isOther5 = !isOther6;
@@ -168,15 +191,15 @@ class _CreateReinspectionState extends State<CreateReinspection> {
         context: this.context,
         builder: (ctx) {
           return AlertDialog(
-            title: const Text('Submit?'),
-            content: const Text('Are you sure you want to submit'),
+            title: Text('Submit?'),
+            content: Text('Are you sure you want to submit'),
             actions: <Widget>[
-              FlatButton(
-                  child: const Text('No'),
+              MaterialButton(
+                  child: Text('No'),
                   onPressed: () {
                     Navigator.pop(ctx);
                   }),
-              FlatButton(
+              MaterialButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
                     log(images.toString());
@@ -217,7 +240,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           "userid": _userid,
                           "custid": _custId,
                           "revised": revised,
-                          "instructionno": _instructionId,
+                          "instructionno": _instructionId != null
+                              ? _instructionId
+                              : _assessmentId,
                           "make": _make,
                           "model": _carmodel,
                           "year": year,
@@ -276,7 +301,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           msg: 'There was no response from the server');
                     }
                   },
-                  child: const Text('Yes'))
+                  child: Text('Yes'))
             ],
           );
         });
@@ -302,6 +327,23 @@ class _CreateReinspectionState extends State<CreateReinspection> {
     });
   }
 
+  Future<XFile?> takePicture() async {
+    final CameraController? cameraController = controller;
+
+    if (cameraController!.value.isTakingPicture) {
+      // A capture is already pending, do nothing.
+      return null;
+    }
+
+    try {
+      XFile file = await cameraController.takePicture();
+      return file;
+    } on CameraException catch (e) {
+      print('Error occured while taking picture: $e');
+      return null;
+    }
+  }
+
   Future uploadmultipleimage() async {
     for (int i = 0; i < newList!.length; i++) {
       print(newList![i].filename);
@@ -320,6 +362,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   }
 
   int? _instructionId;
+  int? _assessmentId;
   String? _policyno;
   String? _chasisno;
   String? _make;
@@ -329,11 +372,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
 
   List<Customer> _customers = [];
   List<XFile>? imageslist = [];
-  List<CameraDescription>? cameras; //list out the camera available
-  CameraController? controller; //controller for camera
+
+//controller for camera
   XFile? image;
   List<Instruction> _instruction = [];
+  List<Assesssment> _assessment = [];
   List instructionsJson = [];
+  List assessmentJson = [];
   Images? images;
   List<Map<String, dynamic>>? newImagesList;
   List<Images>? newList = [];
@@ -342,6 +387,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   void initState() {
     loadCamera();
     _fetchCustomers();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    onNewCameraSelected(cameras[0]);
     DateTime dateTime = DateTime.now();
     String formattedDate = DateFormat('yyyy/MM/dd').format(dateTime);
     _dateinput.text = formattedDate; //set the initial value of text field
@@ -391,10 +438,121 @@ class _CreateReinspectionState extends State<CreateReinspection> {
     super.initState();
   }
 
+  void resetCameraValues() async {
+    _currentZoomLevel = 1.0;
+    _currentExposureOffset = 0.0;
+  }
+
+  void onNewCameraSelected(CameraDescription cameraDescription) async {
+    final previousCameraController = controller;
+
+    final CameraController cameraController = CameraController(
+      cameraDescription,
+      currentResolutionPreset,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    await previousCameraController?.dispose();
+
+    resetCameraValues();
+
+    if (mounted) {
+      setState(() {
+        controller = cameraController;
+      });
+    }
+
+    // Update UI if controller updated
+    cameraController.addListener(() {
+      if (mounted) setState(() {});
+    });
+
+    try {
+      await cameraController.initialize();
+      await Future.wait([
+        cameraController
+            .getMinExposureOffset()
+            .then((value) => _minAvailableExposureOffset = value),
+        cameraController
+            .getMaxExposureOffset()
+            .then((value) => _maxAvailableExposureOffset = value),
+        cameraController
+            .getMaxZoomLevel()
+            .then((value) => _maxAvailableZoom = value),
+        cameraController
+            .getMinZoomLevel()
+            .then((value) => _minAvailableZoom = value),
+      ]);
+
+      _currentFlashMode = controller!.value.flashMode;
+    } on CameraException catch (e) {
+      print('Error initializing camera: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = controller!.value.isInitialized;
+      });
+    }
+  }
+
+  void onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
+    if (controller == null) {
+      return;
+    }
+
+    final offset = Offset(
+      details.localPosition.dx / constraints.maxWidth,
+      details.localPosition.dy / constraints.maxHeight,
+    );
+    controller!.setExposurePoint(offset);
+    controller!.setFocusPoint(offset);
+  }
+
+  getPermissionStatus() async {
+    await Permission.camera.request();
+    var status = await Permission.camera.status;
+
+    if (status.isGranted) {
+      log('Camera Permission: GRANTED');
+      setState(() {
+        _isCameraPermissionGranted = true;
+      });
+      // Set and initialize the new camera
+      onNewCameraSelected(cameras[0]);
+    } else {
+      log('Camera Permission: DENIED');
+    }
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = controller;
+
+    // App state changed before we got the chance to initialize.
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      // Free up memory when camera not active
+      cameraController.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      // Reinitialize the camera with same properties
+      onNewCameraSelected(cameraController.description);
+    }
+  }
+
   loadCamera() async {
     cameras = await availableCameras();
     if (cameras != null) {
-      controller = CameraController(cameras![0], ResolutionPreset.max);
+      controller = CameraController(cameras[0], ResolutionPreset.max);
       //cameras[0] = first camera, change to 1 to another camera
 
       controller!.initialize().then((_) {
@@ -548,7 +706,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                     },
                     icon: Icon(
                       currentForm == 0 ? Icons.error : Icons.arrow_back,
-                      color: Colors.redAccent,
+                      color: Colors.blueAccent,
                     ),
                     label: Text(currentForm == 0 ? "Invalid" : "Prev"),
                     heroTag: null,
@@ -573,7 +731,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               currentForm = 2;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -589,7 +747,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                             } else {
                               Fluttertoast.showToast(
                                   msg: 'Select customer and attach instruction',
-                                  textColor: Colors.red);
+                                  textColor: Colors.blue);
                             }
 
                             break;
@@ -602,7 +760,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -619,7 +777,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -643,13 +801,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.black),
+              iconTheme: IconThemeData(color: Colors.black),
               leading: Builder(
                 builder: (BuildContext context) {
                   return RotatedBox(
                     quarterTurns: 0,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back,
                         color: Colors.black,
                       ),
@@ -672,9 +830,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                     Stack(
                       clipBehavior: Clip.none,
                       children: <Widget>[
-                        isLoading
-                            ? const LinearProgressIndicator()
-                            : const SizedBox(),
+                        isLoading ? LinearProgressIndicator() : SizedBox(),
                         Diagonal(
                           position: position,
                           clipHeight: clipHeight,
@@ -686,7 +842,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              const Text(
+                              Text(
                                 'Create Reinspection',
                                 style: TextStyle(
                                   fontSize: 20.0,
@@ -695,13 +851,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 1.0),
+                              SizedBox(height: 1.0),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 0,
                     ),
                     [
@@ -709,14 +865,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           key: _formKey,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 20),
                                   child: Column(
                                     crossAxisAlignment:
@@ -729,21 +884,20 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             .subtitle2!
                                             .copyWith(),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 30),
                                   child: SizedBox(
                                     child: Column(
@@ -765,12 +919,12 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         SearchableDropdown(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Select Customer",
                                           ),
 
@@ -791,6 +945,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             //     : null;
                                             setState(() {
                                               _fetchInstructions();
+                                              _fetchAssessments();
                                             });
                                             print(_selectedValue);
                                             print(_custName);
@@ -800,7 +955,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                           },
 
                                           // isCaseSensitiveSearch: true,
-                                          searchHint: const Text(
+                                          searchHint: Text(
                                             'Select Customer ',
                                             style: TextStyle(fontSize: 20),
                                           ),
@@ -811,7 +966,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                         CheckboxListTile(
@@ -826,7 +981,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           value: revised,
-                                          activeColor: Colors.red,
+                                          activeColor: Colors.blue,
                                           onChanged: (bool? value) {
                                             setState(() {
                                               if (_custId != null) {
@@ -840,14 +995,12 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             });
                                           },
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-
                                         Row(
                                           children: [
                                             Text(
@@ -858,17 +1011,16 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                   .subtitle2!
                                                   .copyWith(),
                                             ),
-                                            const SizedBox(
+                                            SizedBox(
                                               width: 20,
                                             ),
                                             Expanded(
                                               child: TextField(
                                                 controller:
                                                     _dateinput, //editing controller of this TextField
-                                                decoration:
-                                                    const InputDecoration(
-                                                        //icon of text field
-                                                        ),
+                                                decoration: InputDecoration(
+                                                    //icon of text field
+                                                    ),
                                                 readOnly:
                                                     true, //set it true, so that user will not able to edit text
                                                 onTap: () async {
@@ -905,14 +1057,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             ),
                                             Icon(
                                               Icons.calendar_today,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 30,
                                         ),
-
                                         Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceAround,
@@ -925,17 +1076,16 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                   .subtitle2!
                                                   .copyWith(),
                                             ),
-                                            const SizedBox(
+                                            SizedBox(
                                               width: 20,
                                             ),
                                             Expanded(
                                               child: TextField(
                                                 controller:
                                                     _dateinput, //editing controller of this TextField
-                                                decoration:
-                                                    const InputDecoration(
-                                                        //icon of text field
-                                                        ),
+                                                decoration: InputDecoration(
+                                                    //icon of text field
+                                                    ),
                                                 readOnly:
                                                     true, //set it true, so that user will not able to edit text
                                                 onTap: () async {
@@ -972,82 +1122,17 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             ),
                                             Icon(
                                               Icons.calendar_today,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        // Row(
-                                        //   children: [
-                                        //     Text(
-                                        //       "Department",
-                                        //       overflow: TextOverflow.ellipsis,
-                                        //       style: Theme.of(context)
-                                        //           .textTheme
-                                        //           .subtitle2!
-                                        //           .copyWith(),
-                                        //     ),
-                                        //     Text(
-                                        //       "*",
-                                        //       style: Theme.of(context)
-                                        //           .textTheme
-                                        //           .subtitle2!
-                                        //           .copyWith(color: Colors.red),
-                                        //     )
-                                        //   ],
-                                        // ),
-                                        // DropdownButtonFormField(
-                                        //   hint: const Text(
-                                        //     "Select Department",
-                                        //   ),
-                                        //   isExpanded: true,
-                                        //   onChanged: (String? value) {
-                                        //     _toggleFinancier();
-                                        //     setState(() {
-                                        //       _selectedAccount = value!;
-                                        //       if (_selectedAccount ==
-                                        //           'Selected Value') {
-                                        //         setState(() {
-                                        //           // isBankSelected = false;
-                                        //         });
-                                        //       } else if (_selectedAccount ==
-                                        //           'Bank') {
-                                        //         setState(() {
-                                        //           // isBankSelected = true;
-                                        //         });
-                                        //       }
-                                        //     });
-                                        //   },
-                                        //   onSaved: (String? value) {
-                                        //     setState(() {
-                                        //       _selectedAccount = value!;
-                                        //     });
-                                        //   },
-                                        //   validator: (value) {
-                                        //     if (value != null) {
-                                        //       return null;
-                                        //     } else {
-                                        //       return "can't be empty";
-                                        //     }
-                                        //   },
-                                        //   items: listOfDepartments
-                                        //       .map((String val) {
-                                        //     return DropdownMenuItem(
-                                        //       value: val,
-                                        //       child: Text(
-                                        //         val,
-                                        //       ),
-                                        //     );
-                                        //   }).toList(),
-                                        // ),
-
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 10,
                                         ),
                                         Row(
@@ -1065,24 +1150,19 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         SearchableDropdown(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Attach Instruction",
                                           ),
-
                                           isExpanded: true,
                                           onChanged: (value) {
-                                            // _location = (value != null
-                                            //     ? ['location']
-                                            //     : null);
-
                                             setState(() {
                                               _selectedValue = value;
-                                              _instructionId = value != null
+                                              _assessmentId = value != null
                                                   ? value['id']
                                                   : null;
                                               _make = value != null
@@ -1117,15 +1197,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                   ? value['excess']
                                                   : null;
                                             });
-                                            // print(_selectedValue);
-                                            // print(_custName);
-                                            // print(_custId);
-                                            // print(_custPhone);
+
                                             _dropdownError = null;
                                           },
-
-                                          // isCaseSensitiveSearch: true,
-                                          searchHint: const Text(
+                                          searchHint: Text(
                                             'Attach Instruction',
                                             style: TextStyle(fontSize: 20),
                                           ),
@@ -1136,7 +1211,88 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
+                                          height: 20,
+                                        ),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              "Attach Assessment",
+                                              overflow: TextOverflow.ellipsis,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .subtitle2!
+                                                  .copyWith(),
+                                            ),
+                                            Text(
+                                              "",
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .subtitle2!
+                                                  .copyWith(color: Colors.blue),
+                                            )
+                                          ],
+                                        ),
+                                        SearchableDropdown(
+                                          hint: Text(
+                                            "Attach Assessment",
+                                          ),
+                                          isExpanded: true,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _selectedValue = value;
+                                              _instructionId = value != null
+                                                  ? value['id']
+                                                  : null;
+                                              _make = value != null
+                                                  ? value['make']
+                                                  : null;
+                                              _chasisno = value != null
+                                                  ? value['chassisno']
+                                                  : null;
+                                              _policyno = value != null
+                                                  ? value['policyno']
+                                                  : null;
+                                              _claimno = value != null
+                                                  ? value['claimno']
+                                                  : null;
+                                              _carmodel = value != null
+                                                  ? value['model']
+                                                  : null;
+                                              _location = value != null
+                                                  ? value['location']
+                                                  : null;
+                                              _owner = value != null
+                                                  ? value['owner']
+                                                  : null;
+                                              _insuredvalue = value != null
+                                                  ? value['insuredvalue']
+                                                  : null;
+                                              _vehiclereg = value != null
+                                                  ? value['regno']
+                                                  : null;
+                                              _excess = value != null
+                                                  ? value['excess']
+                                                  : null;
+                                            });
+
+                                            _dropdownError = null;
+                                          },
+                                          searchHint: Text(
+                                            'Attach Assessment',
+                                            style: TextStyle(fontSize: 20),
+                                          ),
+                                          items: assessmentJson.map((val) {
+                                            return DropdownMenuItem(
+                                              child: getListTile1(val),
+                                              value: val,
+                                            );
+                                          }).toList(),
+                                        ),
+                                        SizedBox(
                                           height: 20,
                                         ),
                                       ],
@@ -1148,14 +1304,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           key: _formKey16,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1169,27 +1324,26 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 20,
                                       ),
                                       Row(
@@ -1207,20 +1361,19 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _owner,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured/Owner"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1238,21 +1391,20 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _claimno != null ? _claimno : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Claim No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1270,20 +1422,19 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _policyno ?? '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Policy No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1301,21 +1452,20 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue:
                                             _location != null ? _location : '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Vehicle Location"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1333,20 +1483,19 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _insuredvalue.toString(),
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured Value"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1364,20 +1513,19 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _excess,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Excess"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1395,7 +1543,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1405,10 +1553,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             : null,
                                         initialValue: _chasisno,
                                         onSaved: (value) => {engineNo},
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Chassis No"),
                                       ),
                                       Row(
@@ -1426,7 +1573,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1434,16 +1581,15 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _make != null ? _make : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Make"),
+                                        decoration:
+                                            InputDecoration(hintText: "Make"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1461,7 +1607,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1469,16 +1615,15 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _carmodel != null ? _carmodel : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Type/Model	 By"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                     ],
@@ -1489,14 +1634,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           key: _formKey17,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1510,21 +1654,20 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                    padding: const EdgeInsets.only(
+                                    padding: EdgeInsets.only(
                                         left: 20,
                                         right: 20,
                                         top: 30,
@@ -1552,10 +1695,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             initialValue: _make,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Make"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1577,10 +1720,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             initialValue: _carmodel,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Type/Model	 By"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1602,10 +1745,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _year,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Year"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1627,10 +1770,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _mileage,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Mileage"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1652,10 +1795,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _color,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Color"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1677,10 +1820,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _engineno,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Engine No."),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1702,10 +1845,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _chassisno,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Chassis No"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1727,10 +1870,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _pav,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "P.A.V"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1752,28 +1895,28 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _salvage,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.number,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Salvage"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Align(
                                             alignment: Alignment.center,
                                             child: Row(
                                               children: [
-                                                const Text(
+                                                Text(
                                                   "Pre-Accident Condition",
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 15.0,
-                                                    color: Colors.red,
+                                                    color: Colors.blue,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1795,10 +1938,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _brakes,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Brakes"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1820,10 +1963,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _paintwork,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "PaintWork"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1845,28 +1988,28 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _steering,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Steering"),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Align(
                                             alignment: Alignment.center,
                                             child: Row(
                                               children: [
-                                                const Text(
+                                                Text(
                                                   "Tyres",
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 15.0,
-                                                    color: Colors.red,
+                                                    color: Colors.blue,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
                                               ],
                                             ),
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1887,7 +2030,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(
-                                                        color: Colors.red),
+                                                        color: Colors.blue),
                                               ),
                                               Expanded(
                                                 child: TextFormField(
@@ -1900,14 +2043,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                       {engineNo},
                                                   keyboardType:
                                                       TextInputType.text,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                          hintText: "RHF"),
+                                                  decoration: InputDecoration(
+                                                      hintText: "RHF"),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1928,7 +2070,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(
-                                                        color: Colors.red),
+                                                        color: Colors.blue),
                                               ),
                                               Expanded(
                                                 child: TextFormField(
@@ -1941,14 +2083,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                       {engineNo},
                                                   keyboardType:
                                                       TextInputType.text,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                          hintText: "LHR"),
+                                                  decoration: InputDecoration(
+                                                      hintText: "LHR"),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -1969,7 +2110,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(
-                                                        color: Colors.red),
+                                                        color: Colors.blue),
                                               ),
                                               Expanded(
                                                 child: TextFormField(
@@ -1982,14 +2123,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                       {engineNo},
                                                   keyboardType:
                                                       TextInputType.text,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                          hintText: "RHR"),
+                                                  decoration: InputDecoration(
+                                                      hintText: "RHR"),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -2010,7 +2150,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(
-                                                        color: Colors.red),
+                                                        color: Colors.blue),
                                               ),
                                               Expanded(
                                                 child: TextFormField(
@@ -2023,14 +2163,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                       {engineNo},
                                                   keyboardType:
                                                       TextInputType.text,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                          hintText: "LHF"),
+                                                  decoration: InputDecoration(
+                                                      hintText: "LHF"),
                                                 ),
                                               ),
                                             ],
                                           ),
-                                          const SizedBox(
+                                          SizedBox(
                                             height: 10,
                                           ),
                                           Row(
@@ -2051,7 +2190,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(
-                                                        color: Colors.red),
+                                                        color: Colors.blue),
                                               ),
                                               Expanded(
                                                 child: TextFormField(
@@ -2060,9 +2199,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                       {engineNo},
                                                   keyboardType:
                                                       TextInputType.text,
-                                                  decoration:
-                                                      const InputDecoration(
-                                                          hintText: "Spare"),
+                                                  decoration: InputDecoration(
+                                                      hintText: "Spare"),
                                                 ),
                                               ),
                                             ],
@@ -2089,7 +2227,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             controller: _remarks,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
-                                            decoration: const InputDecoration(
+                                            decoration: InputDecoration(
                                                 hintText: "Remarks"),
                                           ),
                                         ])))
@@ -2098,14 +2236,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           key: _formKey18,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -2119,21 +2256,20 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
@@ -2162,7 +2298,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             ),
                                             Icon(
                                               Icons.camera_enhance,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             )
                                           ],
                                         ),
@@ -2196,7 +2332,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                       //                   child: Container(
                                       //                     child: Padding(
                                       //                       padding:
-                                      //                           const EdgeInsets
+                                      //                            EdgeInsets
                                       //                               .all(8.0),
                                       //                       // child: Text(
                                       //                       //     imageslist![
@@ -2221,7 +2357,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 scrollDirection: Axis.vertical,
                                                 shrinkWrap: true,
                                                 gridDelegate:
-                                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                                    SliverGridDelegateWithFixedCrossAxisCount(
                                                   crossAxisCount: 2,
                                                 ),
                                                 itemCount: imageslist!.length,
@@ -2236,8 +2372,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                         InteractiveViewer(
                                                           panEnabled: true,
                                                           boundaryMargin:
-                                                              const EdgeInsets
-                                                                  .all(80),
+                                                              EdgeInsets.all(
+                                                                  80),
                                                           minScale: 0.5,
                                                           maxScale: 4,
                                                           child: FadeInImage(
@@ -2269,7 +2405,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
-                                                              style: const TextStyle(
+                                                              style: TextStyle(
                                                                   color: Colors
                                                                       .white,
                                                                   fontSize: 16,
@@ -2285,7 +2421,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                               ),
                                             )
                                           : Container(),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 80,
                                       ),
                                     ],
@@ -2294,13 +2430,13 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           ])),
                       Column(children: <Widget>[
                         Card(
-                            margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                            margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                             elevation: 0,
-                            shape: const RoundedRectangleBorder(
+                            shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10.0))),
                             child: Padding(
-                              padding: const EdgeInsets.only(
+                              padding: EdgeInsets.only(
                                   left: 20, right: 20, top: 30, bottom: 30),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2312,7 +2448,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         .headline6!
                                         .copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(
+                                  SizedBox(
                                     height: 10,
                                   ),
                                 ],
@@ -2325,127 +2461,520 @@ class _CreateReinspectionState extends State<CreateReinspection> {
               ),
             ))
         : Scaffold(
-            appBar: AppBar(
-              title: const Text("Capture Image from Camera"),
-              backgroundColor: Colors.red,
-              leading: Builder(
-                builder: (BuildContext context) {
-                  return RotatedBox(
-                    quarterTurns: 0,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.black,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          iscameraopen = false;
-                        });
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            body: SingleChildScrollView(
-              child: Container(
-                  child: Column(children: [
-                Container(
-                  height: 500,
-                  width: 500,
-                  child: controller == null
-                      ? const Center(child: Text("Loading Camera..."))
-                      : !controller!.value.isInitialized
-                          ? const Center(
-                              child: CircularProgressIndicator(),
-                            )
-                          : CameraPreview(controller!),
-                ),
-                SizedBox(
-                  height: 50,
-                ),
-                Row(
-                  children: [
-                    Text(
-                      "Image Description",
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.subtitle2!.copyWith(),
-                    ),
-                  ],
-                ),
-                TextFormField(
-                  controller: _itemDescController,
-                  onSaved: (value) => {engineNo},
-                  keyboardType: TextInputType.text,
-                  decoration: const InputDecoration(
-                      hintText: "Enter Image Description"),
-                ),
-                SizedBox(
-                  height: 50,
-                ),
-                ElevatedButton.icon(
-                  //image capture button
-                  onPressed: () async {
-                    if (_itemDescController.text != '') {
-                      try {
-                        if (controller != null) {
-                          //check if contrller is not null
-                          if (controller!.value.isInitialized) {
-                            //check if controller is initialized
-                            image =
-                                await controller!.takePicture(); //capture image
-                            setState(() {
-                              String? description =
-                                  _itemDescController.text.trim();
-                              print(description);
-                              final bytes =
-                                  Io.File(image!.path).readAsBytesSync();
+            backgroundColor: Colors.black,
+            body: Container(
+              child: _isCameraPermissionGranted
+                  ? _isCameraInitialized
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AspectRatio(
+                              aspectRatio: 1 / controller!.value.aspectRatio,
+                              child: Stack(
+                                children: [
+                                  CameraPreview(
+                                    controller!,
+                                    child: LayoutBuilder(builder:
+                                        (BuildContext context,
+                                            BoxConstraints constraints) {
+                                      return GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTapDown: (details) => onViewFinderTap(
+                                            details, constraints),
+                                      );
+                                    }),
+                                  ),
+                                  // TODO: Uncomment to preview the overlay
+                                  // Center(
+                                  //   child: Image.asset(
+                                  //     'assets/camera_aim.png',
+                                  //     color: Colors.greenAccent,
+                                  //     width: 150,
+                                  //     height: 150,
+                                  //   ),
+                                  // ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16.0,
+                                      8.0,
+                                      16.0,
+                                      8.0,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black87,
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8.0,
+                                                right: 8.0,
+                                              ),
+                                              child: DropdownButton<
+                                                  ResolutionPreset>(
+                                                dropdownColor: Colors.black87,
+                                                underline: Container(),
+                                                value: currentResolutionPreset,
+                                                items: [
+                                                  for (ResolutionPreset preset
+                                                      in resolutionPresets)
+                                                    DropdownMenuItem(
+                                                      child: Text(
+                                                        preset
+                                                            .toString()
+                                                            .split('.')[1]
+                                                            .toUpperCase(),
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                      value: preset,
+                                                    )
+                                                ],
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    currentResolutionPreset =
+                                                        value!;
+                                                    _isCameraInitialized =
+                                                        false;
+                                                  });
+                                                  onNewCameraSelected(
+                                                      controller!.description);
+                                                },
+                                                hint: Text("Select item"),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        // Spacer(),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 8.0, top: 16.0),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                _currentExposureOffset
+                                                        .toStringAsFixed(1) +
+                                                    'x',
+                                                style: TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: RotatedBox(
+                                            quarterTurns: 3,
+                                            child: Container(
+                                              height: 30,
+                                              child: Slider(
+                                                value: _currentExposureOffset,
+                                                min:
+                                                    _minAvailableExposureOffset,
+                                                max:
+                                                    _maxAvailableExposureOffset,
+                                                activeColor: Colors.white,
+                                                inactiveColor: Colors.white30,
+                                                onChanged: (value) async {
+                                                  setState(() {
+                                                    _currentExposureOffset =
+                                                        value;
+                                                  });
+                                                  await controller!
+                                                      .setExposureOffset(value);
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Slider(
+                                                value: _currentZoomLevel,
+                                                min: _minAvailableZoom,
+                                                max: _maxAvailableZoom,
+                                                activeColor: Colors.white,
+                                                inactiveColor: Colors.white30,
+                                                onChanged: (value) async {
+                                                  setState(() {
+                                                    _currentZoomLevel = value;
+                                                  });
+                                                  await controller!
+                                                      .setZoomLevel(value);
+                                                },
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black87,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Text(
+                                                    _currentZoomLevel
+                                                            .toStringAsFixed(
+                                                                1) +
+                                                        'x',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            InkWell(
+                                              onTap: () async {
+                                                image = await takePicture();
+                                                File image1 = File(image!.path);
 
-                              String imageFile = base64Encode(bytes);
-                              images = Images(
-                                  filename: description, attachment: imageFile);
-                              _addImage(image!);
-                              _addImages(images!);
-                              _addDescription(description);
-                            });
-                          }
-                        }
-                      } catch (e) {
-                        print(e); //show error
-                      }
-                      setState(() {
-                        iscameraopen = false;
-                      });
-                    } else {
-                      setState(() {
-                        image = null;
-                        images = null;
-                      });
+                                                int currentUnix = DateTime.now()
+                                                    .millisecondsSinceEpoch;
 
-                      Fluttertoast.showToast(
-                          msg: 'Please fill the description to capture image');
-                    }
-                  },
-                  icon: const Icon(Icons.camera),
-                  label: const Text("Capture"),
-                ),
-              ])),
+                                                String fileFormat =
+                                                    image1.path.split('.').last;
+                                                setState(() {
+                                                  iscameraopen = false;
+                                                });
+                                                iscameraopen = false;
+                                                GallerySaver.saveImage(
+                                                        image!.path)
+                                                    .then((path) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return _SystemPadding(
+                                                        child: AlertDialog(
+                                                          contentPadding:
+                                                              const EdgeInsets
+                                                                  .all(16.0),
+                                                          content: Row(
+                                                            children: <Widget>[
+                                                              Expanded(
+                                                                child:
+                                                                    TextFormField(
+                                                                  controller:
+                                                                      _itemDescController,
+                                                                  keyboardType:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  autofocus:
+                                                                      true,
+                                                                  decoration: const InputDecoration(
+                                                                      labelText:
+                                                                          'Enter Description',
+                                                                      hintText:
+                                                                          'Description'),
+                                                                ),
+                                                              )
+                                                            ],
+                                                          ),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                                child: const Text(
+                                                                    'CANCEL'),
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                }),
+                                                            TextButton(
+                                                                child:
+                                                                    const Text(
+                                                                        'OKAY'),
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  setState(() {
+                                                                    String?
+                                                                        description =
+                                                                        _itemDescController
+                                                                            .text
+                                                                            .trim();
+                                                                    print(
+                                                                        description);
+                                                                    final bytes =
+                                                                        Io.File(image!.path)
+                                                                            .readAsBytesSync();
+
+                                                                    String
+                                                                        imageFile =
+                                                                        base64Encode(
+                                                                            bytes);
+                                                                    images = Images(
+                                                                        filename:
+                                                                            description,
+                                                                        attachment:
+                                                                            imageFile);
+                                                                    _addImage(
+                                                                        image!);
+                                                                    _addImages(
+                                                                        images!);
+                                                                    _addDescription(
+                                                                        description);
+                                                                  });
+                                                                })
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                });
+                                                print(fileFormat);
+                                              },
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.circle,
+                                                    color:
+                                                        _isVideoCameraSelected
+                                                            ? Colors.white
+                                                            : Colors.white38,
+                                                    size: 80,
+                                                  ),
+                                                  Icon(
+                                                    Icons.circle,
+                                                    color:
+                                                        _isVideoCameraSelected
+                                                            ? Colors.blue
+                                                            : Colors.white,
+                                                    size: 65,
+                                                  ),
+                                                  _isVideoCameraSelected &&
+                                                          _isRecordingInProgress
+                                                      ? Icon(
+                                                          Icons.stop_rounded,
+                                                          color: Colors.white,
+                                                          size: 32,
+                                                        )
+                                                      : Container(),
+                                                ],
+                                              ),
+                                            ),
+                                            InkWell(
+                                              onTap: image != null
+                                                  ? () {
+                                                      // Navigator.of(context)
+                                                      //     .push(
+                                                      //   MaterialPageRoute(
+                                                      //     builder: (context) =>
+                                                      //         PreviewScreen(
+                                                      //       image: image!,
+                                                      //       fileList:
+                                                      //           imageslist,
+                                                      //     ),
+                                                      //   ),
+                                                      // );
+                                                    }
+                                                  : null,
+                                              child: Container(
+                                                width: 60,
+                                                height: 60,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                  border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2,
+                                                  ),
+                                                  image: image != null
+                                                      ? DecorationImage(
+                                                          image: FileImage(
+                                                            File(image!.path),
+                                                          ),
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : null,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                physics: BouncingScrollPhysics(),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          16.0, 8.0, 16.0, 8.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.off;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.off,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.flash_off,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.off
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.auto;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.auto,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.flash_auto,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.auto
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.always;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.always,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.flash_on,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.always
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.torch;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.torch,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.highlight,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.torch
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child: Text(
+                            'LOADING',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(),
+                        Text(
+                          'Permission denied',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            getPermissionStatus();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'Give permission',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
             ),
           );
   }
 
   void _showDialog(BuildContext context) {
     Widget okButton = TextButton(
-      child: const Text("OK"),
+      child: Text("OK"),
       onPressed: () {
         Navigator.of(context).pop();
         Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => const Home()));
+            .push(MaterialPageRoute(builder: (context) => Home()));
       },
     );
 
     AlertDialog alert = AlertDialog(
-      title: const Text(
+      title: Text(
         "Success!",
         style: TextStyle(color: Colors.green),
       ),
@@ -2474,13 +3003,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
       print(url +
           'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         setState(() {
-          instructionsJson = jsonResponse;
+          assessmentJson = jsonResponse;
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -2512,11 +3038,68 @@ class _CreateReinspectionState extends State<CreateReinspection> {
     }
   }
 
+  _fetchAssessments() async {
+    String url = await Config.getBaseUrl();
+
+    HttpClientResponse response = await Config.getRequestObject(
+        url + 'valuation/assessmentlist/?custid=$_custId', Config.get);
+    if (response != null) {
+      print(response);
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
+        var jsonResponse = json.decode(data);
+        setState(() {
+          instructionsJson = jsonResponse;
+        });
+        print(jsonResponse);
+        var list = jsonResponse as List;
+        List<Assesssment> result = list.map<Assesssment>((json) {
+          return Assesssment.fromJson(json);
+        }).toList();
+        if (result.isNotEmpty) {
+          setState(() {
+            result.sort((a, b) => a.chassisno!
+                .toLowerCase()
+                .compareTo(b.chassisno!.toLowerCase()));
+            _assessment = result;
+            if (_assessment != null && _assessment.isNotEmpty) {
+              _assessment.forEach((_assessment) {
+                setState(() {});
+
+                print(_make);
+              });
+            }
+          });
+        } else {
+          setState(() {
+            _message = 'You have not been assigned any customers';
+          });
+        }
+      });
+    } else {
+      print('response is null ');
+    }
+  }
+
   Widget getListTile1(val) {
     return ListTile(
       leading: Text(val['regno'] ?? ''),
       title: Text(val['owner'] ?? ''),
       trailing: Text(val['location'] ?? ''),
     );
+  }
+}
+
+class _SystemPadding extends StatelessWidget {
+  final Widget child;
+
+  _SystemPadding({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var mediaQuery = MediaQuery.of(context);
+    return AnimatedContainer(
+        padding: mediaQuery.padding,
+        duration: const Duration(milliseconds: 300),
+        child: child);
   }
 }

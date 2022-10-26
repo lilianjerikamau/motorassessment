@@ -35,6 +35,7 @@ Assesssment _$AssesssmentFromJson(Map<String, dynamic> json) => Assesssment(
       chassisno: json['chassisno'] as String?,
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
+      date: json['date'] as String?,
     );
 
 Map<String, dynamic> _$AssesssmentToJson(Assesssment instance) =>
@@ -67,4 +68,5 @@ Map<String, dynamic> _$AssesssmentToJson(Assesssment instance) =>
       'chassisno': instance.chassisno,
       'policyno': instance.policyno,
       'location': instance.location,
+      'date': instance.date,
     };

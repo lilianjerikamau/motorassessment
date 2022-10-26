@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
@@ -32,15 +33,18 @@ import 'package:camera/camera.dart';
 import 'package:transparent_image/transparent_image.dart';
 import 'dart:io' as Io;
 import 'package:photo_view/photo_view.dart';
+import 'package:gallery_saver/gallery_saver.dart';
+import '../main.dart';
 
 class CreateAssesment extends StatefulWidget {
-  const CreateAssesment({Key? key}) : super(key: key);
+  CreateAssesment({Key? key}) : super(key: key);
 
   @override
   State<CreateAssesment> createState() => _CreateAssesmentState();
 }
 
-class _CreateAssesmentState extends State<CreateAssesment> {
+class _CreateAssesmentState extends State<CreateAssesment>
+    with WidgetsBindingObserver {
   User? _loggedInUser;
 
   int? _userid;
@@ -63,6 +67,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   String? custName;
   String? custPhone;
   bool _loggedIn = false;
+  bool _clicked = false;
   String? remarks;
   String? installationLocation;
   Images? images;
@@ -80,7 +85,6 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   String? _excess;
   String? _owner;
   String? _vehiclereg;
-
   List<Customer> _customers = [];
   List<Instruction> _instruction = [];
   List instructionsJson = [];
@@ -132,16 +136,118 @@ class _CreateAssesmentState extends State<CreateAssesment> {
 
   List<XFile>? imageslist = [];
   List<String>? filenames = [];
-  List<CameraDescription>? cameras; //list out the camera available
+
   CameraController? controller; //controller for camera
+  bool _isCameraInitialized = false;
+  bool _isCameraPermissionGranted = false;
+
+  bool _isRearCameraSelected = true;
+  bool _isVideoCameraSelected = false;
+  bool _isRecordingInProgress = false;
+  double _minAvailableExposureOffset = 0.0;
+  double _maxAvailableExposureOffset = 0.0;
+  double _minAvailableZoom = 1.0;
+  double _maxAvailableZoom = 1.0;
+  double _currentZoomLevel = 1.0;
+  double _currentExposureOffset = 0.0;
+  FlashMode? _currentFlashMode;
+  final resolutionPresets = ResolutionPreset.values;
+  ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
   XFile? image; //for captured image
+  void resetCameraValues() async {
+    _currentZoomLevel = 1.0;
+    _currentExposureOffset = 0.0;
+  }
+
+  void onNewCameraSelected(CameraDescription cameraDescription) async {
+    final previousCameraController = controller;
+
+    final CameraController cameraController = CameraController(
+      cameraDescription,
+      currentResolutionPreset,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+
+    await previousCameraController?.dispose();
+
+    resetCameraValues();
+
+    if (mounted) {
+      setState(() {
+        controller = cameraController;
+      });
+    }
+
+    // Update UI if controller updated
+    cameraController.addListener(() {
+      if (mounted) setState(() {});
+    });
+
+    try {
+      await cameraController.initialize();
+      await Future.wait([
+        cameraController
+            .getMinExposureOffset()
+            .then((value) => _minAvailableExposureOffset = value),
+        cameraController
+            .getMaxExposureOffset()
+            .then((value) => _maxAvailableExposureOffset = value),
+        cameraController
+            .getMaxZoomLevel()
+            .then((value) => _maxAvailableZoom = value),
+        cameraController
+            .getMinZoomLevel()
+            .then((value) => _minAvailableZoom = value),
+      ]);
+
+      _currentFlashMode = controller!.value.flashMode;
+    } on CameraException catch (e) {
+      print('Error initializing camera: $e');
+    }
+
+    if (mounted) {
+      setState(() {
+        _isCameraInitialized = controller!.value.isInitialized;
+      });
+    }
+  }
+
+  void onViewFinderTap(TapDownDetails details, BoxConstraints constraints) {
+    if (controller == null) {
+      return;
+    }
+
+    final offset = Offset(
+      details.localPosition.dx / constraints.maxWidth,
+      details.localPosition.dy / constraints.maxHeight,
+    );
+    controller!.setExposurePoint(offset);
+    controller!.setFocusPoint(offset);
+  }
+
+  getPermissionStatus() async {
+    await Permission.camera.request();
+    var status = await Permission.camera.status;
+
+    if (status.isGranted) {
+      log('Camera Permission: GRANTED');
+      setState(() {
+        _isCameraPermissionGranted = true;
+      });
+      // Set and initialize the new camera
+      onNewCameraSelected(cameras[0]);
+    } else {
+      log('Camera Permission: DENIED');
+    }
+  }
 
   @override
   void initState() {
     _fetchCustomers();
     _instructionId = 2;
     loadCamera();
-
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
+    onNewCameraSelected(cameras[0]);
     SessionPreferences().getLoggedInUser().then((user) {
       setState(() {
         _loggedInUser = user;
@@ -160,6 +266,30 @@ class _CreateAssesmentState extends State<CreateAssesment> {
     iscameraopen = false;
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final CameraController? cameraController = controller;
+
+    // App state changed before we got the chance to initialize.
+    if (cameraController == null || !cameraController.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      // Free up memory when camera not active
+      cameraController.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      // Reinitialize the camera with same properties
+      onNewCameraSelected(cameraController.description);
+    }
   }
 
   bool _searchmode = false;
@@ -272,7 +402,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
   loadCamera() async {
     cameras = await availableCameras();
     if (cameras != null) {
-      controller = CameraController(cameras![0], ResolutionPreset.max);
+      controller = CameraController(cameras[0], ResolutionPreset.max);
       //cameras[0] = first camera, change to 1 to another camera
 
       controller!.initialize().then((_) {
@@ -283,6 +413,23 @@ class _CreateAssesmentState extends State<CreateAssesment> {
       });
     } else {
       print("NO any camera found");
+    }
+  }
+
+  Future<XFile?> takePicture() async {
+    final CameraController? cameraController = controller;
+
+    if (cameraController!.value.isTakingPicture) {
+      // A capture is already pending, do nothing.
+      return null;
+    }
+
+    try {
+      XFile file = await cameraController.takePicture();
+      return file;
+    } on CameraException catch (e) {
+      print('Error occured while taking picture: $e');
+      return null;
     }
   }
 
@@ -302,15 +449,15 @@ class _CreateAssesmentState extends State<CreateAssesment> {
         context: this.context,
         builder: (ctx) {
           return AlertDialog(
-            title: const Text('Submit?'),
-            content: const Text('Are you sure you want to submit'),
+            title: Text('Submit?'),
+            content: Text('Are you sure you want to submit'),
             actions: <Widget>[
-              FlatButton(
-                  child: const Text('No'),
+              MaterialButton(
+                  child: Text('No'),
                   onPressed: () {
                     Navigator.pop(ctx);
                   }),
-              FlatButton(
+              MaterialButton(
                   onPressed: () async {
                     Navigator.pop(ctx);
                     ProgressDialog dial = new ProgressDialog(context,
@@ -426,7 +573,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           msg: 'There was no response from the server');
                     }
                   },
-                  child: const Text('Yes'))
+                  child: Text('Yes'))
             ],
           );
         });
@@ -439,10 +586,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
         url + 'trackerjobcard/customer/?type=1&param=', Config.get);
     if (response != null) {
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         setState(() {
           customersJson = jsonResponse;
@@ -480,10 +624,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
       print(url +
           'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
       print(response);
-      response
-          .transform(utf8.decoder)
-          .transform(const LineSplitter())
-          .listen((data) {
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         setState(() {
           instructionsJson = jsonResponse;
@@ -589,7 +730,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                     },
                     icon: Icon(
                       currentForm == 0 ? Icons.error : Icons.arrow_back,
-                      color: Colors.redAccent,
+                      color: Colors.blueAccent,
                     ),
                     label: Text(currentForm == 0 ? "Invalid" : "Prev"),
                     heroTag: null,
@@ -615,7 +756,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                               // _fetchInstructions();
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -631,7 +772,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                             } else {
                               Fluttertoast.showToast(
                                   msg: 'Select customer and attach instruction',
-                                  textColor: Colors.red);
+                                  textColor: Colors.blue);
                             }
 
                             break;
@@ -644,7 +785,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -661,7 +802,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                               percentageComplete = 100;
                             } else {
                               ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
+                                  .showSnackBar(SnackBar(
                                 behavior: SnackBarBehavior.floating,
                                 content: Text(
                                     "Make sure all required fields are filled"),
@@ -690,20 +831,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
             appBar: AppBar(
               backgroundColor: Colors.white,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.black),
+              iconTheme: IconThemeData(color: Colors.black),
               leading: Builder(
                 builder: (BuildContext context) {
                   return RotatedBox(
                     quarterTurns: 0,
                     child: IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back,
                         color: Colors.black,
                       ),
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const Home()),
+                          MaterialPageRoute(builder: (context) => Home()),
                         );
                       },
                     ),
@@ -719,9 +860,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                     Stack(
                       clipBehavior: Clip.none,
                       children: <Widget>[
-                        isLoading
-                            ? const LinearProgressIndicator()
-                            : const SizedBox(),
+                        isLoading ? LinearProgressIndicator() : SizedBox(),
                         Diagonal(
                           position: position,
                           clipHeight: clipHeight,
@@ -733,7 +872,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              const Text(
+                              Text(
                                 'Create Assessment',
                                 style: TextStyle(
                                   fontSize: 20.0,
@@ -742,13 +881,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 1.0),
+                              SizedBox(height: 1.0),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(
+                    SizedBox(
                       height: 0,
                     ),
                     [
@@ -756,14 +895,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           key: _formKey,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 20),
                                   child: Column(
                                     crossAxisAlignment:
@@ -776,21 +914,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             .subtitle2!
                                             .copyWith(),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 30),
                                   child: SizedBox(
                                     child: Column(
@@ -812,12 +949,12 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               style: Theme.of(context)
                                                   .textTheme
                                                   .subtitle2!
-                                                  .copyWith(color: Colors.red),
+                                                  .copyWith(color: Colors.blue),
                                             )
                                           ],
                                         ),
                                         SearchableDropdown(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Select Customer",
                                           ),
 
@@ -848,7 +985,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                           },
 
                                           // isCaseSensitiveSearch: true,
-                                          searchHint: const Text(
+                                          searchHint: Text(
                                             'Select Customer ',
                                             style: TextStyle(fontSize: 20),
                                           ),
@@ -859,7 +996,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                         CheckboxListTile(
@@ -874,7 +1011,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                 .copyWith(),
                                           ),
                                           value: revised,
-                                          activeColor: Colors.red,
+                                          activeColor: Colors.blue,
                                           onChanged: (bool? value) {
                                             setState(() {
                                               if (_custId != null) {
@@ -888,10 +1025,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             });
                                           },
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                         Row(
@@ -904,17 +1041,16 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                   .subtitle2!
                                                   .copyWith(),
                                             ),
-                                            const SizedBox(
+                                            SizedBox(
                                               width: 20,
                                             ),
                                             Expanded(
                                               child: TextField(
                                                 controller:
                                                     _dateinput, //editing controller of this TextField
-                                                decoration:
-                                                    const InputDecoration(
-                                                        //icon of text field
-                                                        ),
+                                                decoration: InputDecoration(
+                                                    //icon of text field
+                                                    ),
                                                 readOnly:
                                                     true, //set it true, so that user will not able to edit text
                                                 onTap: () async {
@@ -951,11 +1087,11 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             ),
                                             Icon(
                                               Icons.calendar_today,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 30,
                                         ),
                                         Row(
@@ -970,17 +1106,16 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                   .subtitle2!
                                                   .copyWith(),
                                             ),
-                                            const SizedBox(
+                                            SizedBox(
                                               width: 20,
                                             ),
                                             Expanded(
                                               child: TextField(
                                                 controller:
                                                     _dateinput, //editing controller of this TextField
-                                                decoration:
-                                                    const InputDecoration(
-                                                        //icon of text field
-                                                        ),
+                                                decoration: InputDecoration(
+                                                    //icon of text field
+                                                    ),
                                                 readOnly:
                                                     true, //set it true, so that user will not able to edit text
                                                 onTap: () async {
@@ -1017,21 +1152,21 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             ),
                                             Icon(
                                               Icons.calendar_today,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 30,
                                         ),
                                         SearchableDropdown(
-                                          hint: const Text(
+                                          hint: Text(
                                             "Attach Instruction",
                                           ),
 
@@ -1088,7 +1223,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                           },
 
                                           // isCaseSensitiveSearch: true,
-                                          searchHint: const Text(
+                                          searchHint: Text(
                                             'Attach Instruction',
                                             style: TextStyle(fontSize: 20),
                                           ),
@@ -1099,7 +1234,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             );
                                           }).toList(),
                                         ),
-                                        const SizedBox(
+                                        SizedBox(
                                           height: 20,
                                         ),
                                       ],
@@ -1111,14 +1246,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           key: _formKey16,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1132,27 +1266,26 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 20,
                                       ),
                                       Row(
@@ -1170,23 +1303,22 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _owner,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured/Owner"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1204,21 +1336,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _claimno != null ? _claimno : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Claim No"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1236,20 +1367,19 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _policyno ?? '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Policy No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1267,20 +1397,19 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _vehiclereg ?? '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Reg No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1298,21 +1427,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue:
                                             _location != null ? _location : '',
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Vehicle Location"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1330,20 +1458,19 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _insuredvalue.toString(),
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Insured Value"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1361,20 +1488,19 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
                                       TextFormField(
                                         initialValue: _excess,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Enter Excess"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1392,7 +1518,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1402,10 +1528,9 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             : null,
                                         initialValue: _chasisno,
                                         onSaved: (value) => {engineNo},
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Chassis No"),
                                       ),
                                       Row(
@@ -1423,7 +1548,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1431,16 +1556,15 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _make != null ? _make : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Make"),
+                                        decoration:
+                                            InputDecoration(hintText: "Make"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1458,7 +1582,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1466,16 +1590,15 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        style:
-                                            const TextStyle(color: Colors.red),
+                                        style: TextStyle(color: Colors.blue),
                                         initialValue:
                                             _carmodel != null ? _carmodel : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Type/Model	 By"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       CheckboxListTile(
@@ -1490,14 +1613,14 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               .copyWith(),
                                         ),
                                         value: isOther5,
-                                        activeColor: Colors.red,
+                                        activeColor: Colors.blue,
                                         onChanged: (bool? value) {
                                           setState(() {
                                             isOther5 = value!;
                                           });
                                         },
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       CheckboxListTile(
@@ -1512,7 +1635,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               .copyWith(),
                                         ),
                                         value: isOther6,
-                                        activeColor: Colors.red,
+                                        activeColor: Colors.blue,
                                         onChanged: (bool? value) {
                                           setState(() {
                                             isOther6 = value!;
@@ -1527,14 +1650,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           key: _formKey17,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1548,21 +1670,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
@@ -1583,7 +1704,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1594,10 +1715,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _year,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
-                                            hintText: "Year"),
+                                        decoration:
+                                            InputDecoration(hintText: "Year"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1615,7 +1736,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1626,10 +1747,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _mileage,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Mileage"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1647,7 +1768,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1658,10 +1779,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _color,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Color"),
+                                        decoration:
+                                            InputDecoration(hintText: "Color"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1679,7 +1800,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1690,10 +1811,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _engineno,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Engine No."),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1711,7 +1832,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1719,10 +1840,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _pav,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
-                                            hintText: "P.A.V"),
+                                        decoration:
+                                            InputDecoration(hintText: "P.A.V"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1740,7 +1861,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1748,28 +1869,28 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _salvage,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.number,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Salvage"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Align(
                                         alignment: Alignment.center,
                                         child: Row(
                                           children: [
-                                            const Text(
+                                            Text(
                                               "Pre-Accident Condition",
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 15.0,
-                                                color: Colors.red,
+                                                color: Colors.blue,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1787,7 +1908,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1798,10 +1919,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _brakes,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
-                                            hintText: "Brakes"),
+                                        decoration:
+                                            InputDecoration(hintText: "Brakes"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1819,7 +1940,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1830,10 +1951,10 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _paintwork,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "PaintWork"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1851,7 +1972,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           )
                                         ],
                                       ),
@@ -1862,28 +1983,28 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         controller: _steering,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                             hintText: "Steering"),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 30,
                                       ),
                                       Align(
                                         alignment: Alignment.center,
                                         child: Row(
                                           children: [
-                                            const Text(
+                                            Text(
                                               "Tyres",
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 15.0,
-                                                color: Colors.red,
+                                                color: Colors.blue,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1903,7 +2024,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           ),
                                           Expanded(
                                             child: TextFormField(
@@ -1914,13 +2035,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               controller: _RHF,
                                               onSaved: (value) => {engineNo},
                                               keyboardType: TextInputType.text,
-                                              decoration: const InputDecoration(
+                                              decoration: InputDecoration(
                                                   hintText: "RHF"),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1940,7 +2061,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           ),
                                           Expanded(
                                             child: TextFormField(
@@ -1951,13 +2072,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               controller: _LHR,
                                               onSaved: (value) => {engineNo},
                                               keyboardType: TextInputType.text,
-                                              decoration: const InputDecoration(
+                                              decoration: InputDecoration(
                                                   hintText: "LHR"),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -1977,7 +2098,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           ),
                                           Expanded(
                                             child: TextFormField(
@@ -1988,13 +2109,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               controller: _RHR,
                                               onSaved: (value) => {engineNo},
                                               keyboardType: TextInputType.text,
-                                              decoration: const InputDecoration(
+                                              decoration: InputDecoration(
                                                   hintText: "RHR"),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2014,7 +2135,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           ),
                                           Expanded(
                                             child: TextFormField(
@@ -2025,13 +2146,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               controller: _LHF,
                                               onSaved: (value) => {engineNo},
                                               keyboardType: TextInputType.text,
-                                              decoration: const InputDecoration(
+                                              decoration: InputDecoration(
                                                   hintText: "LHF"),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 10,
                                       ),
                                       Row(
@@ -2051,20 +2172,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
-                                                .copyWith(color: Colors.red),
+                                                .copyWith(color: Colors.blue),
                                           ),
                                           Expanded(
                                             child: TextFormField(
                                               controller: _spare,
                                               onSaved: (value) => {engineNo},
                                               keyboardType: TextInputType.text,
-                                              decoration: const InputDecoration(
+                                              decoration: InputDecoration(
                                                   hintText: "Spare"),
                                             ),
                                           ),
                                         ],
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 60,
                                       ),
                                     ],
@@ -2075,14 +2196,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           key: _formKey18,
                           child: Column(children: <Widget>[
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 10, bottom: 5),
                                   child: Column(
                                     crossAxisAlignment:
@@ -2096,21 +2216,20 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             .copyWith(
                                                 fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 1,
                                       ),
                                     ],
                                   ),
                                 )),
                             Card(
-                                margin:
-                                    const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                                 elevation: 0,
-                                shape: const RoundedRectangleBorder(
+                                shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.all(
                                         Radius.circular(10.0))),
                                 child: Padding(
-                                  padding: const EdgeInsets.only(
+                                  padding: EdgeInsets.only(
                                       left: 20, right: 20, top: 30, bottom: 30),
                                   child: Column(
                                     crossAxisAlignment:
@@ -2139,7 +2258,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                             ),
                                             const Icon(
                                               Icons.camera_enhance,
-                                              color: Colors.red,
+                                              color: Colors.blue,
                                             )
                                           ],
                                         ),
@@ -2168,8 +2287,8 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                         InteractiveViewer(
                                                           panEnabled: true,
                                                           boundaryMargin:
-                                                              const EdgeInsets
-                                                                  .all(80),
+                                                              EdgeInsets.all(
+                                                                  80),
                                                           minScale: 0.5,
                                                           maxScale: 4,
                                                           child: FadeInImage(
@@ -2201,7 +2320,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                                               overflow:
                                                                   TextOverflow
                                                                       .ellipsis,
-                                                              style: const TextStyle(
+                                                              style: TextStyle(
                                                                   color: Colors
                                                                       .white,
                                                                   fontSize: 16,
@@ -2217,7 +2336,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                               ),
                                             )
                                           : Container(),
-                                      const SizedBox(
+                                      SizedBox(
                                         height: 80,
                                       ),
                                     ],
@@ -2226,13 +2345,13 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                           ])),
                       Column(children: <Widget>[
                         Card(
-                            margin: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                            margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
                             elevation: 0,
-                            shape: const RoundedRectangleBorder(
+                            shape: RoundedRectangleBorder(
                                 borderRadius:
                                     BorderRadius.all(Radius.circular(10.0))),
                             child: Padding(
-                              padding: const EdgeInsets.only(
+                              padding: EdgeInsets.only(
                                   left: 20, right: 20, top: 30, bottom: 30),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -2244,7 +2363,7 @@ class _CreateAssesmentState extends State<CreateAssesment> {
                                         .headline6!
                                         .copyWith(fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(
+                                  SizedBox(
                                     height: 10,
                                   ),
                                 ],
@@ -2257,113 +2376,507 @@ class _CreateAssesmentState extends State<CreateAssesment> {
               ),
             ))
         : Scaffold(
-            appBar: AppBar(
-              title: const Text("Capture Image from Camera"),
-              backgroundColor: Colors.redAccent,
-              leading: Builder(
-                builder: (BuildContext context) {
-                  return RotatedBox(
-                    quarterTurns: 1,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.black,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          iscameraopen = false;
-                        });
-                      },
+            backgroundColor: Colors.black,
+            body: Container(
+              child: _isCameraPermissionGranted
+                  ? _isCameraInitialized
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AspectRatio(
+                              aspectRatio: 1 / controller!.value.aspectRatio,
+                              child: Stack(
+                                children: [
+                                  CameraPreview(
+                                    controller!,
+                                    child: LayoutBuilder(builder:
+                                        (BuildContext context,
+                                            BoxConstraints constraints) {
+                                      return GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTapDown: (details) => onViewFinderTap(
+                                            details, constraints),
+                                      );
+                                    }),
+                                  ),
+                                  // TODO: Uncomment to preview the overlay
+                                  // Center(
+                                  //   child: Image.asset(
+                                  //     'assets/camera_aim.png',
+                                  //     color: Colors.greenAccent,
+                                  //     width: 150,
+                                  //     height: 150,
+                                  //   ),
+                                  // ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16.0,
+                                      8.0,
+                                      16.0,
+                                      8.0,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black87,
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8.0,
+                                                right: 8.0,
+                                              ),
+                                              child: DropdownButton<
+                                                  ResolutionPreset>(
+                                                dropdownColor: Colors.black87,
+                                                underline: Container(),
+                                                value: currentResolutionPreset,
+                                                items: [
+                                                  for (ResolutionPreset preset
+                                                      in resolutionPresets)
+                                                    DropdownMenuItem(
+                                                      child: Text(
+                                                        preset
+                                                            .toString()
+                                                            .split('.')[1]
+                                                            .toUpperCase(),
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                      value: preset,
+                                                    )
+                                                ],
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    currentResolutionPreset =
+                                                        value!;
+                                                    _isCameraInitialized =
+                                                        false;
+                                                  });
+                                                  onNewCameraSelected(
+                                                      controller!.description);
+                                                },
+                                                hint: Text("Select item"),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        // Spacer(),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 8.0, top: 16.0),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                _currentExposureOffset
+                                                        .toStringAsFixed(1) +
+                                                    'x',
+                                                style: TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: RotatedBox(
+                                            quarterTurns: 3,
+                                            child: Container(
+                                              height: 30,
+                                              child: Slider(
+                                                value: _currentExposureOffset,
+                                                min:
+                                                    _minAvailableExposureOffset,
+                                                max:
+                                                    _maxAvailableExposureOffset,
+                                                activeColor: Colors.white,
+                                                inactiveColor: Colors.white30,
+                                                onChanged: (value) async {
+                                                  setState(() {
+                                                    _currentExposureOffset =
+                                                        value;
+                                                  });
+                                                  await controller!
+                                                      .setExposureOffset(value);
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Slider(
+                                                value: _currentZoomLevel,
+                                                min: _minAvailableZoom,
+                                                max: _maxAvailableZoom,
+                                                activeColor: Colors.white,
+                                                inactiveColor: Colors.white30,
+                                                onChanged: (value) async {
+                                                  setState(() {
+                                                    _currentZoomLevel = value;
+                                                  });
+                                                  await controller!
+                                                      .setZoomLevel(value);
+                                                },
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black87,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Text(
+                                                    _currentZoomLevel
+                                                            .toStringAsFixed(
+                                                                1) +
+                                                        'x',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            InkWell(
+                                              onTap: () async {
+                                                image = await takePicture();
+                                                File image1 = File(image!.path);
+
+                                                int currentUnix = DateTime.now()
+                                                    .millisecondsSinceEpoch;
+
+                                                String fileFormat =
+                                                    image1.path.split('.').last;
+                                                setState(() {
+                                                  iscameraopen = false;
+                                                });
+                                                iscameraopen = false;
+                                                GallerySaver.saveImage(
+                                                        image!.path)
+                                                    .then((path) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return _SystemPadding(
+                                                        child: AlertDialog(
+                                                          contentPadding:
+                                                              const EdgeInsets
+                                                                  .all(16.0),
+                                                          content: Row(
+                                                            children: <Widget>[
+                                                              Expanded(
+                                                                child:
+                                                                    TextFormField(
+                                                                  controller:
+                                                                      _itemDescController,
+                                                                  keyboardType:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  autofocus:
+                                                                      true,
+                                                                  decoration: const InputDecoration(
+                                                                      labelText:
+                                                                          'Enter Description',
+                                                                      hintText:
+                                                                          'Description'),
+                                                                ),
+                                                              )
+                                                            ],
+                                                          ),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                                child: const Text(
+                                                                    'CANCEL'),
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                }),
+                                                            TextButton(
+                                                                child:
+                                                                    const Text(
+                                                                        'OKAY'),
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  setState(() {
+                                                                    _clicked =
+                                                                        true;
+                                                                    String?
+                                                                        description =
+                                                                        _itemDescController
+                                                                            .text
+                                                                            .trim();
+                                                                    print(
+                                                                        description);
+                                                                    final bytes =
+                                                                        Io.File(image!.path)
+                                                                            .readAsBytesSync();
+
+                                                                    String
+                                                                        imageFile =
+                                                                        base64Encode(
+                                                                            bytes);
+                                                                    images = Images(
+                                                                        filename:
+                                                                            description,
+                                                                        attachment:
+                                                                            imageFile);
+                                                                    _addImage(
+                                                                        image!);
+                                                                    _addImages(
+                                                                        images!);
+                                                                    _addDescription(
+                                                                        description);
+                                                                  });
+                                                                })
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                });
+                                                print(fileFormat);
+                                              },
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.circle,
+                                                    color:
+                                                        _isVideoCameraSelected
+                                                            ? Colors.white
+                                                            : Colors.white38,
+                                                    size: 80,
+                                                  ),
+                                                  Icon(
+                                                    Icons.circle,
+                                                    color:
+                                                        _isVideoCameraSelected
+                                                            ? Colors.blue
+                                                            : Colors.white,
+                                                    size: 65,
+                                                  ),
+                                                  _isVideoCameraSelected &&
+                                                          _isRecordingInProgress
+                                                      ? Icon(
+                                                          Icons.stop_rounded,
+                                                          color: Colors.white,
+                                                          size: 32,
+                                                        )
+                                                      : Container(),
+                                                ],
+                                              ),
+                                            ),
+                                            InkWell(
+                                              onTap: image != null
+                                                  ? () {
+                                                      // Navigator.of(context)
+                                                      //     .push(
+                                                      //   MaterialPageRoute(
+                                                      //     builder: (context) =>
+                                                      //         PreviewScreen(
+                                                      //       image: image!,
+                                                      //       fileList:
+                                                      //           imageslist,
+                                                      //     ),
+                                                      //   ),
+                                                      // );
+                                                    }
+                                                  : null,
+                                              child: Container(
+                                                width: 60,
+                                                height: 60,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                  border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2,
+                                                  ),
+                                                  image: image != null
+                                                      ? DecorationImage(
+                                                          image: FileImage(
+                                                            File(image!.path),
+                                                          ),
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : null,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: SingleChildScrollView(
+                                physics: BouncingScrollPhysics(),
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          16.0, 8.0, 16.0, 8.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.off;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.off,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.flash_off,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.off
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.auto;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.auto,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.flash_auto,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.auto
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.always;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.always,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.flash_on,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.always
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                          InkWell(
+                                            onTap: () async {
+                                              setState(() {
+                                                _currentFlashMode =
+                                                    FlashMode.torch;
+                                              });
+                                              await controller!.setFlashMode(
+                                                FlashMode.torch,
+                                              );
+                                            },
+                                            child: Icon(
+                                              Icons.highlight,
+                                              color: _currentFlashMode ==
+                                                      FlashMode.torch
+                                                  ? Colors.amber
+                                                  : Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        )
+                      : Center(
+                          child: Text(
+                            'LOADING',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        )
+                  : Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(),
+                        Text(
+                          'Permission denied',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
+                        ),
+                        SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            getPermissionStatus();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              'Give permission',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  );
-                },
-              ),
             ),
-            body: SingleChildScrollView(
-                child: Container(
-                    child: Column(children: [
-              Container(
-                height: 500,
-                width: 500,
-                child: controller == null
-                    ? const Center(child: Text("Loading Camera..."))
-                    : !controller!.value.isInitialized
-                        ? const Center(
-                            child: CircularProgressIndicator(),
-                          )
-                        : CameraPreview(controller!),
-              ),
-              const SizedBox(
-                height: 50,
-              ),
-              Row(
-                children: [
-                  Text(
-                    "Image Description",
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.subtitle2!.copyWith(),
-                  ),
-                ],
-              ),
-              TextFormField(
-                validator: (value) =>
-                    value!.isEmpty ? "This field is required" : null,
-                controller: _itemDescController,
-                onSaved: (value) => {engineNo},
-                keyboardType: TextInputType.text,
-                decoration:
-                    const InputDecoration(hintText: "Enter Image Description"),
-              ),
-              const SizedBox(
-                height: 50,
-              ),
-              ElevatedButton.icon(
-                //image capture button
-                onPressed: () async {
-                  if (_itemDescController.text != '') {
-                    try {
-                      if (controller != null) {
-                        //check if contrller is not null
-                        if (controller!.value.isInitialized) {
-                          //check if controller is initialized
-                          image =
-                              await controller!.takePicture(); //capture image
-                          setState(() {
-                            String? description =
-                                _itemDescController.text.trim();
-                            print(description);
-                            final bytes =
-                                Io.File(image!.path).readAsBytesSync();
-
-                            String imageFile = base64Encode(bytes);
-                            images = Images(
-                                filename: description, attachment: imageFile);
-                            _addImage(image!);
-                            _addImages(images!);
-                            _addDescription(description);
-                          });
-                        }
-                      }
-                    } catch (e) {
-                      print(e); //show error
-                    }
-                    setState(() {
-                      iscameraopen = false;
-                    });
-                  } else {
-                    setState(() {
-                      image = null;
-                      images = null;
-                    });
-
-                    Fluttertoast.showToast(
-                        msg: 'Please fill the description to capture image');
-                  }
-                },
-                icon: const Icon(Icons.camera),
-                label: const Text("Capture"),
-              ),
-            ]))),
           );
   }
 }
@@ -2375,20 +2888,20 @@ void printWrapped(String text) {
 
 void _showDialog(BuildContext context) {
   Widget okButton = TextButton(
-    child: const Text("OK"),
+    child: Text("OK"),
     onPressed: () {
       Navigator.of(context).pop();
       Navigator.of(context)
-          .push(MaterialPageRoute(builder: (context) => const Home()));
+          .push(MaterialPageRoute(builder: (context) => Home()));
     },
   );
 
   AlertDialog alert = AlertDialog(
-    title: const Text(
+    title: Text(
       "Success!",
-      style: const TextStyle(color: Colors.green),
+      style: TextStyle(color: Colors.green),
     ),
-    content: const Text("Successful!"),
+    content: Text("Successful!"),
     actions: [
       okButton,
     ],
@@ -2400,4 +2913,19 @@ void _showDialog(BuildContext context) {
       return alert;
     },
   );
+}
+
+class _SystemPadding extends StatelessWidget {
+  final Widget child;
+
+  _SystemPadding({Key? key, required this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var mediaQuery = MediaQuery.of(context);
+    return AnimatedContainer(
+        padding: mediaQuery.padding,
+        duration: const Duration(milliseconds: 300),
+        child: child);
+  }
 }

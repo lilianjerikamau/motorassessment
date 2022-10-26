@@ -33,6 +33,7 @@ class Assesssment {
     this.chassisno,
     this.policyno,
     this.location,
+    this.date,
   });
 
   int? userid;
@@ -63,9 +64,11 @@ class Assesssment {
   String? chassisno;
   String? policyno;
   String? location;
+  String? date;
 
   factory Assesssment.fromJson(Map<String, dynamic> json) => Assesssment(
         userid: json["userid"],
+        date: json["date"],
         regno: json['regno'],
         make: json["make"],
         custname: json["customer"],
