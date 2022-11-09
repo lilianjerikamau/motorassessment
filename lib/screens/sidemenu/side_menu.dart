@@ -11,6 +11,7 @@ import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/screens/login_screen.dart';
 import 'package:motorassesmentapp/screens/newpass.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
+import 'package:url_launcher/url_launcher.dart';
 
 class SideMenu extends StatefulWidget {
   @override
@@ -47,6 +48,7 @@ class _SideMenuState extends State<SideMenu> {
     super.initState();
   }
 
+  Future<void>? _launched;
   late User _loggedInUser;
   String? _username;
   String? _company;
@@ -55,6 +57,8 @@ class _SideMenuState extends State<SideMenu> {
   BuildContext? _context;
   @override
   Widget build(BuildContext context) {
+    final Uri toLaunch = Uri(
+        scheme: 'https', host: 'www.anchorerp.co.ke', path: 'privacy-policy');
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -191,7 +195,9 @@ class _SideMenuState extends State<SideMenu> {
                   color: Colors.black,
                 ),
                 title: Text('Change Password',
-                    style: TextStyle(color: Colors.black, fontSize: 16)),
+                    style: TextStyle(
+                      color: Colors.black,
+                    )),
                 onTap: () => {
                   Navigator.pushReplacement(
                     context,
@@ -199,6 +205,17 @@ class _SideMenuState extends State<SideMenu> {
                         builder: (context) => NewPass(Config.changePass)),
                   ),
                 },
+              ),
+              ListTile(
+                leading: Icon(
+                  Icons.document_scanner,
+                  color: Colors.black,
+                ),
+                title: Text('Privacy Policy',
+                    style: TextStyle(
+                      color: Colors.blue,
+                    )),
+                onTap: () => {_launched = _launchInBrowser(toLaunch)},
               ),
               SizedBox(
                 height: 150,
@@ -231,5 +248,14 @@ class _SideMenuState extends State<SideMenu> {
         ),
       ],
     );
+  }
+}
+
+Future<void> _launchInBrowser(Uri url) async {
+  if (!await launchUrl(
+    url,
+    mode: LaunchMode.externalApplication,
+  )) {
+    throw 'Could not launch $url';
   }
 }

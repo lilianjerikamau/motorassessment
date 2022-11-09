@@ -88,7 +88,7 @@ class _HomeState extends State<Home> {
     bool isAssessmentTapped = false;
     bool isReinspectionTapped = false;
     bool isStandardValuationTapped = false;
-    bool isSpecialValuationTapped = false;
+    // bool isSpecialValuationTapped = false;
     bool isInstructionTapped = false;
     _fetchPendingassessment();
     _fetchPendinginspection();
@@ -207,7 +207,7 @@ class _HomeState extends State<Home> {
   bool isAssessmentTapped = false;
   bool isReinspectionTapped = false;
   bool isStandardValuationTapped = false;
-  bool isSpecialValuationTapped = false;
+  // bool isSpecialValuationTapped = false;
   bool isInstructionTapped = false;
   bool isAssessmentHistTapped = false;
   bool isReinspectionHistTapped = false;
@@ -217,7 +217,8 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return isAssessmentTapped == false &&
             isInstructionTapped == false &&
-            isReinspectionTapped == false
+            isReinspectionTapped == false &&
+            isStandardValuationTapped == false
         ? Scaffold(
             backgroundColor: Colors.grey[200],
             drawer: SideMenu(),
@@ -291,7 +292,7 @@ class _HomeState extends State<Home> {
                                   children: [
                                     Text('TASKS TO DO',
                                         style: TextStyle(
-                                          fontSize: 20.0,
+                                          fontSize: 16.0,
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                         )),
@@ -393,206 +394,217 @@ class _HomeState extends State<Home> {
                       ),
                     ),
                   ),
-                  // SizedBox(
-                  //   width: MediaQuery.of(context).size.width,
-                  //   child: Card(
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                  //       side: BorderSide(
-                  //         color: Colors.blue,
-                  //         width: 1, //<-- SEE HERE
-                  //       ),
-                  //     ),
-                  //     elevation: 2,
-                  //     margin: EdgeInsets.all(12.0),
-                  //     child: Padding(
-                  //       padding: EdgeInsets.all(8.0),
-                  //       child: Column(
-                  //         children: [
-                  //           Padding(
-                  //             padding: EdgeInsets.all(8.0),
-                  //             child: InkWell(
-                  //               onTap: () {
-                  //                 Navigator.push(
-                  //                   context,
-                  //                   MaterialPageRoute(
-                  //                       builder: (context) =>
-                  //                           CreateAssesment()),
-                  //                 );
-                  //               },
-                  //               child: Row(
-                  //                   mainAxisAlignment:
-                  //                       MainAxisAlignment.spaceBetween,
-                  //                   children: [
-                  //                     Text('Create Assessment',
-                  //                         style: TextStyle(
-                  //                           fontSize: 20.0,
-                  //                           color: Colors.black,
-                  //                           fontWeight: FontWeight.bold,
-                  //                         )),
-                  //                     Icon(
-                  //                       Icons.add,
-                  //                       color: Colors.blue,
-                  //                     ),
-                  //                   ]),
-                  //             ),
-                  //           ),
-                  //           SizedBox(),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                  // SizedBox(
-                  //   width: MediaQuery.of(context).size.width,
-                  //   child: Card(
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                  //       side: BorderSide(
-                  //         color: Colors.blue,
-                  //         width: 1, //<-- SEE HERE
-                  //       ),
-                  //     ),
-                  //     elevation: 2,
-                  //     margin: EdgeInsets.all(12.0),
-                  //     child: Padding(
-                  //       padding: EdgeInsets.all(8.0),
-                  //       child: Column(
-                  //         children: [
-                  //           Padding(
-                  //             padding: EdgeInsets.all(8.0),
-                  //             child: InkWell(
-                  //               onTap: () {
-                  //                 Navigator.push(
-                  //                   context,
-                  //                   MaterialPageRoute(
-                  //                       builder: (context) =>
-                  //                           CreateValuation()),
-                  //                 );
-                  //               },
-                  //               child: Row(
-                  //                   mainAxisAlignment:
-                  //                       MainAxisAlignment.spaceBetween,
-                  //                   children: [
-                  //                     Text('Create Valuation',
-                  //                         style: TextStyle(
-                  //                           fontSize: 20.0,
-                  //                           color: Colors.black,
-                  //                           fontWeight: FontWeight.bold,
-                  //                         )),
-                  //                     Icon(
-                  //                       Icons.add,
-                  //                       color: Colors.blue,
-                  //                     ),
-                  //                   ]),
-                  //             ),
-                  //           ),
-                  //           SizedBox(),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                  // SizedBox(
-                  //   width: MediaQuery.of(context).size.width,
-                  //   child: Card(
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                  //       side: BorderSide(
-                  //         color: Colors.blue,
-                  //         width: 1, //<-- SEE HERE
-                  //       ),
-                  //     ),
-                  //     elevation: 2,
-                  //     margin: EdgeInsets.all(12.0),
-                  //     child: Padding(
-                  //       padding: EdgeInsets.all(8.0),
-                  //       child: Column(
-                  //         children: [
-                  //           Padding(
-                  //             padding: EdgeInsets.all(8.0),
-                  //             child: InkWell(
-                  //               onTap: () {
-                  //                 Navigator.push(
-                  //                   context,
-                  //                   MaterialPageRoute(
-                  //                       builder: (context) =>
-                  //                           CreateReinspection()),
-                  //                 );
-                  //               },
-                  //               child: Row(
-                  //                   mainAxisAlignment:
-                  //                       MainAxisAlignment.spaceBetween,
-                  //                   children: [
-                  //                     Text('Create Re-Inspection',
-                  //                         style: TextStyle(
-                  //                           fontSize: 20.0,
-                  //                           color: Colors.black,
-                  //                           fontWeight: FontWeight.bold,
-                  //                         )),
-                  //                     Icon(
-                  //                       Icons.add,
-                  //                       color: Colors.blue,
-                  //                     ),
-                  //                   ]),
-                  //             ),
-                  //           ),
-                  //           SizedBox(),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
-                  // SizedBox(
-                  //   width: MediaQuery.of(context).size.width,
-                  //   child: Card(
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.all(Radius.circular(15.0)),
-                  //       side: BorderSide(
-                  //         color: Colors.blue,
-                  //         width: 1, //<-- SEE HERE
-                  //       ),
-                  //     ),
-                  //     elevation: 2,
-                  //     margin: EdgeInsets.all(12.0),
-                  //     child: Padding(
-                  //       padding: EdgeInsets.all(8.0),
-                  //       child: Column(
-                  //         children: [
-                  //           Padding(
-                  //             padding: EdgeInsets.all(8.0),
-                  //             child: InkWell(
-                  //               onTap: () {
-                  //                 Navigator.push(
-                  //                   context,
-                  //                   MaterialPageRoute(
-                  //                       builder: (context) =>
-                  //                           CreateSupplementary()),
-                  //                 );
-                  //               },
-                  //               child: Row(
-                  //                   mainAxisAlignment:
-                  //                       MainAxisAlignment.spaceBetween,
-                  //                   children: [
-                  //                     Text('Create Supplementary',
-                  //                         style: TextStyle(
-                  //                           fontSize: 20.0,
-                  //                           color: Colors.black,
-                  //                           fontWeight: FontWeight.bold,
-                  //                         )),
-                  //                     Icon(
-                  //                       Icons.add,
-                  //                       color: Colors.blue,
-                  //                     ),
-                  //                   ]),
-                  //             ),
-                  //           ),
-                  //           SizedBox(),
-                  //         ],
-                  //       ),
-                  //     ),
-                  //   ),
-                  // ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15.0)),
+                            side: BorderSide(
+                              color: Colors.blue,
+                              width: 1, //<-- SEE HERE
+                            ),
+                          ),
+                          elevation: 2,
+                          margin: EdgeInsets.all(10.0),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(4.0),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                CreateAssesment()),
+                                      );
+                                    },
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Assessment',
+                                              style: TextStyle(
+                                                fontSize: 16.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                          Icon(
+                                            Icons.add,
+                                            color: Colors.blue,
+                                          ),
+                                        ]),
+                                  ),
+                                ),
+                                SizedBox(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15.0)),
+                            side: BorderSide(
+                              color: Colors.blue,
+                              width: 1, //<-- SEE HERE
+                            ),
+                          ),
+                          elevation: 2,
+                          margin: EdgeInsets.all(10.0),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(4.0),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                CreateValuation()),
+                                      );
+                                    },
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Valuation',
+                                              style: TextStyle(
+                                                fontSize: 16.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                          Icon(
+                                            Icons.add,
+                                            color: Colors.blue,
+                                          ),
+                                        ]),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15.0)),
+                            side: BorderSide(
+                              color: Colors.blue,
+                              width: 1, //<-- SEE HERE
+                            ),
+                          ),
+                          elevation: 2,
+                          margin: EdgeInsets.all(10.0),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(4.0),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                CreateReinspection()),
+                                      );
+                                    },
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Re-Inspection',
+                                              style: TextStyle(
+                                                fontSize: 16.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                          Icon(
+                                            Icons.add,
+                                            color: Colors.blue,
+                                          ),
+                                        ]),
+                                  ),
+                                ),
+                                SizedBox(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width / 2,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(15.0)),
+                            side: BorderSide(
+                              color: Colors.blue,
+                              width: 1, //<-- SEE HERE
+                            ),
+                          ),
+                          elevation: 2,
+                          margin: EdgeInsets.all(10.0),
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(4.0),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                CreateSupplementary()),
+                                      );
+                                    },
+                                    child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text('Supplementary',
+                                              style: TextStyle(
+                                                fontSize: 16.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.bold,
+                                              )),
+                                          Icon(
+                                            Icons.add,
+                                            color: Colors.blue,
+                                          ),
+                                        ]),
+                                  ),
+                                ),
+                                SizedBox(),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width,
                     child: Card(
@@ -618,7 +630,7 @@ class _HomeState extends State<Home> {
                                   children: [
                                     Text('HISTORY',
                                         style: TextStyle(
-                                          fontSize: 20.0,
+                                          fontSize: 16.0,
                                           color: Colors.black,
                                           fontWeight: FontWeight.bold,
                                         )),
@@ -644,7 +656,7 @@ class _HomeState extends State<Home> {
                                 },
                                 child: Row(
                                   children: <Widget>[
-                                    Icon(Icons.pending),
+                                    Icon(Icons.history),
                                     SizedBox(
                                       width: 10,
                                     ),
@@ -675,7 +687,7 @@ class _HomeState extends State<Home> {
                                 },
                                 child: Row(
                                   children: <Widget>[
-                                    Icon(Icons.pending),
+                                    Icon(Icons.history),
                                     SizedBox(
                                       width: 10,
                                     ),
@@ -706,7 +718,7 @@ class _HomeState extends State<Home> {
                                 },
                                 child: Row(
                                   children: <Widget>[
-                                    Icon(Icons.pending),
+                                    Icon(Icons.history),
                                     SizedBox(
                                       width: 10,
                                     ),
@@ -801,7 +813,7 @@ class _HomeState extends State<Home> {
                           elevation: 0.0,
                         ),
                         body: _body4())
-                    : isSpecialValuationTapped == true
+                    : isStandardValuationTapped == true
                         ? Scaffold(
                             backgroundColor: Colors.grey[200],
                             appBar: AppBar(
@@ -826,32 +838,7 @@ class _HomeState extends State<Home> {
                               elevation: 0.0,
                             ),
                             body: _body2())
-                        : isStandardValuationTapped == true
-                            ? Scaffold(
-                                backgroundColor: Colors.grey[200],
-                                appBar: AppBar(
-                                  title: Text(
-                                    'Valuations',
-                                    style: TextStyle(color: Colors.black),
-                                  ),
-                                  leading: IconButton(
-                                    icon: Icon(
-                                      Icons.arrow_back,
-                                      color: Colors.blue,
-                                    ),
-                                    onPressed: () {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) => Home()),
-                                      );
-                                    },
-                                  ),
-                                  backgroundColor: Colors.white,
-                                  elevation: 0.0,
-                                ),
-                                body: _body2())
-                            : Container();
+                        : Container();
   }
 
   _fetchPendingassessment() async {

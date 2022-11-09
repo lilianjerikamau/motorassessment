@@ -345,17 +345,16 @@ class _State extends State<LoginPage> {
                                                         Toast.LENGTH_LONG);
                                               }
                                             });
-                                          } else if (statusCode == 500) {
+                                          } else {
                                             // Fluttertoast.showToast(
                                             //     msg: 'Error $statusCode Occured');
                                             showDialog(
                                                 context: context,
                                                 builder: (BuildContext bc) {
                                                   return CupertinoAlertDialog(
-                                                    title: Text(
-                                                        'Connection Error'),
+                                                    title: Text('Error'),
                                                     content: Text(
-                                                        'There is a connection issue with the server! Please try again later'),
+                                                        'Wrong username or password'),
                                                     actions: <Widget>[
                                                       MaterialButton(
                                                           onPressed: () {

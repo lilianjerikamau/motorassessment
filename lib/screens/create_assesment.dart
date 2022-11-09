@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:motorassesmentapp/utils/network_handler.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -241,6 +243,42 @@ class _CreateAssesmentState extends State<CreateAssesment>
     }
   }
 
+  Map _source = {ConnectivityResult.none: false};
+  final NetworkConnectivity _networkConnectivity = NetworkConnectivity.instance;
+  String string = '';
+  _checkNetwork() {
+    _networkConnectivity.initialise();
+    _networkConnectivity.myStream.listen((source) async {
+      _source = source;
+      print('source $_source');
+      // 1.
+      switch (_source.keys.toList()[0]) {
+        case ConnectivityResult.mobile:
+          string =
+              _source.values.toList()[0] ? 'Mobile: Online' : 'Mobile: Offline';
+          break;
+        case ConnectivityResult.wifi:
+          string =
+              _source.values.toList()[0] ? 'WiFi: Online' : 'WiFi: Offline';
+          break;
+        case ConnectivityResult.none:
+        default:
+          string = 'Offline';
+      }
+      // 2.
+      setState(() {});
+      // 3.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            string,
+            style: TextStyle(fontSize: 30),
+          ),
+        ),
+      );
+    });
+  }
+
   @override
   void initState() {
     _fetchCustomers();
@@ -248,6 +286,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
     loadCamera();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     onNewCameraSelected(cameras[0]);
+
     SessionPreferences().getLoggedInUser().then((user) {
       setState(() {
         _loggedInUser = user;
@@ -271,6 +310,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
   @override
   void dispose() {
     controller?.dispose();
+    _networkConnectivity.disposeStream();
     super.dispose();
   }
 
@@ -459,14 +499,6 @@ class _CreateAssesmentState extends State<CreateAssesment>
                   }),
               MaterialButton(
                   onPressed: () async {
-                    Navigator.pop(ctx);
-                    ProgressDialog dial = new ProgressDialog(context,
-                        type: ProgressDialogType.Normal);
-                    dial.show();
-                    dial.style(
-                      message: 'Sending Assessment',
-                    );
-
                     // String chassisno = _chasisno.text.trim();
                     // String make = _make.text.trim();
                     String vehiclecolor = _color.text.trim();
@@ -492,86 +524,95 @@ class _CreateAssesmentState extends State<CreateAssesment>
                     String demoUrl = await Config.getBaseUrl();
                     Uri url = Uri.parse(demoUrl + 'valuation/assessment/');
                     print(url);
+                    if (string.contains('Online')) {
+                      Navigator.pop(ctx);
+                      ProgressDialog dial = new ProgressDialog(context,
+                          type: ProgressDialogType.Normal);
+                      dial.show();
+                      dial.style(
+                        message: 'Sending Assessment',
+                      );
 
-                    final response = await http.post(url,
-                        headers: <String, String>{
-                          'Content-Type': 'application/json',
-                        },
-                        body: jsonEncode(<String, dynamic>{
-                          "userid": _userid,
-                          "custid": _custId,
-                          "revised": revised,
-                          "cashinlieu": revised2,
-                          "instructionno": _instructionId,
-                          "driven": isOther5,
-                          "drivenby": "null",
-                          "towed": isOther6,
-                          "make": _make,
-                          "model": _carmodel,
-                          "year": year,
-                          "mileage": mileage,
-                          "color": vehiclecolor,
-                          "engineno": engineno,
-                          "chasisno": _chasisno,
-                          "pav": pav != "" ? pav : 1,
-                          "salvage": salvage != "" ? salvage : "0",
-                          "brakes": brakes,
-                          "paintwork": paintwork,
-                          "steering": steering,
-                          "RHF": RHF,
-                          "LHR": LHR,
-                          "RHR": RHR,
-                          "LHF": LHF,
-                          "Spare": spare,
-                          "damagesobserved": damagesobserved,
-                          "photolist": newImagesList,
-                        }));
+                      final response = await http.post(url,
+                          headers: <String, String>{
+                            'Content-Type': 'application/json',
+                          },
+                          body: jsonEncode(<String, dynamic>{
+                            "userid": _userid,
+                            "custid": _custId,
+                            "revised": revised,
+                            "cashinlieu": revised2,
+                            "instructionno": _instructionId,
+                            "driven": isOther5,
+                            "drivenby": "null",
+                            "towed": isOther6,
+                            "make": _make,
+                            "model": _carmodel,
+                            "year": year,
+                            "mileage": mileage,
+                            "color": vehiclecolor,
+                            "engineno": engineno,
+                            "chasisno": _chasisno,
+                            "pav": pav != "" ? pav : 1,
+                            "salvage": salvage != "" ? salvage : "0",
+                            "brakes": brakes,
+                            "paintwork": paintwork,
+                            "steering": steering,
+                            "RHF": RHF,
+                            "LHR": LHR,
+                            "RHR": RHR,
+                            "LHF": LHF,
+                            "Spare": spare,
+                            "damagesobserved": damagesobserved,
+                            "photolist": newImagesList,
+                          }));
 
-                    printWrapped(jsonEncode(<String, dynamic>{
-                      // "userid": _userid,
-                      // "custid": _custId,
-                      // "revised": isOther7,
-                      // "cashinlieu": revised2,
-                      // "instructionno": 1,
-                      // "driven": isOther5,
-                      // "drivenby": drivenby,
-                      // "towed": isOther6,
-                      // "make": _make,
-                      // "model": _carmodel,
-                      // "year": year,
-                      // "mileage": mileage,
-                      // "color": vehiclecolor,
-                      // "engineno": engineno,
-                      // "chasisno": _chasisno,
-                      // "pav": pav,
-                      // "salvage": salvage,
-                      // "brakes": brakes,
-                      // "paintwork": paintwork,
-                      // "steering": steering,
-                      // "RHF": RHF,
-                      // "LHR": LHR,
-                      // "RHR": RHR,
-                      // "LHF": LHF,
-                      // "Spare": spare,
-                      // "damagesobserved": damagesobserved,
-                      "photolist": newImagesList,
-                      // "photolist": newList,
-                    }));
-                    if (response != null) {
-                      dial.hide();
-                      int statusCode = response.statusCode;
-                      if (statusCode == 200) {
-                        return _showDialog(this.context);
+                      printWrapped(jsonEncode(<String, dynamic>{
+                        // "userid": _userid,
+                        // "custid": _custId,
+                        // "revised": isOther7,
+                        // "cashinlieu": revised2,
+                        // "instructionno": 1,
+                        // "driven": isOther5,
+                        // "drivenby": drivenby,
+                        // "towed": isOther6,
+                        // "make": _make,
+                        // "model": _carmodel,
+                        // "year": year,
+                        // "mileage": mileage,
+                        // "color": vehiclecolor,
+                        // "engineno": engineno,
+                        // "chasisno": _chasisno,
+                        // "pav": pav,
+                        // "salvage": salvage,
+                        // "brakes": brakes,
+                        // "paintwork": paintwork,
+                        // "steering": steering,
+                        // "RHF": RHF,
+                        // "LHR": LHR,
+                        // "RHR": RHR,
+                        // "LHF": LHF,
+                        // "Spare": spare,
+                        // "damagesobserved": damagesobserved,
+                        "photolist": newImagesList,
+                        // "photolist": newList,
+                      }));
+                      if (response != null) {
+                        dial.hide();
+                        int statusCode = response.statusCode;
+                        if (statusCode == 200) {
+                          return _showDialog(this.context);
+                        } else {
+                          print("Submit Status code::" +
+                              response.body.toString());
+                          showAlertDialog(this.context, response.body);
+                        }
                       } else {
-                        print(
-                            "Submit Status code::" + response.body.toString());
-                        showAlertDialog(this.context, response.body);
+                        dial.hide();
+                        Fluttertoast.showToast(
+                            msg: 'There was no response from the server');
                       }
-                    } else {
-                      dial.hide();
-                      Fluttertoast.showToast(
-                          msg: 'There was no response from the server');
-                    }
+                    } else {}
                   },
                   child: Text('Yes'))
             ],
@@ -816,7 +857,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                             });
                             break;
                           case 4:
-                            _submit();
+                            _checkNetwork();
                         }
                       });
                     },

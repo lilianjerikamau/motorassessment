@@ -240,9 +240,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           "userid": _userid,
                           "custid": _custId,
                           "revised": revised,
-                          "instructionno": _instructionId != null
-                              ? _instructionId
-                              : _assessmentId,
+                          "instructionno": _instructionId,
+                          "assessmentno": _assessmentId,
                           "make": _make,
                           "model": _carmodel,
                           "year": year,
@@ -943,10 +942,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                             // _custEmail = value != null
                                             //     ? ['email']
                                             //     : null;
-                                            setState(() {
-                                              _fetchInstructions();
-                                              _fetchAssessments();
-                                            });
+
+                                            _fetchInstructions();
+                                            _fetchAssessments();
+
                                             print(_selectedValue);
                                             print(_custName);
                                             print(_custId);
@@ -1162,6 +1161,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                           onChanged: (value) {
                                             setState(() {
                                               _selectedValue = value;
+                                              _instructionId = 0;
                                               _assessmentId = value != null
                                                   ? value['id']
                                                   : null;
@@ -1244,6 +1244,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                           onChanged: (value) {
                                             setState(() {
                                               _selectedValue = value;
+                                              _assessmentId = 0;
                                               _instructionId = value != null
                                                   ? value['id']
                                                   : null;
@@ -1277,6 +1278,52 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                               _excess = value != null
                                                   ? value['excess']
                                                   : null;
+                                              _engineno.text = value != null
+                                                  ? value['engineno']
+                                                  : null;
+                                              _color.text = value != null
+                                                  ? value['color']
+                                                  : null;
+                                              _year.text = value != null
+                                                  ? value['year']
+                                                  : null;
+                                              _paintwork.text = value != null
+                                                  ? value['paintwork']
+                                                  : null;
+                                              _spare.text = value != null
+                                                  ? value['spare']
+                                                  : null;
+                                              _pav.text = (value != null
+                                                  ? value["pav"].toString()
+                                                  : null)!;
+                                              _salvage.text = (value != null
+                                                  ? value["salvage"].toString()
+                                                  : null)!;
+                                              _RHR.text = value != null
+                                                  ? value['rhr']
+                                                  : null;
+                                              _LHF.text = value != null
+                                                  ? value['lhf']
+                                                  : null;
+                                              _LHR.text = value != null
+                                                  ? value['lhr']
+                                                  : null;
+                                              _LHR.text = value != null
+                                                  ? value['lhf']
+                                                  : null;
+                                              _RHF.text = value != null
+                                                  ? value['rhf']
+                                                  : null;
+                                              _brakes.text = value != null
+                                                  ? value['brakes']
+                                                  : null;
+                                              _steering.text = value != null
+                                                  ? value['steering']
+                                                  : null;
+                                              _remarks.text = value != null
+                                                  ? value['remarks']
+                                                  : null;
+                                              print(_chasisno);
                                             });
 
                                             _dropdownError = null;
@@ -1488,7 +1535,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ],
                                       ),
                                       TextFormField(
-                                        initialValue: _insuredvalue.toString(),
+                                        initialValue: _insuredvalue != null
+                                            ? _insuredvalue.toString()
+                                            : "",
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -1527,36 +1576,6 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                       ),
                                       SizedBox(
                                         height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Chassis No",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        initialValue: _chasisno,
-                                        onSaved: (value) => {engineNo},
-                                        style: TextStyle(color: Colors.blue),
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Chassis No"),
                                       ),
                                       Row(
                                         children: [
@@ -1686,6 +1705,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .subtitle2!
                                                     .copyWith(),
                                               ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
+                                              ),
                                             ],
                                           ),
                                           TextFormField(
@@ -1710,6 +1737,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(),
+                                              ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
                                               ),
                                             ],
                                           ),
@@ -1736,6 +1771,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .subtitle2!
                                                     .copyWith(),
                                               ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
+                                              ),
                                             ],
                                           ),
                                           TextFormField(
@@ -1760,6 +1803,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(),
+                                              ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
                                               ),
                                             ],
                                           ),
@@ -1786,6 +1837,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .subtitle2!
                                                     .copyWith(),
                                               ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
+                                              ),
                                             ],
                                           ),
                                           TextFormField(
@@ -1810,6 +1869,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(),
+                                              ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
                                               ),
                                             ],
                                           ),
@@ -1836,13 +1903,22 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .subtitle2!
                                                     .copyWith(),
                                               ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
+                                              ),
                                             ],
                                           ),
                                           TextFormField(
                                             validator: (value) => value!.isEmpty
                                                 ? "This field is required"
                                                 : null,
-                                            controller: _chassisno,
+                                            initialValue: _chasisno,
+                                            // controller: _chassisno,
                                             onSaved: (value) => {engineNo},
                                             keyboardType: TextInputType.text,
                                             decoration: InputDecoration(
@@ -1860,6 +1936,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(),
+                                              ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
                                               ),
                                             ],
                                           ),
@@ -1885,6 +1969,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     .textTheme
                                                     .subtitle2!
                                                     .copyWith(),
+                                              ),
+                                              Text(
+                                                "*",
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .subtitle2!
+                                                    .copyWith(
+                                                        color: Colors.blue),
                                               ),
                                             ],
                                           ),
@@ -3040,7 +3132,6 @@ class _CreateReinspectionState extends State<CreateReinspection> {
 
   _fetchAssessments() async {
     String url = await Config.getBaseUrl();
-
     HttpClientResponse response = await Config.getRequestObject(
         url + 'valuation/assessmentlist/?custid=$_custId', Config.get);
     if (response != null) {
@@ -3048,7 +3139,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
       response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         setState(() {
-          instructionsJson = jsonResponse;
+          assessmentJson = jsonResponse;
         });
         print(jsonResponse);
         var list = jsonResponse as List;
