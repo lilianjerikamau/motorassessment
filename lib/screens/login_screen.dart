@@ -383,7 +383,7 @@ class _State extends State<LoginPage> {
                                     textColor: Colors.blue,
                                     child: Text(
                                       'Company URL',
-                                      style: TextStyle(fontSize: 20),
+                                      style: TextStyle(fontSize: 18),
                                     ),
                                     onPressed: () async {
                                       setState(() {

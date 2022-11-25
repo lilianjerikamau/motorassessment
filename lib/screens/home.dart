@@ -269,6 +269,7 @@ class _HomeState extends State<Home> {
                 children: [
                   SizedBox(
                     width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height / 3,
                     child: Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(15.0)),
@@ -607,6 +608,7 @@ class _HomeState extends State<Home> {
                   ),
                   SizedBox(
                     width: MediaQuery.of(context).size.width,
+                    height: MediaQuery.of(context).size.height / 3,
                     child: Card(
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.all(Radius.circular(15.0)),

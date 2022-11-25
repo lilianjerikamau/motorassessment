@@ -101,7 +101,7 @@ class Assesssment {
         brakes: json["brakes"],
         driven: json["driven"],
       );
-  static Map<String, dynamic> toMap(Assesssment assesssment) => {
+  static Map<String, dynamic> toJson(Assesssment assesssment) => {
         'driven': assesssment.driven,
         'brakes': assesssment.brakes,
         'steering': assesssment.steering,
@@ -123,15 +123,9 @@ class Assesssment {
         'location': assesssment.location,
         'model': assesssment.model,
       };
-  static String encode(List<Assesssment> assesssments) => json.encode(
-        assesssments
-            .map<Map<String, dynamic>>(
-                (assesssment) => Assesssment.toMap(assesssment))
-            .toList(),
-      );
 
-  static List<Assesssment> decode(String assesssments) =>
-      (json.decode(assesssments) as List<dynamic>)
-          .map<Assesssment>((item) => Assesssment.fromJson(item))
-          .toList();
+  @override
+  String toString() {
+    return '"Assesssment" : { "driven":$driven, "brakes": $brakes, "steering": $steering,"paintwork":$paintwork,"damegesobserved":$damegesobserved,"userid":$userid,"date":$date,"regno"$regno,"make"$make,"customer"$custname,"drivenby"$drivenby,"towed"$towed,"cashinlieu":$cashinlieu,"companyname":$instructionno,"owner":$owner,"claimno":$claimno,"chassisno":$chassisno,"policyno":$policyno,"location":$location,"model":$model}';
+  }
 }

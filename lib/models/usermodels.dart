@@ -65,27 +65,25 @@ class User {
 class Customer {
   int? custid;
   String? company;
+  String? mobile;
 
   Customer({
     this.custid,
     this.company,
+    this.mobile,
   });
 
   factory Customer.fromJson(Map<String, dynamic> json) =>
       _$CustomerFromJson(json);
   Map<String, dynamic> toJson() => _$CustomerToJson(this);
   factory Customer.fromMap(Map<String, dynamic> json) => new Customer(
-        custid: json["id"],
-        company: json["name"],
-      );
+      custid: json["id"], company: json["name"], mobile: json["mobile"]);
 
-  Map<String, dynamic> toMap() => {
-        "id": custid,
-        "name": company,
-      };
+  Map<String, dynamic> toMap() =>
+      {"id": custid, "name": company, "mobile": mobile};
   @override
   String toString() {
-    return 'Customer{custid: $custid}';
+    return '"Customer" :{custid: $custid,"name":$company,"mobile":$mobile}';
   }
 }
 

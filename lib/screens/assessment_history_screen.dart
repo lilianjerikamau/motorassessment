@@ -12,6 +12,7 @@ import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AssesssmentHistoryScreen extends StatefulWidget {
   @override
@@ -39,6 +40,8 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
   String? _regno;
   String? _date;
   int? _userid;
+  List assessmentHistJson = [];
+  String? assessmentHistString;
   @override
   void initState() {
     SessionPreferences().getLoggedInUser().then((user) {
@@ -48,6 +51,25 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
       });
     });
     super.initState();
+  }
+
+  getUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String auth = prefs.getString('assessmentlist') as String;
+    List customerList = auth.split(",");
+    print("customerlist");
+    print(customerList);
+    setState(() {
+      customerList = assessmentHistJson;
+    });
+  }
+
+  Future<void> saveUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('assessmentlist', assessmentHistString!);
+    print('user info:');
+    // printWrapped(assessmentHistString!);
+    getUserInfo();
   }
 
   @override
@@ -320,6 +342,13 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
                   .transform(LineSplitter())
                   .listen((data) {
                 var jsonResponse = json.decode(data);
+
+                setState(() {
+                  assessmentHistJson = jsonResponse;
+                  assessmentHistString = assessmentHistJson.join(",");
+                  saveUserInfo();
+                });
+
                 var list = jsonResponse as List;
                 List<Assesssment> reqHistories = list
                     .map<Assesssment>((e) => Assesssment.fromJson(e))

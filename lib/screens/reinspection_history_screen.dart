@@ -14,6 +14,7 @@ import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ReinspectionHistoryScreen extends StatefulWidget {
   const ReinspectionHistoryScreen({super.key});
@@ -43,6 +44,8 @@ class _ReinspectionHistoryScreenState extends State<ReinspectionHistoryScreen> {
   String? _regno;
   String? _date;
   int? _userid;
+  List reinspectionHistJson = [];
+  String? reinspectionHistString;
   @override
   void initState() {
     SessionPreferences().getLoggedInUser().then((user) {
@@ -52,6 +55,25 @@ class _ReinspectionHistoryScreenState extends State<ReinspectionHistoryScreen> {
       });
     });
     super.initState();
+  }
+
+  getUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String auth = prefs.getString('reinspectionlist') as String;
+    List customerList = auth.split(",");
+    print("customerlist");
+    print(customerList);
+    setState(() {
+      customerList = reinspectionHistJson;
+    });
+  }
+
+  Future<void> saveUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('reinspectionlist', reinspectionHistString!);
+    print('user info:');
+    // printWrapped(assessmentHistString!);
+    getUserInfo();
   }
 
   @override
@@ -324,6 +346,11 @@ class _ReinspectionHistoryScreenState extends State<ReinspectionHistoryScreen> {
                   .transform(LineSplitter())
                   .listen((data) {
                 var jsonResponse = json.decode(data);
+                setState(() {
+                  reinspectionHistJson = jsonResponse;
+                  reinspectionHistString = reinspectionHistJson.join(",");
+                  saveUserInfo();
+                });
                 var list = jsonResponse as List;
                 List<Assesssment> reqHistories = list
                     .map<Assesssment>((e) => Assesssment.fromJson(e))

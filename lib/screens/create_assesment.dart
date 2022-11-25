@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
@@ -5,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:motorassesmentapp/models/assessmentmodels.dart';
 import 'package:motorassesmentapp/utils/network_handler.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -37,6 +39,7 @@ import 'dart:io' as Io;
 import 'package:photo_view/photo_view.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import '../main.dart';
+import 'package:intl/intl.dart';
 
 class CreateAssesment extends StatefulWidget {
   CreateAssesment({Key? key}) : super(key: key);
@@ -51,6 +54,8 @@ class _CreateAssesmentState extends State<CreateAssesment>
 
   int? _userid;
   int? _custid;
+  String? _custname;
+  String? _custphone;
   int? _custId;
   int? custId;
   int? _hrid;
@@ -89,7 +94,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
   String? _vehiclereg;
   List<Customer> _customers = [];
   List<Instruction> _instruction = [];
-  List instructionsJson = [];
+  final value = new NumberFormat("#,##0.00", "en_US");
+  List<String> assessmentsJson = [];
+  String? assessmentsString;
   static late var _custName;
 
   static late var _custPhone;
@@ -153,8 +160,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
   double _currentZoomLevel = 1.0;
   double _currentExposureOffset = 0.0;
   FlashMode? _currentFlashMode;
+  late SharedPreferences prefs;
   final resolutionPresets = ResolutionPreset.values;
-  ResolutionPreset currentResolutionPreset = ResolutionPreset.high;
+  ResolutionPreset currentResolutionPreset = ResolutionPreset.low;
   XFile? image; //for captured image
   void resetCameraValues() async {
     _currentZoomLevel = 1.0;
@@ -245,45 +253,49 @@ class _CreateAssesmentState extends State<CreateAssesment>
 
   Map _source = {ConnectivityResult.none: false};
   final NetworkConnectivity _networkConnectivity = NetworkConnectivity.instance;
-  String string = '';
-  _checkNetwork() {
-    _networkConnectivity.initialise();
-    _networkConnectivity.myStream.listen((source) async {
-      _source = source;
-      print('source $_source');
-      // 1.
-      switch (_source.keys.toList()[0]) {
-        case ConnectivityResult.mobile:
-          string =
-              _source.values.toList()[0] ? 'Mobile: Online' : 'Mobile: Offline';
-          break;
-        case ConnectivityResult.wifi:
-          string =
-              _source.values.toList()[0] ? 'WiFi: Online' : 'WiFi: Offline';
-          break;
-        case ConnectivityResult.none:
-        default:
-          string = 'Offline';
-      }
-      // 2.
-      setState(() {});
-      // 3.
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            string,
-            style: TextStyle(fontSize: 30),
-          ),
-        ),
-      );
-    });
+
+  saveAssessments() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // save
+    prefs.setString("asessmentslist", assessmentsString!);
+    // readAssessments();
   }
+
+  readAssessments() async {
+    //  read
+
+    prefs = await SharedPreferences.getInstance();
+    assessmentsString = prefs.getString("asessmentslist")!;
+    // List<Assesssment> assesssments =
+    //     assessmentsJson.map((json) => Assesssment.fromJson(json)).toList();
+    print('asessmentspostlist is');
+    // for (int i = 0; i < assessmentsJson.length; i++) {
+    //   setState(() {
+    //     assessmentsString = assessmentsJson[i];
+    //     print(assessmentsJson[i]);
+    //   });
+    // }
+    print('readassessment string  is');
+    print(assessmentsString);
+    if (ConnectivityResult.none == true || assessmentsString == null) {
+    } else {
+      _submitOffline();
+    }
+  }
+
+  StreamSubscription? connection;
+  bool isoffline = false;
 
   @override
   void initState() {
     _fetchCustomers();
     _instructionId = 2;
     loadCamera();
+    saveUserInfo();
+
+    // saveAssessmentInstructions();
+    getAssessmentInstructions();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     onNewCameraSelected(cameras[0]);
 
@@ -303,14 +315,84 @@ class _CreateAssesmentState extends State<CreateAssesment>
     isBankSelected = false;
     isFinancierSelected = false;
     iscameraopen = false;
-
+    connection = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      // whenevery connection status is changed.
+      if (result == ConnectivityResult.none) {
+        //there is no any connection
+        print('Not Connected');
+        setState(() {
+          isoffline = true;
+        });
+      } else if (result == ConnectivityResult.mobile) {
+        //connection is mobile data network
+        if (assessmentsString != null || assessmentsString == "") {
+          readAssessments();
+        }
+        print('Connected to mobile');
+        setState(() {
+          isoffline = false;
+        });
+      } else if (result == ConnectivityResult.wifi) {
+        //connection is from wifi
+        print('Connected to wifi');
+        print(assessmentsString);
+        if (assessmentsString != null || assessmentsString == "") {
+          readAssessments();
+        }
+        setState(() {
+          isoffline = false;
+        });
+      }
+    });
     super.initState();
+  }
+
+  getUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String auth = prefs.getString('key') as String;
+    List customerList = auth.split(",");
+    print("customerlist");
+    print(customersJson);
+    setState(() {
+      customerList = customersJson;
+    });
+  }
+
+  Future<void> saveUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('key', customersString!);
+    print('user info:');
+    printWrapped(customersString!);
+    getUserInfo();
+  }
+
+  getAssessmentInstructions() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String auth = prefs.getString('assessmentinstructions') as String;
+    List instructionList = auth.split(",");
+    print("instructionList");
+
+    setState(() {
+      instructionList = instructionsJson;
+      print(instructionsJson);
+    });
+  }
+
+  Future<void> saveAssessmentInstructions() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('assessmentinstructions', instructionsString!);
+    print('inst:');
+    printWrapped(instructionsString!);
+    // getUserInfo();
+    getAssessmentInstructions();
   }
 
   @override
   void dispose() {
     controller?.dispose();
-    _networkConnectivity.disposeStream();
+    connection!.cancel();
     super.dispose();
   }
 
@@ -336,7 +418,8 @@ class _CreateAssesmentState extends State<CreateAssesment>
   late BuildContext _context;
 
   // late User _loggedInUser;
-
+  String? customersString;
+  String? instructionsString;
   String? _searchString;
   final _drivenby = TextEditingController();
   // final _make = TextEditingController();
@@ -405,7 +488,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
   bool isExistingClient = false;
   bool isExistingFinancier = false;
   bool isOther5 = false;
-  bool isOther6 = false;
+  bool isOther6 = true;
   bool isOther7 = false;
   late String otherValue6;
   late String otherValue7;
@@ -484,6 +567,15 @@ class _CreateAssesmentState extends State<CreateAssesment>
     // _submit();
   }
 
+  Future uploadmultipleassessments() async {
+    for (int i = 0; i < assessmentsJson.length; i++) {
+      setState() {
+        assessmentsString = assessmentsJson[i];
+      }
+    }
+    // _submit();
+  }
+
   _submit() async {
     showDialog(
         context: this.context,
@@ -521,18 +613,55 @@ class _CreateAssesmentState extends State<CreateAssesment>
                     String spare = _spare.text.trim();
                     String damagesobserved = _damagesobserved.text.trim();
 
+                    print(ConnectivityResult.none != true);
+                    Navigator.pop(ctx);
+                    ProgressDialog dial = new ProgressDialog(context,
+                        type: ProgressDialogType.Normal);
+
+                    dial.show();
+                    dial.style(
+                      message: 'Sending Assessment',
+                    );
                     String demoUrl = await Config.getBaseUrl();
                     Uri url = Uri.parse(demoUrl + 'valuation/assessment/');
                     print(url);
-                    if (string.contains('Online')) {
-                      Navigator.pop(ctx);
-                      ProgressDialog dial = new ProgressDialog(context,
-                          type: ProgressDialogType.Normal);
-                      dial.show();
-                      dial.style(
-                        message: 'Sending Assessment',
-                      );
+                    int timeout = 5;
 
+                    try {
+                      setState(() {
+                        assessmentsString = (jsonEncode(<String, dynamic>{
+                          "userid": _userid,
+                          "custid": _custId,
+                          "revised": revised,
+                          "cashinlieu": revised2,
+                          "instructionno": _instructionId,
+                          "driven": isOther5,
+                          "drivenby": "null",
+                          "towed": isOther6,
+                          "make": _make,
+                          "model": _carmodel,
+                          "year": year,
+                          "mileage": mileage,
+                          "color": vehiclecolor,
+                          "engineno": engineno,
+                          "chasisno": _chasisno,
+                          "pav": pav != "" ? pav : 1,
+                          "salvage": salvage != "" ? salvage : "0",
+                          "brakes": brakes,
+                          "paintwork": paintwork,
+                          "steering": steering,
+                          "RHF": RHF,
+                          "LHR": LHR,
+                          "RHR": RHR,
+                          "LHF": LHF,
+                          "Spare": spare,
+                          "damagesobserved": damagesobserved,
+                          "photolist": newImagesList,
+                        }));
+                        _addAssessments(assessmentsString);
+                        saveAssessments();
+                        print('saved');
+                      });
                       final response = await http.post(url,
                           headers: <String, String>{
                             'Content-Type': 'application/json',
@@ -568,37 +697,40 @@ class _CreateAssesmentState extends State<CreateAssesment>
                           }));
 
                       printWrapped(jsonEncode(<String, dynamic>{
-                        // "userid": _userid,
-                        // "custid": _custId,
-                        // "revised": isOther7,
-                        // "cashinlieu": revised2,
-                        // "instructionno": 1,
-                        // "driven": isOther5,
-                        // "drivenby": drivenby,
-                        // "towed": isOther6,
-                        // "make": _make,
-                        // "model": _carmodel,
-                        // "year": year,
-                        // "mileage": mileage,
-                        // "color": vehiclecolor,
-                        // "engineno": engineno,
-                        // "chasisno": _chasisno,
-                        // "pav": pav,
-                        // "salvage": salvage,
-                        // "brakes": brakes,
-                        // "paintwork": paintwork,
-                        // "steering": steering,
-                        // "RHF": RHF,
-                        // "LHR": LHR,
-                        // "RHR": RHR,
-                        // "LHF": LHF,
-                        // "Spare": spare,
-                        // "damagesobserved": damagesobserved,
-                        "photolist": newImagesList,
-                        // "photolist": newList,
+                        "userid": assessmentsString,
+                        "custid": _custId,
+                        "revised": revised,
+                        "cashinlieu": revised2,
+                        "instructionno": _instructionId,
+                        "driven": isOther5,
+                        "drivenby": "null",
+                        "towed": isOther6,
+                        "make": _make,
+                        "model": _carmodel,
+                        "year": year,
+                        "mileage": mileage,
+                        "color": vehiclecolor,
+                        "engineno": engineno,
+                        "chasisno": _chasisno,
+                        "pav": pav != "" ? pav : 1,
+                        "salvage": salvage != "" ? salvage : "0",
+                        "brakes": brakes,
+                        "paintwork": paintwork,
+                        "steering": steering,
+                        "RHF": RHF,
+                        "LHR": LHR,
+                        "RHR": RHR,
+                        "LHF": LHF,
+                        "Spare": spare,
+                        "damagesobserved": damagesobserved,
+                        // "photolist": newImagesList,
                       }));
+                      print('assessment json is:');
+                      print(assessmentsString);
+
                       if (response != null) {
                         dial.hide();
+                        prefs.clear();
                         int statusCode = response.statusCode;
                         if (statusCode == 200) {
                           return _showDialog(this.context);
@@ -612,7 +744,94 @@ class _CreateAssesmentState extends State<CreateAssesment>
                         Fluttertoast.showToast(
                             msg: 'There was no response from the server');
                       }
-                    } else {}
+                    } on TimeoutException catch (e) {
+                      print('Timeout Error: $e');
+                      showAlertDialog(this.context, '$e');
+                    } on SocketException catch (e) {
+                      print('Socket Error: $e');
+                      dial.hide();
+                      showAlertDialog(this.context, '$e');
+                    } on Error catch (e) {
+                      showAlertDialog(this.context, '$e');
+                    }
+                  },
+                  child: Text('Yes'))
+            ],
+          );
+        });
+  }
+
+  _submitOffline() async {
+    showDialog(
+        context: this.context,
+        builder: (ctx) {
+          return AlertDialog(
+            title: Text('Submit saved assessments?'),
+            content: Text('Are you sure you want to submit'),
+            actions: <Widget>[
+              MaterialButton(
+                  child: Text('No'),
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                  }),
+              MaterialButton(
+                  onPressed: () async {
+                    // String chassisno = _chasisno.text.trim();
+                    // String make = _make.text.trim();
+                    String vehiclecolor = _color.text.trim();
+                    String engineno = _engineno.text.trim();
+                    // String model = _carmodel.text.trim();
+                    String year = _year.text.trim();
+                    String dateinput = _dateinput.text;
+                    String pav = _pav.text.trim();
+                    String salvage = _salvage.text.trim();
+                    String brakes = _brakes.text.trim();
+                    String paintwork = _paintwork.text.trim();
+                    String mileage = _mileage.text.trim();
+                    String steering = _steering.text.trim();
+                    String RHF = _RHF.text.trim();
+                    String LHR = _LHR.text;
+                    String RHR = _RHR.text;
+                    String LHF = _LHF.text.trim();
+                    String spare = _spare.text.trim();
+                    String damagesobserved = _damagesobserved.text.trim();
+                    String demoUrl = await Config.getBaseUrl();
+                    Uri url = Uri.parse(demoUrl + 'valuation/assessment/');
+                    print(url);
+
+                    Navigator.pop(ctx);
+                    ProgressDialog dial = new ProgressDialog(context,
+                        type: ProgressDialogType.Normal);
+                    dial.show();
+                    dial.style(
+                      message: 'Sending Assessment',
+                    );
+
+                    final response = await http.post(url,
+                        headers: <String, String>{
+                          'Content-Type': 'application/json',
+                        },
+                        body: assessmentsString);
+
+                    // print('assessment json is:');
+                    print(assessmentsString);
+                    if (response != null) {
+                      dial.hide();
+
+                      int statusCode = response.statusCode;
+                      if (statusCode == 200) {
+                        await prefs.clear();
+                        return _showDialog(this.context);
+                      } else {
+                        print(
+                            "Submit Status code::" + response.body.toString());
+                        showAlertDialog(this.context, response.body);
+                      }
+                    } else {
+                      dial.hide();
+                      Fluttertoast.showToast(
+                          msg: 'There was no response from the server');
+                    }
                   },
                   child: Text('Yes'))
             ],
@@ -631,6 +850,8 @@ class _CreateAssesmentState extends State<CreateAssesment>
         var jsonResponse = json.decode(data);
         setState(() {
           customersJson = jsonResponse;
+          customersString = customersJson.join(",");
+          saveUserInfo();
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -669,6 +890,8 @@ class _CreateAssesmentState extends State<CreateAssesment>
         var jsonResponse = json.decode(data);
         setState(() {
           instructionsJson = jsonResponse;
+          instructionsString = instructionsJson.join(",");
+          saveAssessmentInstructions();
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -857,7 +1080,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                             });
                             break;
                           case 4:
-                            _checkNetwork();
+                            _submit();
                         }
                       });
                     },
@@ -1254,7 +1477,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                   ? value['excess']
                                                   : null;
                                               print(_insuredvalue);
-                                              _fetchInstructions();
+                                              // _fetchInstructions();
                                             });
                                             print(_instructionId);
                                             // print(_custName);
@@ -1658,6 +1881,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         onChanged: (bool? value) {
                                           setState(() {
                                             isOther5 = value!;
+                                            isOther6 = !isOther6;
                                           });
                                         },
                                       ),
@@ -1680,6 +1904,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         onChanged: (bool? value) {
                                           setState(() {
                                             isOther6 = value!;
+                                            isOther5 = !isOther5;
                                           });
                                         },
                                       ),
@@ -2416,168 +2641,59 @@ class _CreateAssesmentState extends State<CreateAssesment>
                 ),
               ),
             ))
-        : Scaffold(
-            backgroundColor: Colors.black,
-            body: Container(
-              child: _isCameraPermissionGranted
-                  ? _isCameraInitialized
-                      ? Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            AspectRatio(
-                              aspectRatio: 1 / controller!.value.aspectRatio,
-                              child: Stack(
-                                children: [
-                                  CameraPreview(
-                                    controller!,
-                                    child: LayoutBuilder(builder:
-                                        (BuildContext context,
-                                            BoxConstraints constraints) {
-                                      return GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTapDown: (details) => onViewFinderTap(
-                                            details, constraints),
-                                      );
-                                    }),
-                                  ),
-                                  // TODO: Uncomment to preview the overlay
-                                  // Center(
-                                  //   child: Image.asset(
-                                  //     'assets/camera_aim.png',
-                                  //     color: Colors.greenAccent,
-                                  //     width: 150,
-                                  //     height: 150,
-                                  //   ),
-                                  // ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      16.0,
-                                      8.0,
-                                      16.0,
-                                      8.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Align(
-                                          alignment: Alignment.topRight,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.black87,
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                left: 8.0,
-                                                right: 8.0,
-                                              ),
-                                              child: DropdownButton<
-                                                  ResolutionPreset>(
-                                                dropdownColor: Colors.black87,
-                                                underline: Container(),
-                                                value: currentResolutionPreset,
-                                                items: [
-                                                  for (ResolutionPreset preset
-                                                      in resolutionPresets)
-                                                    DropdownMenuItem(
-                                                      child: Text(
-                                                        preset
-                                                            .toString()
-                                                            .split('.')[1]
-                                                            .toUpperCase(),
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                      value: preset,
-                                                    )
-                                                ],
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    currentResolutionPreset =
-                                                        value!;
-                                                    _isCameraInitialized =
-                                                        false;
-                                                  });
-                                                  onNewCameraSelected(
-                                                      controller!.description);
-                                                },
-                                                hint: Text("Select item"),
-                                              ),
-                                            ),
-                                          ),
+        : MaterialApp(
+            home: SafeArea(
+              child: Scaffold(
+                backgroundColor: Colors.black,
+                body: Container(
+                  height: MediaQuery.of(context).size.height,
+                  width: MediaQuery.of(context).size.width,
+                  child: _isCameraPermissionGranted
+                      ? _isCameraInitialized
+                          ? ListView(
+                              shrinkWrap: true,
+                              physics: ScrollPhysics(),
+                              children: [
+                                AspectRatio(
+                                  aspectRatio:
+                                      1 / controller!.value.aspectRatio,
+                                  child: Stack(
+                                    children: [
+                                      CameraPreview(
+                                        controller!,
+                                        child: LayoutBuilder(builder:
+                                            (BuildContext context,
+                                                BoxConstraints constraints) {
+                                          return GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTapDown: (details) =>
+                                                onViewFinderTap(
+                                                    details, constraints),
+                                          );
+                                        }),
+                                      ),
+                                      // TODO: Uncomment to preview the overlay
+                                      // Center(
+                                      //   child: Image.asset(
+                                      //     'assets/camera_aim.png',
+                                      //     color: Colors.greenAccent,
+                                      //     width: 150,
+                                      //     height: 150,
+                                      //   ),
+                                      // ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16.0,
+                                          8.0,
+                                          16.0,
+                                          8.0,
                                         ),
-                                        // Spacer(),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              right: 8.0, top: 16.0),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                            ),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                _currentExposureOffset
-                                                        .toStringAsFixed(1) +
-                                                    'x',
-                                                style: TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: RotatedBox(
-                                            quarterTurns: 3,
-                                            child: Container(
-                                              height: 30,
-                                              child: Slider(
-                                                value: _currentExposureOffset,
-                                                min:
-                                                    _minAvailableExposureOffset,
-                                                max:
-                                                    _maxAvailableExposureOffset,
-                                                activeColor: Colors.white,
-                                                inactiveColor: Colors.white30,
-                                                onChanged: (value) async {
-                                                  setState(() {
-                                                    _currentExposureOffset =
-                                                        value;
-                                                  });
-                                                  await controller!
-                                                      .setExposureOffset(value);
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Row(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
-                                            Expanded(
-                                              child: Slider(
-                                                value: _currentZoomLevel,
-                                                min: _minAvailableZoom,
-                                                max: _maxAvailableZoom,
-                                                activeColor: Colors.white,
-                                                inactiveColor: Colors.white30,
-                                                onChanged: (value) async {
-                                                  setState(() {
-                                                    _currentZoomLevel = value;
-                                                  });
-                                                  await controller!
-                                                      .setZoomLevel(value);
-                                                },
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
+                                            Align(
+                                              alignment: Alignment.topRight,
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                   color: Colors.black87,
@@ -2587,338 +2703,488 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                 ),
                                                 child: Padding(
                                                   padding:
+                                                      const EdgeInsets.only(
+                                                    left: 8.0,
+                                                    right: 8.0,
+                                                  ),
+                                                  child: DropdownButton<
+                                                      ResolutionPreset>(
+                                                    dropdownColor:
+                                                        Colors.black87,
+                                                    underline: Container(),
+                                                    value:
+                                                        currentResolutionPreset,
+                                                    items: [
+                                                      for (ResolutionPreset preset
+                                                          in resolutionPresets)
+                                                        DropdownMenuItem(
+                                                          child: Text(
+                                                            preset
+                                                                .toString()
+                                                                .split('.')[1]
+                                                                .toUpperCase(),
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                          value: preset,
+                                                        )
+                                                    ],
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        currentResolutionPreset =
+                                                            value!;
+                                                        _isCameraInitialized =
+                                                            false;
+                                                      });
+                                                      onNewCameraSelected(
+                                                          controller!
+                                                              .description);
+                                                    },
+                                                    hint: Text("Select item"),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0, top: 16.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
                                                       const EdgeInsets.all(8.0),
                                                   child: Text(
-                                                    _currentZoomLevel
+                                                    _currentExposureOffset
                                                             .toStringAsFixed(
                                                                 1) +
                                                         'x',
                                                     style: TextStyle(
-                                                        color: Colors.white),
+                                                        color: Colors.black),
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            InkWell(
-                                              onTap: () async {
-                                                image = await takePicture();
-                                                File image1 = File(image!.path);
-
-                                                int currentUnix = DateTime.now()
-                                                    .millisecondsSinceEpoch;
-
-                                                String fileFormat =
-                                                    image1.path.split('.').last;
-                                                setState(() {
-                                                  iscameraopen = false;
-                                                });
-                                                iscameraopen = false;
-                                                GallerySaver.saveImage(
-                                                        image!.path)
-                                                    .then((path) {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext context) {
-                                                      return _SystemPadding(
-                                                        child: AlertDialog(
-                                                          contentPadding:
-                                                              const EdgeInsets
-                                                                  .all(16.0),
-                                                          content: Row(
-                                                            children: <Widget>[
-                                                              Expanded(
-                                                                child:
-                                                                    TextFormField(
-                                                                  controller:
-                                                                      _itemDescController,
-                                                                  keyboardType:
-                                                                      TextInputType
-                                                                          .text,
-                                                                  autofocus:
-                                                                      true,
-                                                                  decoration: const InputDecoration(
-                                                                      labelText:
-                                                                          'Enter Description',
-                                                                      hintText:
-                                                                          'Description'),
-                                                                ),
-                                                              )
-                                                            ],
-                                                          ),
-                                                          actions: <Widget>[
-                                                            TextButton(
-                                                                child: const Text(
-                                                                    'CANCEL'),
-                                                                onPressed: () {
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                }),
-                                                            TextButton(
-                                                                child:
-                                                                    const Text(
-                                                                        'OKAY'),
-                                                                onPressed: () {
-                                                                  Navigator.pop(
-                                                                      context);
-                                                                  setState(() {
-                                                                    _clicked =
-                                                                        true;
-                                                                    String?
-                                                                        description =
-                                                                        _itemDescController
-                                                                            .text
-                                                                            .trim();
-                                                                    print(
-                                                                        description);
-                                                                    final bytes =
-                                                                        Io.File(image!.path)
-                                                                            .readAsBytesSync();
-
-                                                                    String
-                                                                        imageFile =
-                                                                        base64Encode(
-                                                                            bytes);
-                                                                    images = Images(
-                                                                        filename:
-                                                                            description,
-                                                                        attachment:
-                                                                            imageFile);
-                                                                    _addImage(
-                                                                        image!);
-                                                                    _addImages(
-                                                                        images!);
-                                                                    _addDescription(
-                                                                        description);
-                                                                  });
-                                                                })
-                                                          ],
-                                                        ),
-                                                      );
+                                            Expanded(
+                                              child: RotatedBox(
+                                                quarterTurns: 3,
+                                                child: Container(
+                                                  height: 30,
+                                                  child: Slider(
+                                                    value:
+                                                        _currentExposureOffset,
+                                                    min:
+                                                        _minAvailableExposureOffset,
+                                                    max:
+                                                        _maxAvailableExposureOffset,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentExposureOffset =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setExposureOffset(
+                                                              value);
                                                     },
-                                                  );
-                                                });
-                                                print(fileFormat);
-                                              },
-                                              child: Stack(
-                                                alignment: Alignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.circle,
-                                                    color:
-                                                        _isVideoCameraSelected
-                                                            ? Colors.white
-                                                            : Colors.white38,
-                                                    size: 80,
                                                   ),
-                                                  Icon(
-                                                    Icons.circle,
-                                                    color:
-                                                        _isVideoCameraSelected
-                                                            ? Colors.blue
-                                                            : Colors.white,
-                                                    size: 65,
-                                                  ),
-                                                  _isVideoCameraSelected &&
-                                                          _isRecordingInProgress
-                                                      ? Icon(
-                                                          Icons.stop_rounded,
-                                                          color: Colors.white,
-                                                          size: 32,
-                                                        )
-                                                      : Container(),
-                                                ],
-                                              ),
-                                            ),
-                                            InkWell(
-                                              onTap: image != null
-                                                  ? () {
-                                                      // Navigator.of(context)
-                                                      //     .push(
-                                                      //   MaterialPageRoute(
-                                                      //     builder: (context) =>
-                                                      //         PreviewScreen(
-                                                      //       image: image!,
-                                                      //       fileList:
-                                                      //           imageslist,
-                                                      //     ),
-                                                      //   ),
-                                                      // );
-                                                    }
-                                                  : null,
-                                              child: Container(
-                                                width: 60,
-                                                height: 60,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                  border: Border.all(
-                                                    color: Colors.white,
-                                                    width: 2,
-                                                  ),
-                                                  image: image != null
-                                                      ? DecorationImage(
-                                                          image: FileImage(
-                                                            File(image!.path),
-                                                          ),
-                                                          fit: BoxFit.cover,
-                                                        )
-                                                      : null,
                                                 ),
                                               ),
                                             ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Slider(
+                                                    value: _currentZoomLevel,
+                                                    min: _minAvailableZoom,
+                                                    max: _maxAvailableZoom,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentZoomLevel =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setZoomLevel(value);
+                                                    },
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black87,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        _currentZoomLevel
+                                                                .toStringAsFixed(
+                                                                    1) +
+                                                            'x',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () async {
+                                                    image = await takePicture();
+                                                    File image1 =
+                                                        File(image!.path);
+
+                                                    int currentUnix = DateTime
+                                                            .now()
+                                                        .millisecondsSinceEpoch;
+
+                                                    String fileFormat = image1
+                                                        .path
+                                                        .split('.')
+                                                        .last;
+                                                    setState(() {
+                                                      iscameraopen = false;
+                                                    });
+                                                    iscameraopen = false;
+                                                    GallerySaver.saveImage(
+                                                            image!.path)
+                                                        .then((path) {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext
+                                                            context) {
+                                                          return _SystemPadding(
+                                                            child: AlertDialog(
+                                                              contentPadding:
+                                                                  const EdgeInsets
+                                                                          .all(
+                                                                      16.0),
+                                                              content: Row(
+                                                                children: <
+                                                                    Widget>[
+                                                                  Expanded(
+                                                                    child:
+                                                                        TextFormField(
+                                                                      controller:
+                                                                          _itemDescController,
+                                                                      keyboardType:
+                                                                          TextInputType
+                                                                              .text,
+                                                                      autofocus:
+                                                                          true,
+                                                                      decoration: const InputDecoration(
+                                                                          labelText:
+                                                                              'Enter Description',
+                                                                          hintText:
+                                                                              'Description'),
+                                                                    ),
+                                                                  )
+                                                                ],
+                                                              ),
+                                                              actions: <Widget>[
+                                                                TextButton(
+                                                                    child: const Text(
+                                                                        'CANCEL'),
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                    }),
+                                                                TextButton(
+                                                                    child: const Text(
+                                                                        'OKAY'),
+                                                                    onPressed:
+                                                                        () {
+                                                                      Navigator.pop(
+                                                                          context);
+                                                                      setState(
+                                                                          () {
+                                                                        String?
+                                                                            description =
+                                                                            _itemDescController.text.trim();
+                                                                        print(
+                                                                            description);
+                                                                        final bytes =
+                                                                            Io.File(image!.path).readAsBytesSync();
+
+                                                                        String
+                                                                            imageFile =
+                                                                            base64Encode(bytes);
+                                                                        images = Images(
+                                                                            filename:
+                                                                                description,
+                                                                            attachment:
+                                                                                imageFile);
+                                                                        _addImage(
+                                                                            image!);
+                                                                        _addImages(
+                                                                            images!);
+                                                                        _addDescription(
+                                                                            description);
+                                                                      });
+                                                                    })
+                                                              ],
+                                                            ),
+                                                          );
+                                                        },
+                                                      );
+                                                    });
+                                                    print(fileFormat);
+                                                  },
+                                                  child: Stack(
+                                                    alignment: Alignment.center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.white
+                                                                : Colors
+                                                                    .white38,
+                                                        size: 80,
+                                                      ),
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.blue
+                                                                : Colors.white,
+                                                        size: 65,
+                                                      ),
+                                                      _isVideoCameraSelected &&
+                                                              _isRecordingInProgress
+                                                          ? Icon(
+                                                              Icons
+                                                                  .stop_rounded,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 32,
+                                                            )
+                                                          : Container(),
+                                                    ],
+                                                  ),
+                                                ),
+                                                InkWell(
+                                                  onTap: image != null
+                                                      ? () {
+                                                          // Navigator.of(context)
+                                                          //     .push(
+                                                          //   MaterialPageRoute(
+                                                          //     builder: (context) =>
+                                                          //         PreviewScreen(
+                                                          //       image: image!,
+                                                          //       fileList:
+                                                          //           imageslist,
+                                                          //     ),
+                                                          //   ),
+                                                          // );
+                                                        }
+                                                      : null,
+                                                  child: Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                      border: Border.all(
+                                                        color: Colors.white,
+                                                        width: 2,
+                                                      ),
+                                                      image: image != null
+                                                          ? DecorationImage(
+                                                              image: FileImage(
+                                                                File(image!
+                                                                    .path),
+                                                              ),
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ],
                                         ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    physics: BouncingScrollPhysics(),
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8.0),
+                                          child: Row(
+                                            children: [],
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              16.0, 8.0, 16.0, 8.0),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.off;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.off,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.flash_off,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.off
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.auto;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.auto,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.flash_auto,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.auto
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.always;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.always,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.flash_on,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.always
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: () async {
+                                                  setState(() {
+                                                    _currentFlashMode =
+                                                        FlashMode.torch;
+                                                  });
+                                                  await controller!
+                                                      .setFlashMode(
+                                                    FlashMode.torch,
+                                                  );
+                                                },
+                                                child: Icon(
+                                                  Icons.highlight,
+                                                  color: _currentFlashMode ==
+                                                          FlashMode.torch
+                                                      ? Colors.amber
+                                                      : Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
                                       ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                physics: BouncingScrollPhysics(),
-                                child: Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Row(
-                                        children: [],
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          16.0, 8.0, 16.0, 8.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          InkWell(
-                                            onTap: () async {
-                                              setState(() {
-                                                _currentFlashMode =
-                                                    FlashMode.off;
-                                              });
-                                              await controller!.setFlashMode(
-                                                FlashMode.off,
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.flash_off,
-                                              color: _currentFlashMode ==
-                                                      FlashMode.off
-                                                  ? Colors.amber
-                                                  : Colors.white,
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: () async {
-                                              setState(() {
-                                                _currentFlashMode =
-                                                    FlashMode.auto;
-                                              });
-                                              await controller!.setFlashMode(
-                                                FlashMode.auto,
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.flash_auto,
-                                              color: _currentFlashMode ==
-                                                      FlashMode.auto
-                                                  ? Colors.amber
-                                                  : Colors.white,
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: () async {
-                                              setState(() {
-                                                _currentFlashMode =
-                                                    FlashMode.always;
-                                              });
-                                              await controller!.setFlashMode(
-                                                FlashMode.always,
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.flash_on,
-                                              color: _currentFlashMode ==
-                                                      FlashMode.always
-                                                  ? Colors.amber
-                                                  : Colors.white,
-                                            ),
-                                          ),
-                                          InkWell(
-                                            onTap: () async {
-                                              setState(() {
-                                                _currentFlashMode =
-                                                    FlashMode.torch;
-                                              });
-                                              await controller!.setFlashMode(
-                                                FlashMode.torch,
-                                              );
-                                            },
-                                            child: Icon(
-                                              Icons.highlight,
-                                              color: _currentFlashMode ==
-                                                      FlashMode.torch
-                                                  ? Colors.amber
-                                                  : Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
                                 ),
+                              ],
+                            )
+                          : Center(
+                              child: Text(
+                                'LOADING',
+                                style: TextStyle(color: Colors.white),
                               ),
-                            ),
-                          ],
-                        )
-                      : Center(
-                          child: Text(
-                            'LOADING',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        )
-                  : Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(),
-                        Text(
-                          'Permission denied',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                          ),
-                        ),
-                        SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: () {
-                            getPermissionStatus();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              'Give permission',
+                            )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(),
+                            Text(
+                              'Permission denied',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 24,
                               ),
                             ),
-                          ),
+                            SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () {
+                                getPermissionStatus();
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  'Give permission',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                ),
+              ),
             ),
           );
+  }
+
+  void _addAssessments(String? assessmentsString) {
+    assessmentsJson.add(assessmentsString!);
+    saveAssessments();
   }
 }
 

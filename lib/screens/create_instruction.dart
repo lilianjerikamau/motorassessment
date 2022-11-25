@@ -65,8 +65,15 @@ List<String> listOfInstructiontypes = [
 ];
 List techniciansJson = [];
 List customersJson = [];
+List instructionsJson = [];
+List valuationsJson = [];
+List fleetJson = [];
+List assessmentJson = [];
+List supassessmentJson = [];
 
 List technicians = [];
+List reinspinstructionsJson = [];
+List reinspassessmentJson = [];
 
 class _CreateInstruction extends State<CreateInstruction> {
   late User _loggedInUser;
@@ -2042,7 +2049,10 @@ void showAlertDialog(BuildContext context, String message) {
           actions: <Widget>[
             MaterialButton(
                 onPressed: () {
-                  Navigator.pop(bc);
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Home()),
+                  );
                 },
                 child: Text('Ok'))
           ],

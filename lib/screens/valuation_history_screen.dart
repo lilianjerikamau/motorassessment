@@ -14,6 +14,7 @@ import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:progress_dialog/progress_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ValuationHistoryScreen extends StatefulWidget {
   const ValuationHistoryScreen({super.key});
@@ -42,6 +43,8 @@ class _ValuationHistoryScreenState extends State<ValuationHistoryScreen> {
   String? _regno;
   String? _date;
   int? _userid;
+  List valuationHistJson = [];
+  String? valuationHistString;
   @override
   void initState() {
     SessionPreferences().getLoggedInUser().then((user) {
@@ -51,6 +54,25 @@ class _ValuationHistoryScreenState extends State<ValuationHistoryScreen> {
       });
     });
     super.initState();
+  }
+
+  getUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String auth = prefs.getString('valuationionlist') as String;
+    List customerList = auth.split(",");
+    print("customerlist");
+    print(customerList);
+    setState(() {
+      customerList = valuationHistJson;
+    });
+  }
+
+  Future<void> saveUserInfo() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('valuationionlist', valuationHistString!);
+    print('user info:');
+    // printWrapped(assessmentHistString!);
+    getUserInfo();
   }
 
   @override
