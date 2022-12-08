@@ -7,6 +7,12 @@ part of 'assessmentmodels.dart';
 // **************************************************************************
 
 Assesssment _$AssesssmentFromJson(Map<String, dynamic> json) => Assesssment(
+      id: json['id'] as int?,
+      brakes: json['brakes'] as String?,
+      damegesobserved: json['damegesobserved'] as String?,
+      paintwork: json['paintwork'] as String?,
+      steering: json['steering'] as String?,
+      driven: json['driven'] as bool?,
       userid: json['userid'] as int?,
       custname: json['custname'] as String?,
       regno: json['regno'] as String?,
@@ -29,19 +35,29 @@ Assesssment _$AssesssmentFromJson(Map<String, dynamic> json) => Assesssment(
       RHR: json['RHR'] as String?,
       LHF: json['LHF'] as String?,
       Spare: json['Spare'] as String?,
-      photolist: json['photolist'] as List<Map<String, dynamic>>?,
+      photolist: (json['photolist'] as List<dynamic>?)
+          ?.map((e) => e as Map<String, dynamic>)
+          .toList(),
       owner: json['owner'] as String?,
       claimno: json['claimno'] as String?,
       chassisno: json['chassisno'] as String?,
       policyno: json['policyno'] as String?,
       location: json['location'] as String?,
       date: json['date'] as String?,
+      engineno: json['engineno'] as String?,
     );
 
 Map<String, dynamic> _$AssesssmentToJson(Assesssment instance) =>
     <String, dynamic>{
       'userid': instance.userid,
+      'id': instance.id,
+      'damegesobserved': instance.damegesobserved,
+      'paintwork': instance.paintwork,
+      'steering': instance.steering,
+      'brakes': instance.brakes,
+      'driven': instance.driven,
       'make': instance.make,
+      'engineno': instance.engineno,
       'drivenby': instance.drivenby,
       'towed': instance.towed,
       'cashinlieu': instance.cashinlieu,

@@ -7,7 +7,8 @@ part 'assessmentmodels.g.dart';
 @JsonSerializable()
 class Assesssment {
   Assesssment(
-      {this.brakes,
+      {this.id,
+      this.brakes,
       this.damegesobserved,
       this.paintwork,
       this.steering,
@@ -44,6 +45,7 @@ class Assesssment {
       this.engineno});
 
   int? userid;
+  int? id;
   String? damegesobserved;
   String? paintwork;
   String? steering;
@@ -81,6 +83,8 @@ class Assesssment {
 
   factory Assesssment.fromJson(Map<String, dynamic> json) => Assesssment(
         userid: json["userid"],
+        id: json["id"],
+        custid: json["custid"],
         date: json["date"],
         regno: json['regno'],
         make: json["make"],
@@ -103,6 +107,8 @@ class Assesssment {
       );
   static Map<String, dynamic> toJson(Assesssment assesssment) => {
         'driven': assesssment.driven,
+        'id': assesssment.id,
+        'custid': assesssment.custid,
         'brakes': assesssment.brakes,
         'steering': assesssment.steering,
         'paintwork': assesssment.paintwork,

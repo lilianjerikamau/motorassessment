@@ -42,8 +42,10 @@ import 'package:gallery_saver/gallery_saver.dart';
 import '../main.dart';
 
 class CreateReinspection extends StatefulWidget {
-  CreateReinspection({Key? key}) : super(key: key);
-
+  CreateReinspection({Key? key, @required custID, @required custName})
+      : super(key: key);
+  int? custID;
+  String? custName;
   @override
   State<CreateReinspection> createState() => _CreateReinspectionState();
 }
@@ -356,7 +358,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                         },
                         body: jsonEncode(<String, dynamic>{
                           "userid": _userid,
-                          "custid": _custId,
+                          "custid":
+                              widget.custID != null ? widget.custID : _custId,
                           "revised": revised,
                           "instructionno": _instructionId,
                           "assessmentno": _assessmentId,
@@ -1055,7 +1058,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ),
                                         SearchableDropdown(
                                           hint: Text(
-                                            "Select Customer",
+                                            widget.custID != null
+                                                ? widget.custName!
+                                                : 'Select Customer',
                                           ),
 
                                           isExpanded: true,

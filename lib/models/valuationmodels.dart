@@ -5,6 +5,7 @@ part 'valuationmodels.g.dart';
 @JsonSerializable()
 class Valuation {
   Valuation({
+    this.id,
     this.userid,
     this.regno,
     this.custid,
@@ -34,6 +35,7 @@ class Valuation {
     this.location,
     this.custname,
   });
+  int? id;
   int? userid;
   String? make;
   String? drivenby;
@@ -65,6 +67,8 @@ class Valuation {
 
   factory Valuation.fromJson(Map<String, dynamic> json) => Valuation(
         userid: json["userid"],
+        id: json["id"],
+        custid: json["custid"],
         regno: json['regno'],
         make: json["make"],
         drivenby: json['drivenby'],

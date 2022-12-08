@@ -7,6 +7,7 @@ part of 'inspectionmodels.dart';
 // **************************************************************************
 
 Inspection _$InspectionFromJson(Map<String, dynamic> json) => Inspection(
+      id: json['id'] as int?,
       userid: json['userid'] as int?,
       regno: json['regno'] as String?,
       custid: json['custid'] as int?,
@@ -38,6 +39,7 @@ Inspection _$InspectionFromJson(Map<String, dynamic> json) => Inspection(
 
 Map<String, dynamic> _$InspectionToJson(Inspection instance) =>
     <String, dynamic>{
+      'id': instance.id,
       'userid': instance.userid,
       'make': instance.make,
       'drivenby': instance.drivenby,

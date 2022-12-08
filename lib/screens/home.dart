@@ -19,7 +19,6 @@ import 'package:motorassesmentapp/models/supplementarymodels.dart';
 import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/models/valuationmodels.dart';
 import 'package:motorassesmentapp/screens/create_assesment.dart';
-
 import 'package:motorassesmentapp/screens/create_reinspection.dart';
 import 'package:motorassesmentapp/screens/create_supplementary.dart';
 import 'package:motorassesmentapp/screens/create_valuationstd.dart';
@@ -30,6 +29,9 @@ import 'package:motorassesmentapp/screens/valuation_history_screen.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:geolocator/geolocator.dart';
+import 'package:motorassesmentapp/screens/home.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 
 class Home extends StatefulWidget {
   Home({Key? key}) : super(key: key);
@@ -422,7 +424,10 @@ class _HomeState extends State<Home> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                CreateAssesment()),
+                                                CreateAssesment(
+                                                  custID: 0,
+                                                  custName: 'null',
+                                                )),
                                       );
                                     },
                                     child: Row(
@@ -473,7 +478,10 @@ class _HomeState extends State<Home> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                CreateValuation()),
+                                                CreateValuation(
+                                                  custID: 0,
+                                                  custName: 'null',
+                                                )),
                                       );
                                     },
                                     child: Row(
@@ -527,7 +535,10 @@ class _HomeState extends State<Home> {
                                         context,
                                         MaterialPageRoute(
                                             builder: (context) =>
-                                                CreateReinspection()),
+                                                CreateReinspection(
+                                                  custID: 0,
+                                                  custName: 'null',
+                                                )),
                                       );
                                     },
                                     child: Row(
@@ -849,7 +860,7 @@ class _HomeState extends State<Home> {
     HttpClientResponse response = await Config.getRequestObject(
         url + 'valuation/pendingassessment/?userid=$_userid', Config.get);
     if (response != null) {
-      print(response);
+      print(url + 'valuation/pendingassessment/?userid=$_userid');
       response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
         var jsonResponse = json.decode(data);
         print('assessments');
@@ -860,8 +871,9 @@ class _HomeState extends State<Home> {
         }).toList();
         if (result.isNotEmpty) {
           setState(() {
-            result.sort((a, b) =>
-                a.regno!.toLowerCase().compareTo(b.regno!.toLowerCase()));
+            // result.sort((a, b) =>
+            //     a.regno!.toLowerCase().compareTo(b.regno!.toLowerCase()));
+            result.sort((b, a) => a.id!.compareTo(b.id!));
             _assessments = result;
             assessmentCount = _assessments.length;
           });
@@ -893,8 +905,9 @@ class _HomeState extends State<Home> {
         }).toList();
         if (result.isNotEmpty) {
           setState(() {
-            result.sort((a, b) =>
-                a.regno!.toLowerCase().compareTo(b.regno!.toLowerCase()));
+            // result.sort((a, b) =>
+            //     a.regno!.toLowerCase().compareTo(b.regno!.toLowerCase()));
+            result.sort((b, a) => a.id!.compareTo(b.id!));
             _reinspections = result;
             inspectionCount = _reinspections.length;
           });
@@ -926,8 +939,8 @@ class _HomeState extends State<Home> {
         }).toList();
         if (result.isNotEmpty) {
           setState(() {
-            result.sort((a, b) =>
-                a.regno!.toLowerCase().compareTo(b.regno!.toLowerCase()));
+            // result.sort((b, a) => a.instructionno!.compareTo(b.instructionno!));
+            result.sort((b, a) => a.id!.compareTo(b.id!));
             _valuations = result;
             print("valuation");
             print(_valuations);
@@ -1053,9 +1066,11 @@ class _HomeState extends State<Home> {
           _policyno = instruction.policyno!;
           _regno = instruction.regno!;
           _carmodel = instruction.model!;
-          _custName = instruction.custname;
+          String? _custName = instruction.custname!;
+          int? _custId = instruction.custid!;
 
-          print("Jobcard id :::: ${instruction.make}");
+          print("Jobcard id :::: ${instruction.custid}");
+          // print(_custId);
 
           return Card(
             margin: EdgeInsets.all(10),
@@ -1077,7 +1092,8 @@ class _HomeState extends State<Home> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CreateAssesment()),
+                            builder: (context) => CreateAssesment(
+                                custID: _custId, custName: _custName)),
                       );
                     },
                     child: Row(
@@ -1152,7 +1168,8 @@ class _HomeState extends State<Home> {
           _policyno = inspection.policyno!;
           _regno = inspection.regno!;
           _carmodel = inspection.model!;
-          _custName = inspection.custname;
+          String? _custName = inspection.custname;
+          int? _custId = inspection.custid;
           print("inspection make :::: ${inspection.make}");
 
           return Card(
@@ -1175,7 +1192,8 @@ class _HomeState extends State<Home> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CreateReinspection()),
+                            builder: (context) => CreateReinspection(
+                                custID: _custId, custName: _custName)),
                       );
                     },
                     child: Row(
@@ -1256,7 +1274,8 @@ class _HomeState extends State<Home> {
           _policyno = valuation.policyno!;
           _regno = valuation.regno!;
           _carmodel = valuation.model!;
-          _custName = valuation.custname;
+          String? _custName = valuation.custname;
+          int? _custId = valuation.custid;
           print("valuation make :::: ${valuation.make}");
 
           return Card(
@@ -1279,7 +1298,8 @@ class _HomeState extends State<Home> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => CreateValuation()),
+                            builder: (context) => CreateValuation(
+                                custID: _custId, custName: _custName)),
                       );
                     },
                     child: Row(

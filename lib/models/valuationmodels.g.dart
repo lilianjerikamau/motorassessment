@@ -7,6 +7,7 @@ part of 'valuationmodels.dart';
 // **************************************************************************
 
 Valuation _$ValuationFromJson(Map<String, dynamic> json) => Valuation(
+      id: json['id'] as int?,
       userid: json['userid'] as int?,
       regno: json['regno'] as String?,
       custid: json['custid'] as int?,
@@ -38,6 +39,7 @@ Valuation _$ValuationFromJson(Map<String, dynamic> json) => Valuation(
     );
 
 Map<String, dynamic> _$ValuationToJson(Valuation instance) => <String, dynamic>{
+      'id': instance.id,
       'userid': instance.userid,
       'make': instance.make,
       'drivenby': instance.drivenby,

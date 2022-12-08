@@ -39,9 +39,11 @@ Map<String, dynamic> _$UserToJson(User instance) => <String, dynamic>{
 Customer _$CustomerFromJson(Map<String, dynamic> json) => Customer(
       custid: json['custid'] as int?,
       company: json['company'] as String?,
+      mobile: json['mobile'] as String?,
     );
 
 Map<String, dynamic> _$CustomerToJson(Customer instance) => <String, dynamic>{
       'custid': instance.custid,
       'company': instance.company,
+      'mobile': instance.mobile,
     };

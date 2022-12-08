@@ -5,6 +5,7 @@ part 'inspectionmodels.g.dart';
 @JsonSerializable()
 class Inspection {
   Inspection({
+    this.id,
     this.userid,
     this.regno,
     this.custid,
@@ -33,7 +34,7 @@ class Inspection {
     this.location,
     this.custname,
   });
-
+  int? id;
   int? userid;
   String? make;
   String? drivenby;
@@ -64,8 +65,10 @@ class Inspection {
   String? custname;
 
   factory Inspection.fromJson(Map<String, dynamic> json) => Inspection(
+        id: json["id"],
         userid: json["userid"],
         regno: json['regno'],
+        custid: json['custid'],
         make: json["make"],
         policyno: json["policyno"],
         chassisno: json["chassisno"],

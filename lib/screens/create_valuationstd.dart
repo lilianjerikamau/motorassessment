@@ -39,8 +39,10 @@ import '../main.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class CreateValuation extends StatefulWidget {
-  CreateValuation({Key? key}) : super(key: key);
-
+  CreateValuation({Key? key, @required custID, @required custName})
+      : super(key: key);
+  int? custID;
+  String? custName;
   @override
   State<CreateValuation> createState() => _CreateValuationState();
 }
@@ -184,7 +186,7 @@ class _CreateValuationState extends State<CreateValuation> {
   final _logBookDescController = TextEditingController();
   final _loanofficeremail = TextEditingController();
   // final _vehiclereg = TextEditingController();
-  final _chassisno = TextEditingController();
+  TextEditingController _chassisno = TextEditingController();
   final _transmission = TextEditingController();
   final _drivetype = TextEditingController();
   final _logbookno = TextEditingController();
@@ -420,7 +422,7 @@ class _CreateValuationState extends State<CreateValuation> {
                     String extras = _extras.text.trim();
                     String musicsystemval = _musicsystemval.text.trim();
                     String notes = _notes.text.trim();
-
+                    String make = _make.text.trim();
                     String noofextracurtains = _noofextracurtains.text.trim();
                     String noofextraseats = _noofextraseats.text.trim();
                     String noofextrakneebags = _noofextrakneebags.text.trim();
@@ -464,7 +466,8 @@ class _CreateValuationState extends State<CreateValuation> {
                         },
                         body: jsonEncode(<String, dynamic>{
                           "userid": _userid,
-                          "custid": _custId,
+                          "custid":
+                              widget.custID != null ? widget.custID : _custId,
                           "revised": revised,
                           "fleetinstructionno": _fleetId,
                           "instructionno": _instructionId,
@@ -479,7 +482,7 @@ class _CreateValuationState extends State<CreateValuation> {
                           "mileage": mileage,
                           "enginecapacity": enginecap,
                           "engineno": engineno,
-                          "make": _make,
+                          "make": make,
                           "inspectionplace": inspectionplace,
                           "musicsystemvalue":
                               musicsystemval != "" ? musicsystemval : "0",
@@ -619,145 +622,160 @@ class _CreateValuationState extends State<CreateValuation> {
                           "dutypaid": dutypaid,
                           "color": color,
                         }));
-
                     log(jsonEncode(<String, dynamic>{
-                      // "userid": _userid,
-                      // "custid": _custId,
-                      // "revised": _isEnable,
-                      // "instructionno": 1,
+                      "userid": _userid,
+                      "custid": _custId,
+                      "revised": revised,
+                      "fleetinstructionno": _fleetId,
+                      "instructionno": _instructionId,
                       // "photolist": newImagesList,
-                      "logbooklist": newLogBookList,
-                      // "model": _carmodel,
-                      // "chassis": _chasisno,
-                      // "fuel": fuelby,
-                      // "manufactureyear": year,
-                      // "origin": origin,
-                      // "bodytype": bodytype,
-                      // "mileage": mileage,
-                      // "enginecapacity": enginecap,
-                      // "engineno": engineno,
-                      // "make": _make,
-                      // "inspectionplace": inspectionplace,
-                      // "musicsystemvalue": musicsystemval,
-                      // "alloy": alloy,
-                      // "suspensionspacers": true,
-                      // "noofdiscs": "three",
-                      // "registrationdate": registrationdate,
-                      // "radiocassette": radiocassette,
-                      // "cdplayer": cdplayer,
-                      // "cdchanger": cdchanger,
-                      // "roadworthy": roadworthy,
-                      // // "alarm": alarm,
-                      // "roadworthynotes": roadworthynotes,
-                      // // "alarmtype": alarmtype,
-                      // // "discs": discs,
-                      // "validinsurance": validinsurance,
-                      // "mechanicalcondition": mechanicalcondition,
-                      // "bodycondition": bodycondition,
-                      // "tyres": tyres,
-                      // "generalcondition": generalcondition,
-                      // "extras": extras,
-                      // "notes": notes,
-                      // "windscreenvalue": windscreenvalue,
-                      // "antitheftvalue": antitheftvalue,
-                      // "valuer": valuer,
-                      // "assessedvalue": assessedvalue,
-                      // "sparewheel": sparewheel,
-                      // "tyresize": tyresize,
-                      // "centrallocking": centrallocking,
-                      // "powerwindowsrhf": powerwindowsrhf,
-                      // "powerwindowslhf": powerwindowslhf,
-                      // "powerwindowsrhr": powerwindowsrhr,
-                      // "powerwindowslhr": powerwindowslhr,
-                      // "powermirrors": powermirrors,
-                      // "powersteering": powersteering,
-                      // "airconditioner": airconditioner,
-                      // "absbrakes": absbrakes,
-                      // "foglights": foglights,
-                      // "rearspoiler": rearspoiler,
-                      // "sidesteps": sidesteps,
-                      // "sunroof": sunroof,
-                      // "frontgrilleguard": frontgrilleguard,
-                      // "rearbumperguard": rearbumperguard,
-                      // "sparewheelcover": sparewheelcover,
-                      // "seatcovers": seatcovers,
-                      // "turbotimer": turbotimer,
-                      // "dashboardairbag": dashboardairbag,
-                      // "steeringairbag": steeringairbag,
-                      // "alloyrims": alloyrims,
-                      // "steelrims": steelrims,
-                      // "chromerims": chromerims,
-                      // "assessedvalue": 1,
-                      // "xenonheadlights": xenonheadlights,
-                      // "heightadjustmentsystem": heightadjustmentsystem,
-                      // "powerslidingrhfdoor": powerslidingrhfdoor,
-                      // "powerslidinglhfdoor": powerslidinglhfdoor,
-                      // "powerslidingrhrdoor": powerslidingrhrdoor,
-                      // "powerslidinglhrdoor": powerslidinglhrdoor,
-                      // "powerbootdoor": powerbootdoor,
-                      // "uphostryleatherseat": uphostryleatherseat,
-                      // "uphostryfabricseat": uphostryfabricseat,
-                      // "uphostrytwotoneseat": uphostrytwotoneseat,
-                      // "uphostrybucketseat": uphostrybucketseat,
-                      // "powerseatrhfadjustment": powerseatrhfadjustment,
-                      // "powerseatlhfadjustment": powerseatlhfadjustment,
-                      // "powerseatrhradjustment": powerseatrhradjustment,
-                      // "powersteeringadjustment": powersteeringadjustment,
-                      // "powerseatlhradjustment": powerseatlhradjustment,
-                      // "extralargerims": extralargerims,
-                      // "rimsize": rimsize,
-                      // "noofextracurtains": noofextracurtains,
-                      // "noofextraseats": noofextraseats,
-                      // "noofextrakneebags": noofextrakneebags,
-                      // "frontwindscreen": frontwindscreen,
-                      // "rearwindscreen": rearwindscreen,
-                      // "doors": doors,
-                      // // "yombelts": "vgvgv",
-                      // // "fromanyotherplace": "ggvgvhhh",
-                      // // "vinplatedetails": "vinplatedetails",
-                      // // "injectiontype": "injectiontype",
-                      // // "noofcylinders": "noofcylinders",
-                      // // "amfmonly": true,
-                      // "crackedrearwindscreen": crackedrearwindscreen,
-                      // "approxmatewindscreenvalue": 878.08,
-                      // "rearwindscreenvalue": 878.08,
-                      // "musicsystemmodel": musicsystemmodel,
-                      // "musicsystemmake": musicsystemmake,
-                      // "inbuiltcassette": inbuiltcassette,
-                      // "inbuiltcd": inbuiltcd,
-                      // "inbuiltdvd": inbuiltdvd,
-                      // "inbuiltmapreader": inbuiltmapreader,
-                      // "inbuilthddcardreader": inbuilthddcardreader,
-                      // "inbuiltminidisc": inbuiltminidisc,
-                      // "inbuiltusb": inbuiltusb,
-                      // "inbuiltbluetooth": inbuiltbluetooth,
-                      // "inbuilttvscreen": inbuilttvscreen,
-                      // "inbuiltcdchanger": inbuiltcdchanger,
-                      // "inbuiltsecuritydoorlock": inbuiltsecuritydoorlock,
-                      // "inbuiltalarm": inbuiltalarm,
-                      // "inbuiltimmobilizer": inbuiltimmobilizer,
-                      // "keylessignition": keylessignition,
-                      // "trackingdevice": trackingdevice,
-                      // "gearleverlock": gearleverlock,
-                      // "enginecutoff": enginecutoff,
-                      // "anyotherantitheftfeature": anyotherantitheftfeature,
-                      // "anyotherextrafeature": anyotherextrafeature,
-                      // "anyothervehiclefeature": anyothervehiclefeature,
-                      // "anyotheraddedfeature": "fcfccf",
-                      // "anyothermusicsystem": "fffffffffffcf",
-                      // "noofdoorairbags": noofdoorairbags,
-                      // "musicsystemdetachable": musicsystemdetachable,
-                      // "musicsysteminbuilt": musicsysteminbuilt,
-                      // "fittedwithamfmonly": fittedwithamfmonly,
-                      // "fittedwithreversecamera": fittedwithreversecamera,
-                      // "amfmonly": amfmonly,
-                      // "locallyfittedalarm": locallyfittedalarm,
-                      // "antitheftmake": antitheftmake,
-                      // "roofcarrier": roofcarrier,
-                      // "roofrails": true,
-                      // "uphostryfabricleatherseat": uphostryfabricleatherseat,
-                      // "dutypaid": dutypaid,
-                      // "color": color,
+                      // "logbooklist": newLogBookList,
+                      "model": _carmodel != null ? _carmodel : model,
+                      "chassisno": _chasisno != null ? _chasisno : chasisno,
+                      "fuel": fuelby,
+                      "manufactureyear": year,
+                      "origin": origin,
+                      "bodytype": bodytype,
+                      "mileage": mileage,
+                      "enginecapacity": enginecap,
+                      "engineno": engineno,
+                      "make": make,
+                      "inspectionplace": inspectionplace,
+                      "musicsystemvalue":
+                          musicsystemval != "" ? musicsystemval : "0",
+                      "alloy": alloy,
+                      "regno": _vehiclereg != null ? _vehiclereg : reg,
+                      "location": _location,
+                      "suspensionspacers": true,
+                      "noofdiscs": "three",
+                      "registrationdate": registrationdate,
+                      "radiocassette": radiocassette,
+                      "cdplayer": cdplayer,
+                      "cdchanger": cdchanger,
+                      "roadworthy": roadworthy,
+                      // "alarm": alarm,
+                      "roadworthynotes": roadworthynotes,
+                      // "alarmtype": alarmtype,
+                      // "discs": discs,
+                      "validinsurance": validinsurance,
+                      "mechanicalcondition": mechanicalcondition,
+                      "bodycondition": bodycondition,
+                      "tyres": tyres,
+                      "generalcondition": generalcondition,
+                      "extras": extras,
+                      "notes": notes,
+                      "windscreenvalue": windscreenvalue,
+                      "antitheftvalue": antitheftvalue,
+                      "valuer": valuer,
+                      "assessedvalue": assessedvalue,
+                      "sparewheel": sparewheel,
+                      "tyresize": tyresize,
+                      "centrallocking": centrallocking,
+                      "powerwindowsrhf": powerwindowsrhf,
+                      "powerwindowslhf": powerwindowslhf,
+                      "powerwindowsrhr": powerwindowsrhr,
+                      "powerwindowslhr": powerwindowslhr,
+                      "powermirrors": powermirrors,
+                      "powersteering": powersteering,
+                      "airconditioner": airconditioner,
+                      "absbrakes": absbrakes,
+                      "foglights": foglights,
+                      "rearspoiler": rearspoiler,
+                      "sidesteps": sidesteps,
+                      "sunroof": sunroof,
+                      "frontgrilleguard": frontgrilleguard,
+                      "rearbumperguard": rearbumperguard,
+                      "sparewheelcover": sparewheelcover,
+                      "seatcovers": seatcovers,
+                      "turbotimer": turbotimer,
+                      "dashboardairbag": dashboardairbag,
+                      "steeringairbag": steeringairbag,
+                      "alloyrims": alloyrims,
+                      "steelrims": steelrims,
+                      "chromerims": chromerims,
+                      "assessedvalue": 1,
+                      "xenonheadlights": xenonheadlights,
+                      "heightadjustmentsystem": heightadjustmentsystem,
+                      "powerslidingrhfdoor": powerslidingrhfdoor,
+                      "powerslidinglhfdoor": powerslidinglhfdoor,
+                      "powerslidingrhrdoor": powerslidingrhrdoor,
+                      "powerslidinglhrdoor": powerslidinglhrdoor,
+                      "powerbootdoor": powerbootdoor,
+                      "uphostryleatherseat": uphostryleatherseat,
+                      "uphostryfabricseat": uphostryfabricseat,
+                      "uphostrytwotoneseat": uphostrytwotoneseat,
+                      "uphostrybucketseat": uphostrybucketseat,
+                      "powerseatrhfadjustment": powerseatrhfadjustment,
+                      "powerseatlhfadjustment": powerseatlhfadjustment,
+                      "powerseatrhradjustment": powerseatrhradjustment,
+                      "powersteeringadjustment": powersteeringadjustment,
+                      "powerseatlhradjustment": powerseatlhradjustment,
+                      "extralargerims": extralargerims,
+                      "rimsize": rimsize,
+                      "noofextracurtains":
+                          noofextracurtains != "" ? noofextracurtains : "0",
+                      "noofextraseats":
+                          noofextraseats != "" ? noofextraseats : "0",
+                      "noofextrakneebags":
+                          noofextrakneebags != "" ? noofextrakneebags : "0",
+                      "frontwindscreen":
+                          frontwindscreen != "" ? frontwindscreen : "none",
+                      "rearwindscreen":
+                          rearwindscreen != "" ? rearwindscreen : "none",
+                      "doors": doors,
+                      // "yombelts": "vgvgv",
+                      // "fromanyotherplace": "ggvgvhhh",
+                      // "vinplatedetails": "vinplatedetails",
+                      // "injectiontype": "injectiontype",
+                      // "noofcylinders": "noofcylinders",
+                      // "amfmonly": true,
+                      "crackedrearwindscreen": crackedrearwindscreen,
+                      "approxmatewindscreenvalue": 878.08,
+                      "rearwindscreenvalue": 878.08,
+                      "musicsystemmodel": musicsystemmodel,
+                      "musicsystemmake": musicsystemmake,
+                      "inbuiltcassette": inbuiltcassette,
+                      "inbuiltcd": inbuiltcd,
+                      "inbuiltdvd": inbuiltdvd,
+                      "inbuiltmapreader": inbuiltmapreader,
+                      "inbuilthddcardreader": inbuilthddcardreader,
+                      "inbuiltminidisc": inbuiltminidisc,
+                      "inbuiltusb": inbuiltusb,
+                      "inbuiltbluetooth": inbuiltbluetooth,
+                      "inbuilttvscreen": inbuilttvscreen,
+                      "inbuiltcdchanger": inbuiltcdchanger,
+                      "inbuiltsecuritydoorlock": inbuiltsecuritydoorlock,
+                      "inbuiltalarm": inbuiltalarm,
+                      "inbuiltimmobilizer": inbuiltimmobilizer,
+                      "keylessignition": keylessignition,
+                      "trackingdevice": trackingdevice,
+                      "gearleverlock": gearleverlock,
+                      "enginecutoff": enginecutoff,
+                      "anyotherantitheftfeature": anyotherantitheftfeature != ""
+                          ? anyotherantitheftfeature
+                          : "none",
+                      "anyotherextrafeature": anyotherextrafeature != ""
+                          ? anyotherextrafeature
+                          : "none",
+                      "anyothervehiclefeature": anyothervehiclefeature,
+                      "anyotheraddedfeature": "fcfccf",
+                      "anyothermusicsystem": anyothermusicsystem != ""
+                          ? anyothermusicsystem
+                          : "none",
+                      "noofdoorairbags":
+                          noofdoorairbags != "" ? noofdoorairbags : "0",
+                      "musicsystemdetachable": musicsystemdetachable,
+                      "musicsysteminbuilt": musicsysteminbuilt,
+                      "fittedwithamfmonly": fittedwithamfmonly,
+                      "fittedwithreversecamera": fittedwithreversecamera,
+                      "amfmonly": amfmonly,
+                      "locallyfittedalarm": locallyfittedalarm,
+                      "antitheftmake": antitheftmake,
+                      "roofcarrier": roofcarrier,
+                      "roofrails": true,
+                      "uphostryfabricleatherseat": uphostryfabricleatherseat,
+                      "dutypaid": dutypaid,
+                      "color": color,
                     }));
                     if (response != null) {
                       dial.hide();
@@ -1539,7 +1557,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         SearchableDropdown(
                                           hint: Text(
-                                            "Select Customer",
+                                            widget.custID != null
+                                                ? widget.custName!
+                                                : 'Select Customer',
                                           ),
 
                                           isExpanded: true,
@@ -1792,7 +1812,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               _make.text = value != null
                                                   ? value['make']
                                                   : null;
-                                              _chasisno = value != null
+                                              _chassisno.text = value != null
                                                   ? value['chassisno']
                                                   : null;
                                               _policyno = value != null
@@ -1887,7 +1907,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                   ? value['id']
                                                   : null;
 
-                                              _chasisno = "";
+                                              _chassisno.clear();
                                               _policyno = "";
                                               _claimno = "";
 
@@ -2286,38 +2306,38 @@ class _CreateValuationState extends State<CreateValuation> {
                                         decoration: InputDecoration(
                                             hintText: "Type/Model	 By"),
                                       ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Drive Type",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _drivetype,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Drive Type"),
-                                      ),
+                                      // SizedBox(
+                                      //   height: 10,
+                                      // ),
+                                      // Row(
+                                      //   children: [
+                                      //     Text(
+                                      //       "Drive Type",
+                                      //       overflow: TextOverflow.ellipsis,
+                                      //       style: Theme.of(context)
+                                      //           .textTheme
+                                      //           .subtitle2!
+                                      //           .copyWith(),
+                                      //     ),
+                                      //     Text(
+                                      //       "*",
+                                      //       style: Theme.of(context)
+                                      //           .textTheme
+                                      //           .subtitle2!
+                                      //           .copyWith(color: Colors.blue),
+                                      //     )
+                                      //   ],
+                                      // ),
+                                      // TextFormField(
+                                      //   validator: (value) => value!.isEmpty
+                                      //       ? "This field is required"
+                                      //       : null,
+                                      //   controller: _drivetype,
+                                      //   onSaved: (value) => {engineNo},
+                                      //   keyboardType: TextInputType.text,
+                                      //   decoration: InputDecoration(
+                                      //       hintText: "Drive Type"),
+                                      // ),
                                       SizedBox(
                                         height: 10,
                                       ),
@@ -2513,35 +2533,35 @@ class _CreateValuationState extends State<CreateValuation> {
                                       SizedBox(
                                         height: 10,
                                       ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "No of Owners",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _noofowners,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "No of Owners"),
-                                      ),
+                                      // Row(
+                                      //   children: [
+                                      //     Text(
+                                      //       "No of Owners",
+                                      //       overflow: TextOverflow.ellipsis,
+                                      //       style: Theme.of(context)
+                                      //           .textTheme
+                                      //           .subtitle2!
+                                      //           .copyWith(),
+                                      //     ),
+                                      //     Text(
+                                      //       "*",
+                                      //       style: Theme.of(context)
+                                      //           .textTheme
+                                      //           .subtitle2!
+                                      //           .copyWith(color: Colors.blue),
+                                      //     )
+                                      //   ],
+                                      // ),
+                                      // TextFormField(
+                                      //   validator: (value) => value!.isEmpty
+                                      //       ? "This field is required"
+                                      //       : null,
+                                      //   controller: _noofowners,
+                                      //   onSaved: (value) => {engineNo},
+                                      //   keyboardType: TextInputType.text,
+                                      //   decoration: InputDecoration(
+                                      //       hintText: "No of Owners"),
+                                      // ),
                                       CheckboxListTile(
                                         controlAffinity:
                                             ListTileControlAffinity.trailing,
@@ -6272,9 +6292,9 @@ class _CreateValuationState extends State<CreateValuation> {
 
 Widget getListTile2(val) {
   return ListTile(
-    leading: Text('Customer:  ' + val['custname'] ?? ''),
-    title: Text('Vehicles:  ' + val['noofveh'].toString() ?? ''),
-    trailing: Text('Location:  ' + val['location'] ?? ''),
+    leading: Text(val['custname'] ?? ''),
+    title: Text(val['noofveh'].toString() ?? ''),
+    trailing: Text(val['location'] ?? ''),
   );
 }
 
