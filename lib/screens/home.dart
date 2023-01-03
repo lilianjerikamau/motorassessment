@@ -96,7 +96,7 @@ class _HomeState extends State<Home> {
     _fetchPendinginspection();
     _fetchPendingvaluation();
     _fetchSupplementary();
-    timer = Timer.periodic(Duration(minutes: 5), (Timer t) => checkGps());
+    timer = Timer.periodic(Duration(minutes: 2), (Timer t) => checkGps());
   }
 
   @override
@@ -213,7 +213,7 @@ class _HomeState extends State<Home> {
   bool isInstructionTapped = false;
   bool isAssessmentHistTapped = false;
   bool isReinspectionHistTapped = false;
-  bool isStandardValuationHistTapped = false;
+  bool isStandardValuationHistTappeda = false;
 
   @override
   Widget build(BuildContext context) {
@@ -425,8 +425,8 @@ class _HomeState extends State<Home> {
                                         MaterialPageRoute(
                                             builder: (context) =>
                                                 CreateAssesment(
-                                                  custID: 0,
-                                                  custName: 'null',
+                                                  custID: null,
+                                                  custName: '',
                                                 )),
                                       );
                                     },
@@ -479,8 +479,8 @@ class _HomeState extends State<Home> {
                                         MaterialPageRoute(
                                             builder: (context) =>
                                                 CreateValuation(
-                                                  custID: 0,
-                                                  custName: 'null',
+                                                  custID: null,
+                                                  custName: '',
                                                 )),
                                       );
                                     },
@@ -536,8 +536,8 @@ class _HomeState extends State<Home> {
                                         MaterialPageRoute(
                                             builder: (context) =>
                                                 CreateReinspection(
-                                                  custID: 0,
-                                                  custName: 'null',
+                                                  custID: null,
+                                                  custName: '',
                                                 )),
                                       );
                                     },
@@ -1066,8 +1066,8 @@ class _HomeState extends State<Home> {
           _policyno = instruction.policyno!;
           _regno = instruction.regno!;
           _carmodel = instruction.model!;
-          String? _custName = instruction.custname!;
-          int? _custId = instruction.custid!;
+          String? _custName = instruction.customer;
+          int _custId = instruction.custid!;
 
           print("Jobcard id :::: ${instruction.custid}");
           // print(_custId);
@@ -1168,8 +1168,8 @@ class _HomeState extends State<Home> {
           _policyno = inspection.policyno!;
           _regno = inspection.regno!;
           _carmodel = inspection.model!;
-          String? _custName = inspection.custname;
-          int? _custId = inspection.custid;
+          String? _custName = inspection.customer;
+          int _custId = inspection.custid!;
           print("inspection make :::: ${inspection.make}");
 
           return Card(
@@ -1274,8 +1274,8 @@ class _HomeState extends State<Home> {
           _policyno = valuation.policyno!;
           _regno = valuation.regno!;
           _carmodel = valuation.model!;
-          String? _custName = valuation.custname;
-          int? _custId = valuation.custid;
+          String? _custName = valuation.customer;
+          int _custId = valuation.custid!;
           print("valuation make :::: ${valuation.make}");
 
           return Card(

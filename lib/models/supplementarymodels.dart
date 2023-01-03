@@ -4,36 +4,36 @@ part 'supplementarymodels.g.dart';
 
 @JsonSerializable()
 class Supplementary {
-  Supplementary({
-    this.userid,
-    this.regno,
-    this.custid,
-    this.revised,
-    this.cashinlieu,
-    this.instructionno,
-    this.drivenby,
-    this.towed,
-    this.make,
-    this.model,
-    this.year,
-    this.mileage,
-    this.color,
-    this.chasisno,
-    this.pav,
-    this.salvage,
-    this.RHF,
-    this.LHR,
-    this.RHR,
-    this.LHF,
-    this.Spare,
-    this.photolist,
-    this.owner,
-    this.claimno,
-    this.chassisno,
-    this.policyno,
-    this.location,
-    this.custname,
-  });
+  Supplementary(
+      {this.userid,
+      this.regno,
+      this.custid,
+      this.revised,
+      this.cashinlieu,
+      this.instructionno,
+      this.drivenby,
+      this.towed,
+      this.make,
+      this.model,
+      this.year,
+      this.mileage,
+      this.color,
+      this.chasisno,
+      this.pav,
+      this.salvage,
+      this.RHF,
+      this.LHR,
+      this.RHR,
+      this.LHF,
+      this.Spare,
+      this.photolist,
+      this.owner,
+      this.claimno,
+      this.chassisno,
+      this.policyno,
+      this.location,
+      this.custname,
+      this.customer});
 
   int? userid;
   String? make;
@@ -63,12 +63,14 @@ class Supplementary {
   String? policyno;
   String? location;
   String? custname;
+  String? customer;
 
   factory Supplementary.fromJson(Map<String, dynamic> json) => Supplementary(
         userid: json["userid"],
+        customer: json["customer"],
         regno: json['regno'],
         make: json["make"],
-        custname: json["customer"],
+        custname: json["custname"],
         drivenby: json['drivenby'],
         towed: json["towed"],
         cashinlieu: json["cashinlieu"],

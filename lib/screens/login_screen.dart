@@ -286,6 +286,9 @@ class _State extends State<LoginPage> {
                                               User user = User.fromJson(
                                                   json.decode(data));
                                               if (user.id! > 0) {
+                                                print('employee id is');
+                                                print(user.hrid);
+
                                                 if (user.hrid! > 0) {
                                                   setState(() {
                                                     _loggedIn = true;
@@ -309,9 +312,10 @@ class _State extends State<LoginPage> {
                                                   });
                                                   Fluttertoast.showToast(
                                                       msg: 'Welcome $username');
-                                                } else {
+                                                } else if (user.hrid == 0 ||
+                                                    user.hrid! < 0) {
                                                   showDialog(
-                                                      context: _context,
+                                                      context: context,
                                                       builder:
                                                           (BuildContext bc) {
                                                         return CupertinoAlertDialog(

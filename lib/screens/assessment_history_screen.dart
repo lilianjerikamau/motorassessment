@@ -143,15 +143,6 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
                                 ),
                                 Divider(),
                                 Text(
-                                  _selectedItem!.policyno != null
-                                      ? 'Policy No: $_policyno'
-                                      : 'Policy No:',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                Divider(),
-                                Text(
                                   _selectedItem!.model != null
                                       ? 'Car Model: $_carmodel'
                                       : 'Car Model',

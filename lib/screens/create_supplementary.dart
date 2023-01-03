@@ -341,8 +341,8 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
         var jsonResponse = json.decode(data);
         setState(() {
           supassessmentJson = jsonResponse;
-          assessmentsString = supassessmentJson.join(",");
-          saveAssessments();
+          // assessmentsString = supassessmentJson.join(",");
+          // saveAssessments();
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -378,14 +378,14 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
 
   @override
   void initState() {
-    _checkNetwork();
-    if (string.contains('Online')) {
-      _fetchCustomers();
-      _fetchInstructions();
-      List supassessmentJson = [];
-    } else {
-      getInstructions();
-    }
+    // _checkNetwork();
+    // if (string.contains('Online')) {
+    //   _fetchCustomers();
+    //   _fetchInstructions();
+    //   List supassessmentJson = [];
+    // } else {
+    //   getInstructions();
+    // }
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     onNewCameraSelected(cameras[0]);
@@ -689,7 +689,7 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
   Widget getListTile1(val) {
     return ListTile(
       leading: Text(val['regno'] ?? ''),
-      title: Text(val['owner'] ?? ''),
+      title: Text(val['customer'] ?? ''),
       trailing: Text(val['location'] ?? ''),
     );
   }
@@ -775,7 +775,6 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                         switch (currentForm) {
                           case 0:
                             form = _formKey.currentState;
-
                             if (form.validate() &&
                                 _assessmentId != null &&
                                 _custId != null) {
@@ -1331,59 +1330,168 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                 ),
               ),
             ))
-        : MaterialApp(
-            home: SafeArea(
-              child: Scaffold(
-                backgroundColor: Colors.black,
-                body: Container(
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
-                  child: _isCameraPermissionGranted
-                      ? _isCameraInitialized
-                          ? ListView(
-                              shrinkWrap: true,
-                              physics: ScrollPhysics(),
-                              children: [
-                                AspectRatio(
-                                  aspectRatio:
-                                      1 / controller!.value.aspectRatio,
-                                  child: Stack(
-                                    children: [
-                                      CameraPreview(
-                                        controller!,
-                                        child: LayoutBuilder(builder:
-                                            (BuildContext context,
-                                                BoxConstraints constraints) {
-                                          return GestureDetector(
-                                            behavior: HitTestBehavior.opaque,
-                                            onTapDown: (details) =>
-                                                onViewFinderTap(
-                                                    details, constraints),
-                                          );
-                                        }),
-                                      ),
-                                      // TODO: Uncomment to preview the overlay
-                                      // Center(
-                                      //   child: Image.asset(
-                                      //     'assets/camera_aim.png',
-                                      //     color: Colors.greenAccent,
-                                      //     width: 150,
-                                      //     height: 150,
-                                      //   ),
-                                      // ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          16.0,
-                                          8.0,
-                                          16.0,
-                                          8.0,
+        : Scaffold(
+            backgroundColor: Colors.black,
+            body: _isCameraPermissionGranted
+                ? _isCameraInitialized
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          SingleChildScrollView(
+                            child: AspectRatio(
+                              aspectRatio: 1 / controller!.value.aspectRatio,
+                              child: Stack(
+                                children: [
+                                  CameraPreview(
+                                    controller!,
+                                    child: LayoutBuilder(builder:
+                                        (BuildContext context,
+                                            BoxConstraints constraints) {
+                                      return GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTapDown: (details) => onViewFinderTap(
+                                            details, constraints),
+                                      );
+                                    }),
+                                  ),
+                                  // TODO: Uncomment to preview the overlay
+                                  // Center(
+                                  //   child: Image.asset(
+                                  //     'assets/camera_aim.png',
+                                  //     color: Colors.greenAccent,
+                                  //     width: 150,
+                                  //     height: 150,
+                                  //   ),
+                                  // ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16.0,
+                                      8.0,
+                                      16.0,
+                                      8.0,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        Align(
+                                          alignment: Alignment.topRight,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.black87,
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8.0,
+                                                right: 8.0,
+                                              ),
+                                              child: DropdownButton<
+                                                  ResolutionPreset>(
+                                                dropdownColor: Colors.black87,
+                                                underline: Container(),
+                                                value: currentResolutionPreset,
+                                                items: [
+                                                  for (ResolutionPreset preset
+                                                      in resolutionPresets)
+                                                    DropdownMenuItem(
+                                                      child: Text(
+                                                        preset
+                                                            .toString()
+                                                            .split('.')[1]
+                                                            .toUpperCase(),
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                      value: preset,
+                                                    )
+                                                ],
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    currentResolutionPreset =
+                                                        value!;
+                                                    _isCameraInitialized =
+                                                        false;
+                                                  });
+                                                  onNewCameraSelected(
+                                                      controller!.description);
+                                                },
+                                                hint: Text("Select item"),
+                                              ),
+                                            ),
+                                          ),
                                         ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
+                                        // Spacer(),
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                              right: 8.0, top: 16.0),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(10.0),
+                                            ),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Text(
+                                                _currentExposureOffset
+                                                        .toStringAsFixed(1) +
+                                                    'x',
+                                                style: TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: RotatedBox(
+                                            quarterTurns: 3,
+                                            child: Container(
+                                              height: 30,
+                                              child: Slider(
+                                                value: _currentExposureOffset,
+                                                min:
+                                                    _minAvailableExposureOffset,
+                                                max:
+                                                    _maxAvailableExposureOffset,
+                                                activeColor: Colors.white,
+                                                inactiveColor: Colors.white30,
+                                                onChanged: (value) async {
+                                                  setState(() {
+                                                    _currentExposureOffset =
+                                                        value;
+                                                  });
+                                                  await controller!
+                                                      .setExposureOffset(value);
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Row(
                                           children: [
-                                            Align(
-                                              alignment: Alignment.topRight,
+                                            Expanded(
+                                              child: Slider(
+                                                value: _currentZoomLevel,
+                                                min: _minAvailableZoom,
+                                                max: _maxAvailableZoom,
+                                                activeColor: Colors.white,
+                                                inactiveColor: Colors.white30,
+                                                onChanged: (value) async {
+                                                  setState(() {
+                                                    _currentZoomLevel = value;
+                                                  });
+                                                  await controller!
+                                                      .setZoomLevel(value);
+                                                },
+                                              ),
+                                            ),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0),
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                   color: Colors.black87,
@@ -1393,482 +1501,338 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                                                 ),
                                                 child: Padding(
                                                   padding:
-                                                      const EdgeInsets.only(
-                                                    left: 8.0,
-                                                    right: 8.0,
-                                                  ),
-                                                  child: DropdownButton<
-                                                      ResolutionPreset>(
-                                                    dropdownColor:
-                                                        Colors.black87,
-                                                    underline: Container(),
-                                                    value:
-                                                        currentResolutionPreset,
-                                                    items: [
-                                                      for (ResolutionPreset preset
-                                                          in resolutionPresets)
-                                                        DropdownMenuItem(
-                                                          child: Text(
-                                                            preset
-                                                                .toString()
-                                                                .split('.')[1]
-                                                                .toUpperCase(),
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white),
-                                                          ),
-                                                          value: preset,
-                                                        )
-                                                    ],
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        currentResolutionPreset =
-                                                            value!;
-                                                        _isCameraInitialized =
-                                                            false;
-                                                      });
-                                                      onNewCameraSelected(
-                                                          controller!
-                                                              .description);
-                                                    },
-                                                    hint: Text("Select item"),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            // Spacer(),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0, top: 16.0),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                ),
-                                                child: Padding(
-                                                  padding:
                                                       const EdgeInsets.all(8.0),
                                                   child: Text(
-                                                    _currentExposureOffset
+                                                    _currentZoomLevel
                                                             .toStringAsFixed(
                                                                 1) +
                                                         'x',
                                                     style: TextStyle(
-                                                        color: Colors.black),
+                                                        color: Colors.white),
                                                   ),
                                                 ),
                                               ),
-                                            ),
-                                            Expanded(
-                                              child: RotatedBox(
-                                                quarterTurns: 3,
-                                                child: Container(
-                                                  height: 30,
-                                                  child: Slider(
-                                                    value:
-                                                        _currentExposureOffset,
-                                                    min:
-                                                        _minAvailableExposureOffset,
-                                                    max:
-                                                        _maxAvailableExposureOffset,
-                                                    activeColor: Colors.white,
-                                                    inactiveColor:
-                                                        Colors.white30,
-                                                    onChanged: (value) async {
-                                                      setState(() {
-                                                        _currentExposureOffset =
-                                                            value;
-                                                      });
-                                                      await controller!
-                                                          .setExposureOffset(
-                                                              value);
-                                                    },
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Slider(
-                                                    value: _currentZoomLevel,
-                                                    min: _minAvailableZoom,
-                                                    max: _maxAvailableZoom,
-                                                    activeColor: Colors.white,
-                                                    inactiveColor:
-                                                        Colors.white30,
-                                                    onChanged: (value) async {
-                                                      setState(() {
-                                                        _currentZoomLevel =
-                                                            value;
-                                                      });
-                                                      await controller!
-                                                          .setZoomLevel(value);
-                                                    },
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          right: 8.0),
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black87,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: Text(
-                                                        _currentZoomLevel
-                                                                .toStringAsFixed(
-                                                                    1) +
-                                                            'x',
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                InkWell(
-                                                  onTap: () async {
-                                                    image = await takePicture();
-                                                    File image1 =
-                                                        File(image!.path);
-
-                                                    int currentUnix = DateTime
-                                                            .now()
-                                                        .millisecondsSinceEpoch;
-
-                                                    String fileFormat = image1
-                                                        .path
-                                                        .split('.')
-                                                        .last;
-                                                    setState(() {
-                                                      iscameraopen = false;
-                                                    });
-                                                    iscameraopen = false;
-                                                    GallerySaver.saveImage(
-                                                            image!.path)
-                                                        .then((path) {
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (BuildContext
-                                                            context) {
-                                                          return _SystemPadding(
-                                                            child: AlertDialog(
-                                                              contentPadding:
-                                                                  const EdgeInsets
-                                                                          .all(
-                                                                      16.0),
-                                                              content: Row(
-                                                                children: <
-                                                                    Widget>[
-                                                                  Expanded(
-                                                                    child:
-                                                                        TextFormField(
-                                                                      controller:
-                                                                          _itemDescController,
-                                                                      keyboardType:
-                                                                          TextInputType
-                                                                              .text,
-                                                                      autofocus:
-                                                                          true,
-                                                                      decoration: const InputDecoration(
-                                                                          labelText:
-                                                                              'Enter Description',
-                                                                          hintText:
-                                                                              'Description'),
-                                                                    ),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                              actions: <Widget>[
-                                                                TextButton(
-                                                                    child: const Text(
-                                                                        'CANCEL'),
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    }),
-                                                                TextButton(
-                                                                    child: const Text(
-                                                                        'OKAY'),
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                      setState(
-                                                                          () {
-                                                                        String?
-                                                                            description =
-                                                                            _itemDescController.text.trim();
-                                                                        print(
-                                                                            description);
-                                                                        final bytes =
-                                                                            Io.File(image!.path).readAsBytesSync();
-
-                                                                        String
-                                                                            imageFile =
-                                                                            base64Encode(bytes);
-                                                                        images = Images(
-                                                                            filename:
-                                                                                description,
-                                                                            attachment:
-                                                                                imageFile);
-                                                                        _addImage(
-                                                                            image!);
-                                                                        _addImages(
-                                                                            images!);
-                                                                        _addDescription(
-                                                                            description);
-                                                                      });
-                                                                    })
-                                                              ],
-                                                            ),
-                                                          );
-                                                        },
-                                                      );
-                                                    });
-                                                    print(fileFormat);
-                                                  },
-                                                  child: Stack(
-                                                    alignment: Alignment.center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.circle,
-                                                        color:
-                                                            _isVideoCameraSelected
-                                                                ? Colors.white
-                                                                : Colors
-                                                                    .white38,
-                                                        size: 80,
-                                                      ),
-                                                      Icon(
-                                                        Icons.circle,
-                                                        color:
-                                                            _isVideoCameraSelected
-                                                                ? Colors.blue
-                                                                : Colors.white,
-                                                        size: 65,
-                                                      ),
-                                                      _isVideoCameraSelected &&
-                                                              _isRecordingInProgress
-                                                          ? Icon(
-                                                              Icons
-                                                                  .stop_rounded,
-                                                              color:
-                                                                  Colors.white,
-                                                              size: 32,
-                                                            )
-                                                          : Container(),
-                                                    ],
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  onTap: image != null
-                                                      ? () {
-                                                          // Navigator.of(context)
-                                                          //     .push(
-                                                          //   MaterialPageRoute(
-                                                          //     builder: (context) =>
-                                                          //         PreviewScreen(
-                                                          //       image: image!,
-                                                          //       fileList:
-                                                          //           imageslist,
-                                                          //     ),
-                                                          //   ),
-                                                          // );
-                                                        }
-                                                      : null,
-                                                  child: Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                      border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 2,
-                                                      ),
-                                                      image: image != null
-                                                          ? DecorationImage(
-                                                              image: FileImage(
-                                                                File(image!
-                                                                    .path),
-                                                              ),
-                                                              fit: BoxFit.cover,
-                                                            )
-                                                          : null,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
                                             ),
                                           ],
+                                        ),
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            InkWell(
+                                              onTap: () async {
+                                                image = await takePicture();
+                                                File image1 = File(image!.path);
+
+                                                int currentUnix = DateTime.now()
+                                                    .millisecondsSinceEpoch;
+
+                                                String fileFormat =
+                                                    image1.path.split('.').last;
+                                                setState(() {
+                                                  iscameraopen = false;
+                                                });
+                                                iscameraopen = false;
+                                                // GallerySaver.saveImage(
+                                                //         image!.path)
+                                                //     .then((path) {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return _SystemPadding(
+                                                      child: AlertDialog(
+                                                        contentPadding:
+                                                            const EdgeInsets
+                                                                .all(16.0),
+                                                        content: Row(
+                                                          children: <Widget>[
+                                                            Expanded(
+                                                              child:
+                                                                  TextFormField(
+                                                                controller:
+                                                                    _itemDescController,
+                                                                keyboardType:
+                                                                    TextInputType
+                                                                        .text,
+                                                                autofocus: true,
+                                                                decoration: const InputDecoration(
+                                                                    labelText:
+                                                                        'Enter Description',
+                                                                    hintText:
+                                                                        'Description'),
+                                                              ),
+                                                            )
+                                                          ],
+                                                        ),
+                                                        actions: <Widget>[
+                                                          TextButton(
+                                                              child: const Text(
+                                                                  'CANCEL'),
+                                                              onPressed: () {
+                                                                Navigator.pop(
+                                                                    context);
+                                                              }),
+                                                          TextButton(
+                                                              child: const Text(
+                                                                  'OKAY'),
+                                                              onPressed: () {
+                                                                Navigator.pop(
+                                                                    context);
+                                                                setState(() {
+                                                                  String?
+                                                                      description =
+                                                                      _itemDescController
+                                                                          .text
+                                                                          .trim();
+                                                                  print(
+                                                                      description);
+                                                                  final bytes = Io.File(
+                                                                          image!
+                                                                              .path)
+                                                                      .readAsBytesSync();
+
+                                                                  String
+                                                                      imageFile =
+                                                                      base64Encode(
+                                                                          bytes);
+                                                                  images = Images(
+                                                                      filename:
+                                                                          description,
+                                                                      attachment:
+                                                                          imageFile);
+                                                                  _addImage(
+                                                                      image!);
+                                                                  _addImages(
+                                                                      images!);
+                                                                  _addDescription(
+                                                                      description);
+                                                                });
+                                                              })
+                                                        ],
+                                                      ),
+                                                    );
+                                                  },
+                                                );
+                                                // });
+                                                print(fileFormat);
+                                              },
+                                              child: Stack(
+                                                alignment: Alignment.center,
+                                                children: [
+                                                  Icon(
+                                                    Icons.circle,
+                                                    color:
+                                                        _isVideoCameraSelected
+                                                            ? Colors.white
+                                                            : Colors.white38,
+                                                    size: 80,
+                                                  ),
+                                                  Icon(
+                                                    Icons.circle,
+                                                    color:
+                                                        _isVideoCameraSelected
+                                                            ? Colors.blue
+                                                            : Colors.white,
+                                                    size: 65,
+                                                  ),
+                                                  _isVideoCameraSelected &&
+                                                          _isRecordingInProgress
+                                                      ? Icon(
+                                                          Icons.stop_rounded,
+                                                          color: Colors.white,
+                                                          size: 32,
+                                                        )
+                                                      : Container(),
+                                                ],
+                                              ),
+                                            ),
+                                            InkWell(
+                                              onTap: image != null
+                                                  ? () {
+                                                      // Navigator.of(context)
+                                                      //     .push(
+                                                      //   MaterialPageRoute(
+                                                      //     builder: (context) =>
+                                                      //         PreviewScreen(
+                                                      //       image: image!,
+                                                      //       fileList:
+                                                      //           imageslist,
+                                                      //     ),
+                                                      //   ),
+                                                      // );
+                                                    }
+                                                  : null,
+                                              child: Container(
+                                                width: 60,
+                                                height: 60,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                  border: Border.all(
+                                                    color: Colors.white,
+                                                    width: 2,
+                                                  ),
+                                                  image: image != null
+                                                      ? DecorationImage(
+                                                          image: FileImage(
+                                                            File(image!.path),
+                                                          ),
+                                                          fit: BoxFit.cover,
+                                                        )
+                                                      : null,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Row(
+                                    children: [],
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                      16.0, 8.0, 16.0, 8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () async {
+                                            setState(() {
+                                              _currentFlashMode = FlashMode.off;
+                                            });
+                                            await controller!.setFlashMode(
+                                              FlashMode.off,
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.flash_off,
+                                            color: _currentFlashMode ==
+                                                    FlashMode.off
+                                                ? Colors.amber
+                                                : Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () async {
+                                            setState(() {
+                                              _currentFlashMode =
+                                                  FlashMode.auto;
+                                            });
+                                            await controller!.setFlashMode(
+                                              FlashMode.auto,
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.flash_auto,
+                                            color: _currentFlashMode ==
+                                                    FlashMode.auto
+                                                ? Colors.amber
+                                                : Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () async {
+                                            setState(() {
+                                              _currentFlashMode =
+                                                  FlashMode.always;
+                                            });
+                                            await controller!.setFlashMode(
+                                              FlashMode.always,
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.flash_on,
+                                            color: _currentFlashMode ==
+                                                    FlashMode.always
+                                                ? Colors.amber
+                                                : Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: InkWell(
+                                          onTap: () async {
+                                            setState(() {
+                                              _currentFlashMode =
+                                                  FlashMode.torch;
+                                            });
+                                            await controller!.setFlashMode(
+                                              FlashMode.torch,
+                                            );
+                                          },
+                                          child: Icon(
+                                            Icons.highlight,
+                                            color: _currentFlashMode ==
+                                                    FlashMode.torch
+                                                ? Colors.amber
+                                                : Colors.white,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                ),
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    physics: BouncingScrollPhysics(),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 8.0),
-                                          child: Row(
-                                            children: [],
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              16.0, 8.0, 16.0, 8.0),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              InkWell(
-                                                onTap: () async {
-                                                  setState(() {
-                                                    _currentFlashMode =
-                                                        FlashMode.off;
-                                                  });
-                                                  await controller!
-                                                      .setFlashMode(
-                                                    FlashMode.off,
-                                                  );
-                                                },
-                                                child: Icon(
-                                                  Icons.flash_off,
-                                                  color: _currentFlashMode ==
-                                                          FlashMode.off
-                                                      ? Colors.amber
-                                                      : Colors.white,
-                                                ),
-                                              ),
-                                              InkWell(
-                                                onTap: () async {
-                                                  setState(() {
-                                                    _currentFlashMode =
-                                                        FlashMode.auto;
-                                                  });
-                                                  await controller!
-                                                      .setFlashMode(
-                                                    FlashMode.auto,
-                                                  );
-                                                },
-                                                child: Icon(
-                                                  Icons.flash_auto,
-                                                  color: _currentFlashMode ==
-                                                          FlashMode.auto
-                                                      ? Colors.amber
-                                                      : Colors.white,
-                                                ),
-                                              ),
-                                              InkWell(
-                                                onTap: () async {
-                                                  setState(() {
-                                                    _currentFlashMode =
-                                                        FlashMode.always;
-                                                  });
-                                                  await controller!
-                                                      .setFlashMode(
-                                                    FlashMode.always,
-                                                  );
-                                                },
-                                                child: Icon(
-                                                  Icons.flash_on,
-                                                  color: _currentFlashMode ==
-                                                          FlashMode.always
-                                                      ? Colors.amber
-                                                      : Colors.white,
-                                                ),
-                                              ),
-                                              InkWell(
-                                                onTap: () async {
-                                                  setState(() {
-                                                    _currentFlashMode =
-                                                        FlashMode.torch;
-                                                  });
-                                                  await controller!
-                                                      .setFlashMode(
-                                                    FlashMode.torch,
-                                                  );
-                                                },
-                                                child: Icon(
-                                                  Icons.highlight,
-                                                  color: _currentFlashMode ==
-                                                          FlashMode.torch
-                                                      ? Colors.amber
-                                                      : Colors.white,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                                )
                               ],
-                            )
-                          : Center(
-                              child: Text(
-                                'LOADING',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(),
-                            Text(
-                              'Permission denied',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                              ),
                             ),
-                            SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () {
-                                getPermissionStatus();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Give permission',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
+                        ],
+                      )
+                    : Center(
+                        child: Text(
+                          'LOADING',
+                          style: TextStyle(color: Colors.white),
                         ),
-                ),
-              ),
-            ),
+                      )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(),
+                      Text(
+                        'Permission denied',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          getPermissionStatus();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Give permission',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           );
   }
 }

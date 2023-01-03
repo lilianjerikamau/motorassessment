@@ -33,11 +33,13 @@ class Inspection {
     this.policyno,
     this.location,
     this.custname,
+    this.customer,
   });
   int? id;
   int? userid;
   String? make;
   String? drivenby;
+  String? customer;
   bool? towed;
   bool? cashinlieu;
   int? instructionno;
@@ -80,7 +82,8 @@ class Inspection {
         claimno: json['claimno'],
         location: json['location'],
         model: json["model"],
-        custname: json["customer"],
+        custname: json["custname"],
+        customer: json["customer"],
       );
 
   Map<String, dynamic> toJson() => {};

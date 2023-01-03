@@ -59,7 +59,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
   User? _loggedInUser;
 
   int? _userid;
-  int? _custid;
+  var _custid;
   String? _custname;
   String? _custphone;
   int? _custId;
@@ -90,14 +90,19 @@ class _CreateAssesmentState extends State<CreateAssesment>
   int? customerid;
   String? _policyno;
   String? _chasisno;
-  String? _make;
+  // String? _make;
+  TextEditingController _make = TextEditingController();
+  TextEditingController _model = TextEditingController();
+  TextEditingController _type = TextEditingController();
+  TextEditingController _vehiclereg = TextEditingController();
+
   String? _carmodel;
   String? _location;
   String? _claimno;
   int? _insuredvalue;
   String? _excess;
   String? _owner;
-  String? _vehiclereg;
+  // String? _vehiclereg;
   List<Customer> _customers = [];
   List<Instruction> _instruction = [];
   final value = new NumberFormat("#,##0.00", "en_US");
@@ -174,7 +179,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
   bool _isCameraInitialized = false;
   bool _isCameraPermissionGranted = false;
 
-  bool _isRearCameraSelected = true;
+  // bool _isRearCameraSelected = true;
   bool _isVideoCameraSelected = false;
   bool _isRecordingInProgress = false;
   double _minAvailableExposureOffset = 0.0;
@@ -314,29 +319,30 @@ class _CreateAssesmentState extends State<CreateAssesment>
   @override
   void initState() {
     print('custID');
-
-    if (widget.custID != 0 || widget.custID != null) {
+    print(widget.custID != null);
+    if ((widget.custID != 0) && (widget.custID != null)) {
       setState(() {
         SessionPreferences().getLoggedInUser().then((user) {
           setState(() {
+            _fetchInstructions();
+            // _fetchCustomers();
             _loggedInUser = user;
             custId = user.custid;
             _userid = user.id;
             _hrid = user.hrid;
             print('userid');
             print(_hrid);
+            // _custId = widget.custID as int;
           });
         });
-        _custid = widget.custID;
+
         print('cust id is');
-        print(_custid);
+        print(widget.custID);
       });
-      _fetchInstructions();
     } else {
       _fetchCustomers();
     }
 
-    _instructionId = 2;
     loadCamera();
     // saveUserInfo();
 
@@ -365,34 +371,51 @@ class _CreateAssesmentState extends State<CreateAssesment>
         .onConnectivityChanged
         .listen((ConnectivityResult result) {
       // whenevery connection status is changed.
-      if (result == ConnectivityResult.none) {
-        //there is no any connection
-        print('Not Connected');
-        setState(() {
-          isoffline = true;
-        });
-      } else if (result == ConnectivityResult.mobile) {
-        //connection is mobile data network
-        if (assessmentsString != null || assessmentsString == "") {
-          readAssessments();
-        }
-        print('Connected to mobile');
-        setState(() {
-          isoffline = false;
-        });
-      } else if (result == ConnectivityResult.wifi) {
-        //connection is from wifi
-        print('Connected to wifi');
-        print(assessmentsString);
-        if (assessmentsString != null || assessmentsString == "") {
-          readAssessments();
-        }
-        setState(() {
-          isoffline = false;
-        });
-      }
+      // if (result == ConnectivityResult.none) {
+      //   //there is no any connection
+      //   print('Not Connected');
+      //   setState(() {
+      //     isoffline = true;
+      //   });
+      // } else if (result == ConnectivityResult.mobile) {
+      //   //connection is mobile data network
+      //   if (assessmentsString != null || assessmentsString == "") {
+      //     readAssessments();
+      //   }
+      //   print('Connected to mobile');
+      //   setState(() {
+      //     isoffline = false;
+      //   });
+      // } else if (result == ConnectivityResult.wifi) {
+      //   //connection is from wifi
+      //   print('Connected to wifi');
+      //   print(assessmentsString);
+      //   if (assessmentsString != null || assessmentsString == "") {
+      //     readAssessments();
+      //   }
+      //   setState(() {
+      //     isoffline = false;
+      //   });
+      // }
     });
     super.initState();
+  }
+
+  loadCamera() async {
+    cameras = await availableCameras();
+    if (cameras != null) {
+      controller = CameraController(cameras[0], ResolutionPreset.max);
+      //cameras[0] = first camera, change to 1 to another camera
+
+      controller!.initialize().then((_) {
+        if (!mounted) {
+          return;
+        }
+        setState(() {});
+      });
+    } else {
+      print("NO any camera found");
+    }
   }
 
   getUserInfo() async {
@@ -415,15 +438,15 @@ class _CreateAssesmentState extends State<CreateAssesment>
   }
 
   getAssessmentInstructions() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String auth = prefs.getString('assessmentinstructions') as String;
-    List instructionList = auth.split(",");
-    print("instructionList");
+    // final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // String auth = prefs.getString('assessmentinstructions') as String;
+    // List instructionList = auth.split(",");
+    // print("instructionList");
 
-    setState(() {
-      instructionList = instructionsJson;
-      print(instructionsJson);
-    });
+    // setState(() {
+    //   instructionList = instructionsJson;
+    //   print(instructionsJson);
+    // });
   }
 
   Future<void> saveAssessmentInstructions() async {
@@ -471,12 +494,12 @@ class _CreateAssesmentState extends State<CreateAssesment>
   final _drivenby = TextEditingController();
   // final _make = TextEditingController();
   TextEditingController _searchController = new TextEditingController();
-  final _year = TextEditingController();
+  TextEditingController _year = TextEditingController();
   final _color = TextEditingController();
   final _itemDescController = TextEditingController();
   final _loanofficeremail = TextEditingController();
   // final _vehiclereg = TextEditingController();
-  final _chassisno = TextEditingController();
+  TextEditingController _chassisno = TextEditingController();
   // final _carmodel = TextEditingController();
   final _mileage = TextEditingController();
   final _engineno = TextEditingController();
@@ -493,6 +516,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
   final _RHR = TextEditingController();
   final _paintwork = TextEditingController();
   final _spare = TextEditingController();
+  final _remarks = TextEditingController();
   final _damagesobserved = TextEditingController();
   // final _deliveredby = TextEditingController();
   // final _owner = TextEditingController();
@@ -569,22 +593,6 @@ class _CreateAssesmentState extends State<CreateAssesment>
   double clipHeight = containerHeight * 0.35;
   DiagonalPosition position = DiagonalPosition.BOTTOM_LEFT;
   final size = 200.0;
-  loadCamera() async {
-    cameras = await availableCameras();
-    if (cameras != null) {
-      controller = CameraController(cameras[0], ResolutionPreset.max);
-      //cameras[0] = first camera, change to 1 to another camera
-
-      controller!.initialize().then((_) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {});
-      });
-    } else {
-      print("NO any camera found");
-    }
-  }
 
   Future<XFile?> takePicture() async {
     final CameraController? cameraController = controller;
@@ -643,16 +651,20 @@ class _CreateAssesmentState extends State<CreateAssesment>
                     String vehiclecolor = _color.text.trim();
                     String engineno = _engineno.text.trim();
                     String drivenby = _drivenby.text.trim();
-                    // String model = _carmodel.text.trim();
+                    String model = _model.text.trim();
+                    String type = _type.text.trim();
+                    String chasisno = _chassisno.text.trim();
                     String year = _year.text.trim();
+                    String regno = _vehiclereg.text.trim();
                     String dateinput = _dateinput.text;
                     String pav = _pav.text.trim();
+                    String remarks = _remarks.text.trim();
                     String salvage = _salvage.text.trim();
                     String brakes = _brakes.text.trim();
                     String paintwork = _paintwork.text.trim();
                     String mileage = _mileage.text.trim();
                     String steering = _steering.text.trim();
-
+                    String make = _make.text.trim();
                     String RHF = _RHF.text.trim();
                     String LHR = _LHR.text;
                     String RHR = _RHR.text;
@@ -679,20 +691,22 @@ class _CreateAssesmentState extends State<CreateAssesment>
                         assessmentsString = (jsonEncode(<String, dynamic>{
                           "userid": _userid,
                           "custid":
-                              widget.custID != 0 ? widget.custID : _custId,
+                              widget.custID == null ? _custId : widget.custID,
                           "revised": revised,
                           "cashinlieu": revised2,
                           "instructionno": _instructionId,
                           "driven": isOther5,
                           "drivenby": drivenby,
                           "towed": isOther6,
-                          "make": _make,
-                          "model": _carmodel,
+                          "remarks": remarks,
+                          "make": make,
+                          "model": model,
+                          "type": type,
                           "year": year,
                           "mileage": mileage,
                           "color": vehiclecolor,
                           "engineno": engineno,
-                          "chasisno": _chasisno,
+                          "chasisno": chasisno,
                           "pav": pav != "" ? pav : 1,
                           "salvage": salvage != "" ? salvage : "0",
                           "brakes": brakes,
@@ -716,20 +730,23 @@ class _CreateAssesmentState extends State<CreateAssesment>
                           },
                           body: jsonEncode(<String, dynamic>{
                             "userid": _userid,
-                            "custid": _custId,
+                            "custid":
+                                widget.custID == null ? _custId : widget.custID,
                             "revised": revised,
                             "cashinlieu": revised2,
                             "instructionno": _instructionId,
                             "driven": isOther5,
                             "drivenby": drivenby,
                             "towed": isOther6,
-                            "make": _make,
-                            "model": _carmodel,
+                            "remarks": remarks,
+                            "make": make,
+                            "model": model,
+                            "type": type,
                             "year": year,
                             "mileage": mileage,
                             "color": vehiclecolor,
                             "engineno": engineno,
-                            "chasisno": _chasisno,
+                            "chassisno": chasisno,
                             "pav": pav != "" ? pav : 1,
                             "salvage": salvage != "" ? salvage : "0",
                             "brakes": brakes,
@@ -925,107 +942,71 @@ class _CreateAssesmentState extends State<CreateAssesment>
 
   _fetchInstructions() async {
     String url = await Config.getBaseUrl();
-    if (widget.custID != 0 || widget.custID != null) {
-      HttpClientResponse response = await Config.getRequestObject(
-          url +
-              'valuation/custinstruction/?custid=$_custid&hrid=$_hrid&typeid=1&revised=$revised',
-          Config.get);
-      if (response != null) {
-        print(url +
-            'valuation/custinstruction/?custid=$_custid&hrid=$_hrid&typeid=1&revised=$revised');
-        print(response);
-        response
-            .transform(utf8.decoder)
-            .transform(LineSplitter())
-            .listen((data) {
-          var jsonResponse = json.decode(data);
-          setState(() {
-            instructionsJson = jsonResponse;
-            instructionsString = instructionsJson.join(",");
-            saveAssessmentInstructions();
-          });
-          print(jsonResponse);
-          var list = jsonResponse as List;
-          List<Instruction> result = list.map<Instruction>((json) {
-            return Instruction.fromJson(json);
-          }).toList();
-          if (result.isNotEmpty) {
-            setState(() {
-              result.sort((a, b) => a.chassisno!
-                  .toLowerCase()
-                  .compareTo(b.chassisno!.toLowerCase()));
-              _instruction = result;
-              if (_instruction != null && _instruction.isNotEmpty) {
-                _instruction.forEach((instruction) {
-                  setState(() {});
 
-                  print(_make);
-                });
-              }
-            });
-          } else {
-            setState(() {
-              _message = 'You have not been assigned any customers';
-            });
-          }
-        });
-      } else {
-        print('response is null ');
-      }
-    } else {
-      HttpClientResponse response = await Config.getRequestObject(
-          url +
-              'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised',
-          Config.get);
-      if (response != null) {
-        print(url +
+    URLQueryParams urlQueryParams = new URLQueryParams();
+    urlQueryParams.append('custid', _custId);
+    urlQueryParams.append('hrid', _hrid);
+    urlQueryParams.append('typeid', '1');
+    urlQueryParams.append('revised', revised);
+    String qParams = urlQueryParams.toString();
+    final stringurl = widget.custID == null
+        ? (url +
+            'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised')
+        : (url +
             'valuation/custinstruction/?custid=${widget.custID}&hrid=$_hrid&typeid=1&revised=$revised');
-        print(response);
-        response
-            .transform(utf8.decoder)
-            .transform(LineSplitter())
-            .listen((data) {
-          var jsonResponse = json.decode(data);
-          setState(() {
-            instructionsJson = jsonResponse;
-            instructionsString = instructionsJson.join(",");
-            saveAssessmentInstructions();
-          });
-          print(jsonResponse);
-          var list = jsonResponse as List;
-          List<Instruction> result = list.map<Instruction>((json) {
-            return Instruction.fromJson(json);
-          }).toList();
-          if (result.isNotEmpty) {
-            setState(() {
-              result.sort((a, b) => a.chassisno!
-                  .toLowerCase()
-                  .compareTo(b.chassisno!.toLowerCase()));
-              _instruction = result;
-              if (_instruction != null && _instruction.isNotEmpty) {
-                _instruction.forEach((instruction) {
-                  setState(() {});
-
-                  print(_make);
-                });
-              }
-            });
-          } else {
-            setState(() {
-              _message = 'You have not been assigned any customers';
-            });
-          }
+    HttpClientResponse response = await Config.getRequestObject(
+      stringurl,
+      Config.get,
+    );
+    if (response != null) {
+      print(stringurl);
+      print(response.compressionState);
+      bool _validURL = Uri.parse(url +
+              'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised')
+          .isAbsolute;
+      print(_validURL);
+      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
+        var jsonResponse = jsonDecode(data);
+        print(jsonResponse);
+        setState(() {
+          instructionsJson = jsonResponse;
+          // instructionsString = instructionsJson.join(",");
+          // saveAssessmentInstructions();
         });
-      } else {
-        print('response is null ');
-      }
+        print(jsonResponse);
+        var list = jsonResponse as List;
+        List<Instruction> result = list.map<Instruction>((json) {
+          return Instruction.fromJson(json);
+        }).toList();
+        if (result.isNotEmpty) {
+          setState(() {
+            result.sort((a, b) => a.chassisno!
+                .toLowerCase()
+                .compareTo(b.chassisno!.toLowerCase()));
+            _instruction = result;
+            if (_instruction != null && _instruction.isNotEmpty) {
+              _instruction.forEach((instruction) {
+                setState(() {});
+
+                print(_make);
+              });
+            }
+          });
+        } else {
+          setState(() {
+            _message = 'You have not been assigned any customers';
+          });
+        }
+      });
+    } else {
+      print('response is null ');
     }
   }
 
   Widget getListTile1(val) {
     return ListTile(
       leading: Text(val['regno'] ?? ''),
-      title: Text(val['owner'] ?? ''),
+      title: Text(val['customer'] ?? ''),
       trailing: Text(val['location'] ?? ''),
     );
   }
@@ -1127,7 +1108,8 @@ class _CreateAssesmentState extends State<CreateAssesment>
                               ));
                             }
                             if (form.validate() &&
-                                _instructionId != null &&
+                                    _instructionId != null &&
+                                    widget.custID != null ||
                                 _custId != null) {
                               form.save();
                               currentForm = 1;
@@ -1318,8 +1300,8 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         ),
                                         SearchableDropdown(
                                           hint: Text(
-                                            widget.custID != 0 ||
-                                                    widget.custID != null ||
+                                            widget.custID != 0 &&
+                                                    widget.custID != null &&
                                                     widget.custName != 'null'
                                                 ? widget.custName!
                                                 : 'Select Customer',
@@ -1332,6 +1314,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                               _custId = value != null
                                                   ? value['custid']
                                                   : null;
+
                                               _custName = value != null
                                                   ? value['company']
                                                   : null;
@@ -1344,6 +1327,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
 
                                               _fetchInstructions();
                                             });
+                                            print(_instructionId);
                                             print(_selectedValue);
                                             print(_custName);
                                             print(_custId);
@@ -1545,13 +1529,39 @@ class _CreateAssesmentState extends State<CreateAssesment>
 
                                             setState(() {
                                               _selectedValue = value;
+                                              // _instructionId = value != null
+                                              //     ? value['id']
+                                              //     : null;
+                                              // _make = value != null
+                                              //     ? value['make']
+                                              //     : null;
+                                              // _chasisno = value != null
+                                              //     ? value['chassisno']
+                                              //     : null;
+                                              // _policyno = value != null
+                                              //     ? value['policyno']
+                                              //     : null;
+                                              // _claimno = value != null
+                                              //     ? value['claimno']
+                                              //     : null;
+
+                                              // _location = value != null
+                                              //     ? value['location']
+                                              //     : null;
+                                              // _owner = value != null
+                                              //     ? value['owner']
+                                              //     : null;
+                                              // _insuredvalue = value != null
+                                              //     ? value['insuredvalue']
+                                              //     : null;
+
                                               _instructionId = value != null
                                                   ? value['id']
                                                   : null;
-                                              _make = value != null
+                                              _make.text = value != null
                                                   ? value['make']
                                                   : null;
-                                              _chasisno = value != null
+                                              _chassisno.text = value != null
                                                   ? value['chassisno']
                                                   : null;
                                               _policyno = value != null
@@ -1560,7 +1570,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                               _claimno = value != null
                                                   ? value['claimno']
                                                   : null;
-                                              _carmodel = value != null
+                                              _model.text = value != null
                                                   ? value['model']
                                                   : null;
 
@@ -1573,7 +1583,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                               _insuredvalue = value != null
                                                   ? value['insuredvalue']
                                                   : null;
-                                              _vehiclereg = value != null
+                                              _vehiclereg.text = value != null
                                                   ? value['regno']
                                                   : null;
                                               _excess = value != null
@@ -1708,6 +1718,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         ],
                                       ),
                                       TextFormField(
+                                        readOnly: true,
                                         initialValue: _owner,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
@@ -1772,6 +1783,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         ],
                                       ),
                                       TextFormField(
+                                        readOnly: true,
                                         initialValue: _policyno ?? '',
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleColor},
@@ -1802,7 +1814,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         ],
                                       ),
                                       TextFormField(
-                                        initialValue: _vehiclereg ?? '',
+                                        controller: _vehiclereg,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
@@ -1863,6 +1875,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         ],
                                       ),
                                       TextFormField(
+                                        readOnly: true,
                                         initialValue: _insuredvalue.toString(),
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
@@ -1893,6 +1906,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         ],
                                       ),
                                       TextFormField(
+                                        readOnly: true,
                                         initialValue: _excess,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {remarks},
@@ -1926,7 +1940,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        initialValue: _chasisno,
+                                        controller: _chassisno,
                                         onSaved: (value) => {engineNo},
                                         style: TextStyle(color: Colors.blue),
                                         keyboardType: TextInputType.text,
@@ -1957,8 +1971,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                             ? "This field is required"
                                             : null,
                                         style: TextStyle(color: Colors.blue),
-                                        initialValue:
-                                            _make != null ? _make : '',
+                                        controller: _make,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
                                         decoration:
@@ -1970,7 +1983,40 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                       Row(
                                         children: [
                                           Text(
-                                            "Type/Model	",
+                                            "Model	",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _model,
+                                        style: TextStyle(color: Colors.blue),
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration:
+                                            InputDecoration(hintText: "Model"),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Type",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -1990,13 +2036,12 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
+                                        controller: _type,
                                         style: TextStyle(color: Colors.blue),
-                                        initialValue:
-                                            _carmodel != null ? _carmodel : '',
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Type/Model"),
+                                        decoration:
+                                            InputDecoration(hintText: "Type"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2094,7 +2139,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                       Row(
                                         children: [
                                           Text(
-                                            "Year",
+                                            "Year of manufucture",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2115,10 +2160,12 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                             ? "This field is required"
                                             : null,
                                         controller: _year,
-                                        onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.number,
                                         decoration:
                                             InputDecoration(hintText: "Year"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2619,6 +2666,36 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                           ),
                                         ],
                                       ),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Remarks",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          ),
+                                          Expanded(
+                                            child: TextFormField(
+                                              controller: _remarks,
+                                              onSaved: (value) => {engineNo},
+                                              keyboardType: TextInputType.text,
+                                              decoration: InputDecoration(
+                                                  hintText: "Remarks"),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                       SizedBox(
                                         height: 60,
                                       ),
@@ -2809,422 +2886,404 @@ class _CreateAssesmentState extends State<CreateAssesment>
                 ),
               ),
             ))
-        : MaterialApp(
-            home: SafeArea(
-              child: Scaffold(
-                backgroundColor: Colors.black,
-                body: Container(
-                  height: MediaQuery.of(context).size.height,
-                  width: MediaQuery.of(context).size.width,
-                  child: _isCameraPermissionGranted
-                      ? _isCameraInitialized
-                          ? ListView(
-                              shrinkWrap: true,
-                              physics: ScrollPhysics(),
-                              children: [
-                                AspectRatio(
-                                  aspectRatio:
-                                      1 / controller!.value.aspectRatio,
-                                  child: Stack(
-                                    children: [
-                                      CameraPreview(
-                                        controller!,
-                                        child: LayoutBuilder(builder:
-                                            (BuildContext context,
-                                                BoxConstraints constraints) {
-                                          return GestureDetector(
-                                            behavior: HitTestBehavior.opaque,
-                                            onTapDown: (details) =>
-                                                onViewFinderTap(
-                                                    details, constraints),
-                                          );
-                                        }),
+        : Scaffold(
+            backgroundColor: Colors.black,
+            body: _isCameraPermissionGranted
+                ? _isCameraInitialized
+                    ? SingleChildScrollView(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SingleChildScrollView(
+                              child: AspectRatio(
+                                aspectRatio: 1 / controller!.value.aspectRatio,
+                                child: Stack(
+                                  children: [
+                                    CameraPreview(
+                                      controller!,
+                                      child: LayoutBuilder(builder:
+                                          (BuildContext context,
+                                              BoxConstraints constraints) {
+                                        return GestureDetector(
+                                          behavior: HitTestBehavior.opaque,
+                                          onTapDown: (details) =>
+                                              onViewFinderTap(
+                                                  details, constraints),
+                                        );
+                                      }),
+                                    ),
+                                    // TODO: Uncomment to preview the overlay
+                                    // Center(
+                                    //   child: Image.asset(
+                                    //     'assets/camera_aim.png',
+                                    //     color: Colors.greenAccent,
+                                    //     width: 150,
+                                    //     height: 150,
+                                    //   ),
+                                    // ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16.0,
+                                        8.0,
+                                        16.0,
+                                        8.0,
                                       ),
-                                      // TODO: Uncomment to preview the overlay
-                                      // Center(
-                                      //   child: Image.asset(
-                                      //     'assets/camera_aim.png',
-                                      //     color: Colors.greenAccent,
-                                      //     width: 150,
-                                      //     height: 150,
-                                      //   ),
-                                      // ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          16.0,
-                                          8.0,
-                                          16.0,
-                                          8.0,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.topRight,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black87,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                    left: 8.0,
-                                                    right: 8.0,
-                                                  ),
-                                                  child: DropdownButton<
-                                                      ResolutionPreset>(
-                                                    dropdownColor:
-                                                        Colors.black87,
-                                                    underline: Container(),
-                                                    value:
-                                                        currentResolutionPreset,
-                                                    items: [
-                                                      for (ResolutionPreset preset
-                                                          in resolutionPresets)
-                                                        DropdownMenuItem(
-                                                          child: Text(
-                                                            preset
-                                                                .toString()
-                                                                .split('.')[1]
-                                                                .toUpperCase(),
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white),
-                                                          ),
-                                                          value: preset,
-                                                        )
-                                                    ],
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        currentResolutionPreset =
-                                                            value!;
-                                                        _isCameraInitialized =
-                                                            false;
-                                                      });
-                                                      onNewCameraSelected(
-                                                          controller!
-                                                              .description);
-                                                    },
-                                                    hint: Text("Select item"),
-                                                  ),
-                                                ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        children: [
+                                          Align(
+                                            alignment: Alignment.topRight,
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.black87,
+                                                borderRadius:
+                                                    BorderRadius.circular(10.0),
                                               ),
-                                            ),
-                                            // Spacer(),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0, top: 16.0),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
+                                              child: Padding(
+                                                padding: const EdgeInsets.only(
+                                                  left: 8.0,
+                                                  right: 8.0,
                                                 ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Text(
-                                                    _currentExposureOffset
-                                                            .toStringAsFixed(
-                                                                1) +
-                                                        'x',
-                                                    style: TextStyle(
-                                                        color: Colors.black),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: RotatedBox(
-                                                quarterTurns: 3,
-                                                child: Container(
-                                                  height: 30,
-                                                  child: Slider(
-                                                    value:
-                                                        _currentExposureOffset,
-                                                    min:
-                                                        _minAvailableExposureOffset,
-                                                    max:
-                                                        _maxAvailableExposureOffset,
-                                                    activeColor: Colors.white,
-                                                    inactiveColor:
-                                                        Colors.white30,
-                                                    onChanged: (value) async {
-                                                      setState(() {
-                                                        _currentExposureOffset =
-                                                            value;
-                                                      });
-                                                      await controller!
-                                                          .setExposureOffset(
-                                                              value);
-                                                    },
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Slider(
-                                                    value: _currentZoomLevel,
-                                                    min: _minAvailableZoom,
-                                                    max: _maxAvailableZoom,
-                                                    activeColor: Colors.white,
-                                                    inactiveColor:
-                                                        Colors.white30,
-                                                    onChanged: (value) async {
-                                                      setState(() {
-                                                        _currentZoomLevel =
-                                                            value;
-                                                      });
-                                                      await controller!
-                                                          .setZoomLevel(value);
-                                                    },
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          right: 8.0),
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black87,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: Text(
-                                                        _currentZoomLevel
-                                                                .toStringAsFixed(
-                                                                    1) +
-                                                            'x',
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                InkWell(
-                                                  onTap: () async {
-                                                    image = await takePicture();
-                                                    File image1 =
-                                                        File(image!.path);
-
-                                                    int currentUnix = DateTime
-                                                            .now()
-                                                        .millisecondsSinceEpoch;
-
-                                                    String fileFormat = image1
-                                                        .path
-                                                        .split('.')
-                                                        .last;
-                                                    setState(() {
-                                                      iscameraopen = false;
-                                                    });
-                                                    iscameraopen = false;
-                                                    GallerySaver.saveImage(
-                                                            image!.path)
-                                                        .then((path) {
-                                                      showDialog(
-                                                        context: context,
-                                                        builder: (BuildContext
-                                                            context) {
-                                                          return _SystemPadding(
-                                                            child: AlertDialog(
-                                                              contentPadding:
-                                                                  const EdgeInsets
-                                                                          .all(
-                                                                      16.0),
-                                                              content: Row(
-                                                                children: <
-                                                                    Widget>[
-                                                                  Expanded(
-                                                                    child:
-                                                                        TextFormField(
-                                                                      controller:
-                                                                          _itemDescController,
-                                                                      keyboardType:
-                                                                          TextInputType
-                                                                              .text,
-                                                                      autofocus:
-                                                                          true,
-                                                                      decoration: const InputDecoration(
-                                                                          labelText:
-                                                                              'Enter Description',
-                                                                          hintText:
-                                                                              'Description'),
-                                                                    ),
-                                                                  )
-                                                                ],
-                                                              ),
-                                                              actions: <Widget>[
-                                                                TextButton(
-                                                                    child: const Text(
-                                                                        'CANCEL'),
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                    }),
-                                                                TextButton(
-                                                                    child: const Text(
-                                                                        'OKAY'),
-                                                                    onPressed:
-                                                                        () {
-                                                                      Navigator.pop(
-                                                                          context);
-                                                                      setState(
-                                                                          () {
-                                                                        String?
-                                                                            description =
-                                                                            _itemDescController.text.trim();
-                                                                        print(
-                                                                            description);
-                                                                        final bytes =
-                                                                            Io.File(image!.path).readAsBytesSync();
-
-                                                                        String
-                                                                            imageFile =
-                                                                            base64Encode(bytes);
-                                                                        images = Images(
-                                                                            filename:
-                                                                                description,
-                                                                            attachment:
-                                                                                imageFile);
-                                                                        _addImage(
-                                                                            image!);
-                                                                        _addImages(
-                                                                            images!);
-                                                                        _addDescription(
-                                                                            description);
-                                                                      });
-                                                                    })
-                                                              ],
-                                                            ),
-                                                          );
-                                                        },
-                                                      );
-                                                    });
-                                                    print(fileFormat);
-                                                  },
-                                                  child: Stack(
-                                                    alignment: Alignment.center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.circle,
-                                                        color:
-                                                            _isVideoCameraSelected
-                                                                ? Colors.white
-                                                                : Colors
-                                                                    .white38,
-                                                        size: 80,
-                                                      ),
-                                                      Icon(
-                                                        Icons.circle,
-                                                        color:
-                                                            _isVideoCameraSelected
-                                                                ? Colors.blue
-                                                                : Colors.white,
-                                                        size: 65,
-                                                      ),
-                                                      _isVideoCameraSelected &&
-                                                              _isRecordingInProgress
-                                                          ? Icon(
-                                                              Icons
-                                                                  .stop_rounded,
+                                                child: DropdownButton<
+                                                    ResolutionPreset>(
+                                                  dropdownColor: Colors.black87,
+                                                  underline: Container(),
+                                                  value:
+                                                      currentResolutionPreset,
+                                                  items: [
+                                                    for (ResolutionPreset preset
+                                                        in resolutionPresets)
+                                                      DropdownMenuItem(
+                                                        child: Text(
+                                                          preset
+                                                              .toString()
+                                                              .split('.')[1]
+                                                              .toUpperCase(),
+                                                          style: TextStyle(
                                                               color:
-                                                                  Colors.white,
-                                                              size: 32,
-                                                            )
-                                                          : Container(),
-                                                    ],
-                                                  ),
+                                                                  Colors.white),
+                                                        ),
+                                                        value: preset,
+                                                      )
+                                                  ],
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      currentResolutionPreset =
+                                                          value!;
+                                                      _isCameraInitialized =
+                                                          false;
+                                                    });
+                                                    onNewCameraSelected(
+                                                        controller!
+                                                            .description);
+                                                  },
+                                                  hint: Text("Select item"),
                                                 ),
-                                                InkWell(
-                                                  onTap: image != null
-                                                      ? () {
-                                                          // Navigator.of(context)
-                                                          //     .push(
-                                                          //   MaterialPageRoute(
-                                                          //     builder: (context) =>
-                                                          //         PreviewScreen(
-                                                          //       image: image!,
-                                                          //       fileList:
-                                                          //           imageslist,
-                                                          //     ),
-                                                          //   ),
-                                                          // );
-                                                        }
-                                                      : null,
-                                                  child: Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                      border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 2,
-                                                      ),
-                                                      image: image != null
-                                                          ? DecorationImage(
-                                                              image: FileImage(
-                                                                File(image!
-                                                                    .path),
-                                                              ),
-                                                              fit: BoxFit.cover,
-                                                            )
-                                                          : null,
+                                              ),
+                                            ),
+                                          ),
+                                          // Spacer(),
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                                right: 8.0, top: 16.0),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.white,
+                                                borderRadius:
+                                                    BorderRadius.circular(10.0),
+                                              ),
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.all(8.0),
+                                                child: Text(
+                                                  _currentExposureOffset
+                                                          .toStringAsFixed(1) +
+                                                      'x',
+                                                  style: TextStyle(
+                                                      color: Colors.black),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: RotatedBox(
+                                              quarterTurns: 3,
+                                              child: Container(
+                                                height: 30,
+                                                child: Slider(
+                                                  value: _currentExposureOffset,
+                                                  min:
+                                                      _minAvailableExposureOffset,
+                                                  max:
+                                                      _maxAvailableExposureOffset,
+                                                  activeColor: Colors.white,
+                                                  inactiveColor: Colors.white30,
+                                                  onChanged: (value) async {
+                                                    setState(() {
+                                                      _currentExposureOffset =
+                                                          value;
+                                                    });
+                                                    await controller!
+                                                        .setExposureOffset(
+                                                            value);
+                                                  },
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Slider(
+                                                  value: _currentZoomLevel,
+                                                  min: _minAvailableZoom,
+                                                  max: _maxAvailableZoom,
+                                                  activeColor: Colors.white,
+                                                  inactiveColor: Colors.white30,
+                                                  onChanged: (value) async {
+                                                    setState(() {
+                                                      _currentZoomLevel = value;
+                                                    });
+                                                    await controller!
+                                                        .setZoomLevel(value);
+                                                  },
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 8.0),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black87,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10.0),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            8.0),
+                                                    child: Text(
+                                                      _currentZoomLevel
+                                                              .toStringAsFixed(
+                                                                  1) +
+                                                          'x',
+                                                      style: TextStyle(
+                                                          color: Colors.white),
                                                     ),
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    physics: BouncingScrollPhysics(),
-                                    child: Column(
-                                      children: [
-                                        Padding(
-                                          padding:
-                                              const EdgeInsets.only(top: 8.0),
-                                          child: Row(
-                                            children: [],
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              16.0, 8.0, 16.0, 8.0),
-                                          child: Row(
+                                          Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.spaceBetween,
                                             children: [
                                               InkWell(
+                                                onTap: () async {
+                                                  image = await takePicture();
+                                                  File image1 =
+                                                      File(image!.path);
+
+                                                  int currentUnix = DateTime
+                                                          .now()
+                                                      .millisecondsSinceEpoch;
+
+                                                  String fileFormat = image1
+                                                      .path
+                                                      .split('.')
+                                                      .last;
+                                                  setState(() {
+                                                    iscameraopen = false;
+                                                  });
+                                                  iscameraopen = false;
+                                                  // GallerySaver.saveImage(
+                                                  //         image!.path)
+                                                  //     .then((path) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return _SystemPadding(
+                                                        child: AlertDialog(
+                                                          contentPadding:
+                                                              const EdgeInsets
+                                                                  .all(16.0),
+                                                          content: Row(
+                                                            children: <Widget>[
+                                                              Expanded(
+                                                                child:
+                                                                    TextFormField(
+                                                                  controller:
+                                                                      _itemDescController,
+                                                                  keyboardType:
+                                                                      TextInputType
+                                                                          .text,
+                                                                  autofocus:
+                                                                      true,
+                                                                  decoration: const InputDecoration(
+                                                                      labelText:
+                                                                          'Enter Description',
+                                                                      hintText:
+                                                                          'Description'),
+                                                                ),
+                                                              )
+                                                            ],
+                                                          ),
+                                                          actions: <Widget>[
+                                                            TextButton(
+                                                                child: const Text(
+                                                                    'CANCEL'),
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                }),
+                                                            TextButton(
+                                                                child:
+                                                                    const Text(
+                                                                        'OKAY'),
+                                                                onPressed: () {
+                                                                  Navigator.pop(
+                                                                      context);
+                                                                  setState(() {
+                                                                    String?
+                                                                        description =
+                                                                        _itemDescController
+                                                                            .text
+                                                                            .trim();
+                                                                    print(
+                                                                        description);
+                                                                    final bytes =
+                                                                        Io.File(image!.path)
+                                                                            .readAsBytesSync();
+
+                                                                    String
+                                                                        imageFile =
+                                                                        base64Encode(
+                                                                            bytes);
+                                                                    images = Images(
+                                                                        filename:
+                                                                            description,
+                                                                        attachment:
+                                                                            imageFile);
+                                                                    _addImage(
+                                                                        image!);
+                                                                    _addImages(
+                                                                        images!);
+                                                                    _addDescription(
+                                                                        description);
+                                                                  });
+                                                                })
+                                                          ],
+                                                        ),
+                                                      );
+                                                    },
+                                                  );
+                                                  // });
+                                                  print(fileFormat);
+                                                },
+                                                child: Stack(
+                                                  alignment: Alignment.center,
+                                                  children: [
+                                                    Icon(
+                                                      Icons.circle,
+                                                      color:
+                                                          _isVideoCameraSelected
+                                                              ? Colors.white
+                                                              : Colors.white38,
+                                                      size: 80,
+                                                    ),
+                                                    Icon(
+                                                      Icons.circle,
+                                                      color:
+                                                          _isVideoCameraSelected
+                                                              ? Colors.blue
+                                                              : Colors.white,
+                                                      size: 65,
+                                                    ),
+                                                    _isVideoCameraSelected &&
+                                                            _isRecordingInProgress
+                                                        ? Icon(
+                                                            Icons.stop_rounded,
+                                                            color: Colors.white,
+                                                            size: 32,
+                                                          )
+                                                        : Container(),
+                                                  ],
+                                                ),
+                                              ),
+                                              InkWell(
+                                                onTap: image != null
+                                                    ? () {
+                                                        // Navigator.of(context)
+                                                        //     .push(
+                                                        //   MaterialPageRoute(
+                                                        //     builder: (context) =>
+                                                        //         PreviewScreen(
+                                                        //       image: image!,
+                                                        //       fileList:
+                                                        //           imageslist,
+                                                        //     ),
+                                                        //   ),
+                                                        // );
+                                                      }
+                                                    : null,
+                                                child: Container(
+                                                  width: 60,
+                                                  height: 60,
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10.0),
+                                                    border: Border.all(
+                                                      color: Colors.white,
+                                                      width: 2,
+                                                    ),
+                                                    image: image != null
+                                                        ? DecorationImage(
+                                                            image: FileImage(
+                                                              File(image!.path),
+                                                            ),
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                        : null,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(top: 8.0),
+                                        child: Row(
+                                          children: [],
+                                        ),
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            16.0, 8.0, 16.0, 8.0),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Expanded(
+                                              child: InkWell(
                                                 onTap: () async {
                                                   setState(() {
                                                     _currentFlashMode =
@@ -3243,7 +3302,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                       : Colors.white,
                                                 ),
                                               ),
-                                              InkWell(
+                                            ),
+                                            Expanded(
+                                              child: InkWell(
                                                 onTap: () async {
                                                   setState(() {
                                                     _currentFlashMode =
@@ -3262,7 +3323,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                       : Colors.white,
                                                 ),
                                               ),
-                                              InkWell(
+                                            ),
+                                            Expanded(
+                                              child: InkWell(
                                                 onTap: () async {
                                                   setState(() {
                                                     _currentFlashMode =
@@ -3281,7 +3344,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                       : Colors.white,
                                                 ),
                                               ),
-                                              InkWell(
+                                            ),
+                                            Expanded(
+                                              child: InkWell(
                                                 onTap: () async {
                                                   setState(() {
                                                     _currentFlashMode =
@@ -3300,53 +3365,53 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                       : Colors.white,
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        )
-                                      ],
-                                    ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    ],
                                   ),
                                 ),
                               ],
-                            )
-                          : Center(
-                              child: Text(
-                                'LOADING',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            )
-                      : Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(),
-                            Text(
-                              'Permission denied',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                              ),
-                            ),
-                            SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () {
-                                getPermissionStatus();
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Text(
-                                  'Give permission',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                  ),
-                                ),
-                              ),
                             ),
                           ],
                         ),
-                ),
-              ),
-            ),
+                      )
+                    : Center(
+                        child: Text(
+                          'LOADING',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(),
+                      Text(
+                        'Permission denied',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                        ),
+                      ),
+                      SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          getPermissionStatus();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Text(
+                            'Give permission',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
           );
   }
 

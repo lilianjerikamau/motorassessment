@@ -34,6 +34,7 @@ class Valuation {
     this.policyno,
     this.location,
     this.custname,
+    this.customer,
   });
   int? id;
   int? userid;
@@ -64,9 +65,11 @@ class Valuation {
   String? policyno;
   String? location;
   String? custname;
+  String? customer;
 
   factory Valuation.fromJson(Map<String, dynamic> json) => Valuation(
         userid: json["userid"],
+        customer: json["customer"],
         id: json["id"],
         custid: json["custid"],
         regno: json['regno'],

@@ -37,12 +37,15 @@ import 'dart:io' as Io;
 import 'package:gallery_saver/gallery_saver.dart';
 import '../main.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 class CreateValuation extends StatefulWidget {
-  CreateValuation({Key? key, @required custID, @required custName})
-      : super(key: key);
   int? custID;
   String? custName;
+
+  CreateValuation({Key? key, this.custID, this.custName}) : super(key: key);
+
   @override
   State<CreateValuation> createState() => _CreateValuationState();
 }
@@ -81,6 +84,7 @@ class _CreateValuationState extends State<CreateValuation> {
   String? engineNo;
   String? custName;
   String? custPhone;
+  double? loadcapacity;
   bool _loggedIn = false;
   String? remarks;
   String? installationLocation;
@@ -162,7 +166,69 @@ class _CreateValuationState extends State<CreateValuation> {
   bool roofcarrier = false;
   bool uphostryfabricleatherseat = false;
   bool dutypaid = false;
+  bool crawleeexcavator = false;
+  bool backhoewheelloader = false;
+  bool roller = false;
+  bool fixedcrane = false;
+  bool rollercrane = false;
+  bool mobilecrane = false;
+  bool hiabfittedcranetruck = false;
+  bool primemover = false;
+  bool primemoverfilledwithrailercrane = false;
+  bool lowloadertrailer = false;
+  bool concretemixer = false;
+  bool topmacrollers = false;
+  bool aircompressor = false;
+  bool forklift = false;
+  bool specialpurposeconstructionmachinery = false;
+  bool batterypoweredlift = false;
+  bool batterypoweredscissorlift = false;
+  bool boomlift = false;
+  bool dumptruck = false;
+  bool backheeloader = false;
+  bool vaccumpumpsystem = false;
+  bool dryaircompressor = false;
+  bool transformeroilpurifizatonplant = false;
+  bool dieselgenerator = false;
+  bool platecompactor = false;
+  bool twindrumroller = false;
+  bool tractors = false;
+  bool plaughs = false;
+  bool seeders = false;
+  bool combineharvester = false;
+  bool sprayers = false;
+  bool culters = false;
+  bool balers = false;
+  bool ordinaryfueltankers = false;
+  bool watertanker = false;
+  bool exhauster = false;
+  bool specializedfueltanker = false;
+  bool opensidebody = false;
+  bool closedsidebody = false;
+  bool trailers = false;
+  bool fuseboxbypassed = false;
 
+  bool turbocharger = false;
+  bool lightfitted = false;
+  bool lightfittedok = false;
+  bool dipswitchok = false;
+  bool lightdipok = false;
+  bool rearlightclean = false;
+  bool handbrakeok = false;
+  bool hydraulicsystemok = false;
+  bool servook = false;
+  bool handbreakmarginok = false;
+  bool footbreakmarginok = false;
+  bool balljointsok = false;
+  bool jointsstatus = false;
+  bool wheelalignment = false;
+  bool wheelbalanced = false;
+  bool chassisok = false;
+  bool fuelpumptank = false;
+  bool antitheftdevicefitted = false;
+  bool vehiclefit = false;
+  bool vehicleconformrules = false;
+  bool speedgovernorfitted = false;
   static late var _custName;
   // static late var _custEmail;
   static late var _custPhone;
@@ -180,6 +246,31 @@ class _CreateValuationState extends State<CreateValuation> {
   final _drivenby = TextEditingController();
   // final _make = TextEditingController();
   TextEditingController _searchController = new TextEditingController();
+  TextEditingController _noofbatteries = new TextEditingController();
+  TextEditingController _handdrivetype = new TextEditingController();
+  TextEditingController _turbochargerdesc = new TextEditingController();
+  TextEditingController _footbreakok = new TextEditingController();
+  TextEditingController _frontnearside1 = new TextEditingController();
+  TextEditingController _frontoffside1 = new TextEditingController();
+  TextEditingController _rearnearside1 = new TextEditingController();
+  TextEditingController _rearnearsideouter1 = new TextEditingController();
+  TextEditingController _rearoffsideinner1 = new TextEditingController();
+  TextEditingController _rearoffsideouter1 = new TextEditingController();
+  TextEditingController _sparetyre1 = new TextEditingController();
+  TextEditingController _frontnearside2 = new TextEditingController();
+  TextEditingController _frontoffside2 = new TextEditingController();
+  TextEditingController _rearnearside2 = new TextEditingController();
+  TextEditingController _rearnearsideouter2 = new TextEditingController();
+  TextEditingController _rearoffsideinner2 = new TextEditingController();
+  TextEditingController _rearoffsideouter2 = new TextEditingController();
+  TextEditingController _sparetyre2 = new TextEditingController();
+  TextEditingController _steeringboxstatus = new TextEditingController();
+  TextEditingController _jointsdefect = new TextEditingController();
+  TextEditingController _bodyworkok = new TextEditingController();
+  TextEditingController _repairgoodstandard = new TextEditingController();
+  TextEditingController _windscreendoor = new TextEditingController();
+  TextEditingController _antitheftdevicedesc = new TextEditingController();
+  TextEditingController _seatingcapacity = new TextEditingController();
   final _year = TextEditingController();
   final _color = TextEditingController();
   final _itemDescController = TextEditingController();
@@ -274,13 +365,20 @@ class _CreateValuationState extends State<CreateValuation> {
   TextEditingController _dateinput = TextEditingController();
   Images? images;
   Images? logbooks;
+  String? _claimString;
   List<Map<String, dynamic>>? newImagesList;
   List<Map<String, dynamic>>? newLogBookList;
   List<Images>? newList = [];
   List<Images>? newLogbookList = [];
   List<Images>? newimages = [];
   List<Instruction> _instruction = [];
-
+  var items = [
+    'LPG propelled',
+    'LPG/liquid fuel',
+    'electric/liquid fuel(hybrid)',
+    'Fuel-petrol',
+    'Fuel-disel',
+  ];
   Future<XFile?> takePicture() async {
     final CameraController? cameraController = controller;
 
@@ -340,6 +438,24 @@ class _CreateValuationState extends State<CreateValuation> {
       print(newImagesList);
     }
     // _submit();
+  }
+
+  createPdf() async {
+    var bytes = base64Decode(_claimString!.replaceAll('\n', ''));
+
+    final output = await getTemporaryDirectory();
+
+    final file = File("${output.path}/${_instructionId}.pdf");
+
+    output.create();
+    await file.writeAsBytes(bytes.buffer.asUint8List());
+
+    print("${output.path}/${_instructionId}.pdf");
+    await OpenFile.open("${output.path}/${_instructionId}.pdf");
+    // if (output.existsSync()) {
+    //   output.deleteSync(recursive: true);
+    // }
+    setState(() {});
   }
 
   void _addLogBookDescription(String description) {
@@ -405,6 +521,8 @@ class _CreateValuationState extends State<CreateValuation> {
                     String mechanicalcondition =
                         _mechanicalcondition.text.trim();
                     String valuer = _valuer.text;
+                    int noofbatteries = int.parse(_noofbatteries.text.trim());
+
                     String assessedvalue = _assessedvalue.text.trim();
                     String rimsize = _rimsize.text.trim();
                     String sparewheel = _sparewheel.text.trim();
@@ -453,9 +571,36 @@ class _CreateValuationState extends State<CreateValuation> {
                     String fromanyotherplace = _fromanyotherplace.text.trim();
                     // String noofdiscs = _noofdiscs.text.trim();
                     String vinplatedetails = _vinplatedetails.text.trim();
-
+                    String? seatingcapacity = _seatingcapacity.text.trim();
+                    var doubleseatingcapacity = double.parse(seatingcapacity);
                     String injectiontype = _injectiontype.text.trim();
                     String noofcylinders = _noofcylinders.text.trim();
+                    String handdrivetype = _handdrivetype.text.trim();
+                    String turbochargerdesc = _turbochargerdesc.text.trim();
+                    String footbreakok = _footbreakok.text.trim();
+                    String frontnearside1 = _frontnearside1.text.trim();
+                    String frontoffside1 = _frontoffside1.text.trim();
+                    String rearnearside1 = _rearnearside1.text.trim();
+                    String rearnearsideouter1 = _rearnearsideouter1.text.trim();
+                    String rearoffsideinner1 = _rearoffsideinner1.text.trim();
+                    String rearoffsideouter1 = _rearoffsideouter1.text.trim();
+                    String sparetyre1 = _sparetyre1.text.trim();
+                    String frontnearside2 = _frontnearside2.text.trim();
+                    String frontoffside2 = _frontoffside2.text.trim();
+                    String rearnearside2 = _rearnearside2.text.trim();
+                    String rearnearsideouter2 = _rearnearsideouter2.text.trim();
+                    String rearoffsideinner2 = _rearoffsideinner2.text.trim();
+                    String rearoffsideouter2 = _rearoffsideouter2.text.trim();
+                    String sparetyre2 = _sparetyre2.text.trim();
+                    String steeringboxstatus = _steeringboxstatus.text.trim();
+                    String jointsdefect = _jointsdefect.text.trim();
+                    String bodyworkok = _bodyworkok.text.trim();
+                    String repairgoodstandard = _repairgoodstandard.text.trim();
+                    String windscreendoor = _windscreendoor.text.trim();
+                    String antitheftdevicedesc =
+                        _antitheftdevicedesc.text.trim();
+                    String loadcapacity = _loadcapacity.text.trim();
+                    var intloadcapacity = int.parse(loadcapacity);
                     String demoUrl = await Config.getBaseUrl();
                     Uri url = Uri.parse(demoUrl + 'valuation/valuation/');
                     print(url);
@@ -467,7 +612,7 @@ class _CreateValuationState extends State<CreateValuation> {
                         body: jsonEncode(<String, dynamic>{
                           "userid": _userid,
                           "custid":
-                              widget.custID != null ? widget.custID : _custId,
+                              widget.custID == null ? _custId : widget.custID,
                           "revised": revised,
                           "fleetinstructionno": _fleetId,
                           "instructionno": _instructionId,
@@ -475,7 +620,7 @@ class _CreateValuationState extends State<CreateValuation> {
                           "logbooklist": newLogBookList,
                           "model": _carmodel != null ? _carmodel : model,
                           "chassisno": _chasisno != null ? _chasisno : chasisno,
-                          "fuel": fuelby,
+                          "fuel": _selectedFuel,
                           "manufactureyear": year,
                           "origin": origin,
                           "bodytype": bodytype,
@@ -621,18 +766,118 @@ class _CreateValuationState extends State<CreateValuation> {
                               uphostryfabricleatherseat,
                           "dutypaid": dutypaid,
                           "color": color,
+
+                          // new features
+                          "noofbattery": noofbatteries,
+                          "crawleeexcavator": crawleeexcavator,
+                          "backhoewheelloader": backhoewheelloader,
+                          "roller": roller,
+                          "fixedcrane": fixedcrane,
+                          "rollercrane": rollercrane,
+                          "mobilecrane": mobilecrane,
+                          "hiabfittedcranetruck": hiabfittedcranetruck,
+                          "primemover": primemover,
+                          "primemoverfilledwithrailercrane":
+                              primemoverfilledwithrailercrane,
+                          "lowloadertrailer": lowloadertrailer,
+                          "concretemixer": concretemixer,
+                          "topmacrollers": topmacrollers,
+                          "aircompressor": aircompressor,
+                          "forklift": forklift,
+                          "specialpurposeconstructionmachinery":
+                              specialpurposeconstructionmachinery,
+                          "batterypoweredlift": batterypoweredlift,
+                          "batterypoweredscissorlift":
+                              batterypoweredscissorlift,
+                          "boomlift": boomlift,
+                          "dumptruck": dumptruck,
+                          "backheeloader": backheeloader,
+                          "vaccumpumpsystem": vaccumpumpsystem,
+                          "dryaircompressor": dryaircompressor,
+                          "transformeroilpurifizatonplant":
+                              transformeroilpurifizatonplant,
+                          "dieselgenerator": dieselgenerator,
+                          "platecompactor": platecompactor,
+                          "twindrumroller": twindrumroller,
+                          "tractors": tractors,
+                          "plaughs": plaughs,
+                          "seeders": seeders,
+                          "combineharvester": combineharvester,
+                          "sprayers": sprayers,
+                          "culters": culters,
+                          "balers": balers,
+                          "ordinaryfueltankers": ordinaryfueltankers,
+                          "watertanker": watertanker,
+                          "exhauster": exhauster,
+                          "specializedfueltanker": specializedfueltanker,
+                          "opensidebody": opensidebody,
+                          "closedsidebody": closedsidebody,
+                          "trailers": trailers,
+                          "fuseboxbypasses": fuseboxbypassed,
+
+                          //other
+                          "turbocharger": turbocharger,
+                          "lightfitted": lightfitted,
+                          "lightfittedok": lightfittedok,
+                          "dipswitchok": dipswitchok,
+                          "lightdipok": lightdipok,
+                          "rearlightclean": rearlightclean,
+                          "handbrakeok": handbrakeok,
+                          "hydraulicsystemok": hydraulicsystemok,
+                          "servook": servook,
+                          "handbreakmarginok": handbreakmarginok,
+                          "footbreakmarginok": footbreakmarginok,
+                          "balljointsok": balljointsok,
+                          "jointsstatus": jointsstatus,
+                          "wheelalignment": wheelalignment,
+                          "wheelbalanced": wheelbalanced,
+                          "chassisok": chassisok,
+                          "fuelpumptank": fuelpumptank,
+                          "antitheftdevicefitted": antitheftdevicefitted,
+                          "vehiclefit": vehiclefit,
+                          "vehicleconformrules": vehicleconformrules,
+                          "speedgovernorfitted": speedgovernorfitted,
+
+                          //double
+                          "loadcapacity": intloadcapacity,
+                          //int
+                          "seatingcapacity": doubleseatingcapacity,
+                          //dtring
+                          "handdrivetype": handdrivetype,
+                          "turbochargerdesc": turbochargerdesc,
+                          "footbreakok": footbreakok,
+                          "frontnearside1": frontnearside1,
+                          "frontoffside1": frontoffside1,
+                          "rearnearside1": rearnearside1,
+                          "rearnearsideouter1": rearnearsideouter1,
+                          "rearoffsideinner1": rearoffsideinner1,
+                          "rearoffsideouter1": rearoffsideouter1,
+                          "sparetyre1": sparetyre1,
+                          "frontnearside2": frontnearside2,
+                          "frontoffside2": frontoffside2,
+                          "rearnearside2": rearnearside2,
+                          "rearnearsideouter2": rearnearsideouter2,
+                          "rearoffsideinner2": rearoffsideinner2,
+                          "rearoffsideouter2": rearoffsideouter2,
+                          "sparetyre2": sparetyre2,
+                          "steeringboxstatus": steeringboxstatus,
+                          "jointsdefect": jointsdefect,
+                          "bodyworkok": bodyworkok,
+                          "repairgoodstandard": repairgoodstandard,
+                          "windscreendoor": windscreendoor,
+                          "antitheftdevicedesc": antitheftdevicedesc,
                         }));
                     log(jsonEncode(<String, dynamic>{
                       "userid": _userid,
-                      "custid": _custId,
+                      "custid": widget.custID == null ? _custId : widget.custID,
                       "revised": revised,
                       "fleetinstructionno": _fleetId,
                       "instructionno": _instructionId,
-                      // "photolist": newImagesList,
-                      // "logbooklist": newLogBookList,
+                      "photolist": newImagesList,
+                      "logbooklist": newLogBookList,
                       "model": _carmodel != null ? _carmodel : model,
                       "chassisno": _chasisno != null ? _chasisno : chasisno,
-                      "fuel": fuelby,
+                      "fuel": _selectedFuel,
                       "manufactureyear": year,
                       "origin": origin,
                       "bodytype": bodytype,
@@ -776,6 +1021,105 @@ class _CreateValuationState extends State<CreateValuation> {
                       "uphostryfabricleatherseat": uphostryfabricleatherseat,
                       "dutypaid": dutypaid,
                       "color": color,
+
+                      // new features
+                      "noofbattery": noofbatteries,
+                      "crawleeexcavator": crawleeexcavator,
+                      "backhoewheelloader": backhoewheelloader,
+                      "roller": roller,
+                      "fixedcrane": fixedcrane,
+                      "rollercrane": rollercrane,
+                      "mobilecrane": mobilecrane,
+                      "hiabfittedcranetruck": hiabfittedcranetruck,
+                      "primemover": primemover,
+                      "primemoverfilledwithrailercrane":
+                          primemoverfilledwithrailercrane,
+                      "lowloadertrailer": lowloadertrailer,
+                      "concretemixer": concretemixer,
+                      "topmacrollers": topmacrollers,
+                      "aircompressor": aircompressor,
+                      "forklift": forklift,
+                      "specialpurposeconstructionmachinery":
+                          specialpurposeconstructionmachinery,
+                      "batterypoweredlift": batterypoweredlift,
+                      "batterypoweredscissorlift": batterypoweredscissorlift,
+                      "boomlift": boomlift,
+                      "dumptruck": dumptruck,
+                      "backheeloader": backheeloader,
+                      "vaccumpumpsystem": vaccumpumpsystem,
+                      "dryaircompressor": dryaircompressor,
+                      "transformeroilpurifizatonplant":
+                          transformeroilpurifizatonplant,
+                      "dieselgenerator": dieselgenerator,
+                      "platecompactor": platecompactor,
+                      "twindrumroller": twindrumroller,
+                      "tractors": tractors,
+                      "plaughs": plaughs,
+                      "seeders": seeders,
+                      "combineharvester": combineharvester,
+                      "sprayers": sprayers,
+                      "culters": culters,
+                      "balers": balers,
+                      "ordinaryfueltankers": ordinaryfueltankers,
+                      "watertanker": watertanker,
+                      "exhauster": exhauster,
+                      "specializedfueltanker": specializedfueltanker,
+                      "opensidebody": opensidebody,
+                      "closedsidebody": closedsidebody,
+                      "trailers": trailers,
+                      "fuseboxbypasses": fuseboxbypassed,
+
+                      //other
+                      "turbocharger": turbocharger,
+                      "lightfitted": lightfitted,
+                      "lightfittedok": lightfittedok,
+                      "dipswitchok": dipswitchok,
+                      "lightdipok": lightdipok,
+                      "rearlightclean": rearlightclean,
+                      "handbrakeok": handbrakeok,
+                      "hydraulicsystemok": hydraulicsystemok,
+                      "servook": servook,
+                      "handbreakmarginok": handbreakmarginok,
+                      "footbreakmarginok": footbreakmarginok,
+                      "balljointsok": balljointsok,
+                      "jointsstatus": jointsstatus,
+                      "wheelalignment": wheelalignment,
+                      "wheelbalanced": wheelbalanced,
+                      "chassisok": chassisok,
+                      "fuelpumptank": fuelpumptank,
+                      "antitheftdevicefitted": antitheftdevicefitted,
+                      "vehiclefit": vehiclefit,
+                      "vehicleconformrules": vehicleconformrules,
+                      "speedgovernorfitted": speedgovernorfitted,
+
+                      //double
+                      "loadcapacity": intloadcapacity,
+                      //int
+                      "seatingcapacity": doubleseatingcapacity,
+                      //dtring
+                      "handdrivetype": handdrivetype,
+                      "turbochargerdesc": turbochargerdesc,
+                      "footbreakok": footbreakok,
+                      "frontnearside1": frontnearside1,
+                      "frontoffside1": frontoffside1,
+                      "rearnearside1": rearnearside1,
+                      "rearnearsideouter1": rearnearsideouter1,
+                      "rearoffsideinner1": rearoffsideinner1,
+                      "rearoffsideouter1": rearoffsideouter1,
+                      "sparetyre1": sparetyre1,
+                      "frontnearside2": frontnearside2,
+                      "frontoffside2": frontoffside2,
+                      "rearnearside2": rearnearside2,
+                      "rearnearsideouter2": rearnearsideouter2,
+                      "rearoffsideinner2": rearoffsideinner2,
+                      "rearoffsideouter2": rearoffsideouter2,
+                      "sparetyre2": sparetyre2,
+                      "steeringboxstatus": steeringboxstatus,
+                      "jointsdefect": jointsdefect,
+                      "bodyworkok": bodyworkok,
+                      "repairgoodstandard": repairgoodstandard,
+                      "windscreendoor": windscreendoor,
+                      "antitheftdevicedesc": antitheftdevicedesc,
                     }));
                     if (response != null) {
                       dial.hide();
@@ -860,16 +1204,16 @@ class _CreateValuationState extends State<CreateValuation> {
           string = 'Offline';
       }
       // 2.
-      setState(() {
-        if (string.contains('Offline')) {
-          Fluttertoast.showToast(
-              msg:
-                  'No internet,your assessment will be posted once you are connected to the internet!');
-          // saveAssessments();
-        } else {
-          // _submit();
-        }
-      });
+      // setState(() {
+      //   if (string.contains('Offline')) {
+      //     Fluttertoast.showToast(
+      //         msg:
+      //             'No internet,your assessment will be posted once you are connected to the internet!');
+      //     // saveAssessments();
+      //   } else {
+      //     // _submit();
+      //   }
+      // });
       // 3.
       // ScaffoldMessenger.of(context).showSnackBar(
       //   SnackBar(
@@ -1078,22 +1422,47 @@ class _CreateValuationState extends State<CreateValuation> {
   @override
   void initState() {
     _checkNetwork();
-    if (string.contains('Online')) {
-      _fetchCustomers();
-      // _fetchInstructions();
-      List valuationsJson = [];
-    } else {
-      getInstructions();
-      getUserInfo();
-    }
+    // if (string.contains('Online')) {
+    //   // _fetchInstructions();
+    //   List valuationsJson = [];
+    // } else {
+    //   getInstructions();
+    //   getUserInfo();
+    // }
+    print('custID');
+    print(widget.custID != null);
+    print('custID');
+    print(widget.custID != null);
+    if ((widget.custID != 0) && (widget.custID != null)) {
+      setState(() {
+        SessionPreferences().getLoggedInUser().then((user) {
+          setState(() {
+            _fetchInstructions();
+            _fetchCustomers();
+            _fetchFleet();
+            _loggedInUser = user;
+            // custId = user.custid;
+            _userid = user.id;
+            _hrid = user.hrid;
+            print('userid');
+            print(_hrid);
+            _custId = widget.custID as int;
+          });
+        });
 
+        print('cust id is');
+        print(_custId);
+      });
+    } else {
+      _fetchCustomers();
+    }
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     onNewCameraSelected(cameras[0]);
     loadCamera();
     DateTime dateTime = DateTime.now();
     String formattedDate = DateFormat('yyyy/MM/dd').format(dateTime);
     _dateinput.text = formattedDate; //set the initial value of text field
-    _instructionId = 2;
+
     financierid = null;
     _financierName = null;
     custid = null;
@@ -1199,6 +1568,7 @@ class _CreateValuationState extends State<CreateValuation> {
 
   bool _isEnable = false;
   var _selectedValue = null;
+  var _selectedFuel = null;
   var _selectedInstaller = null;
   var _selectedAccount = 'Selected Value';
   String? _dropdownError;
@@ -1346,13 +1716,9 @@ class _CreateValuationState extends State<CreateValuation> {
                               form.save();
                               currentForm = 1;
                             } else {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(
-                                behavior: SnackBarBehavior.floating,
-                                content: Text(
-                                    "Make sure all required fields are filled"),
-                                duration: Duration(seconds: 3),
-                              ));
+                              Fluttertoast.showToast(
+                                  msg: 'Select customer and attach instruction',
+                                  textColor: Colors.blue);
                             }
 
                             // if (form.validate() &&
@@ -1557,7 +1923,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         SearchableDropdown(
                                           hint: Text(
-                                            widget.custID != null
+                                            widget.custID != 0 &&
+                                                    widget.custID != null &&
+                                                    widget.custName != 'null'
                                                 ? widget.custName!
                                                 : 'Select Customer',
                                           ),
@@ -1586,7 +1954,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                               // _selectedValue = value!;
                                             });
                                             print(_selectedValue);
-                                            print(_custName);
+                                            print(_instructionId);
                                             print(_custid);
                                             print(_custPhone);
                                             _dropdownError = null;
@@ -1840,6 +2208,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                               _excess = value != null
                                                   ? value['excess']
                                                   : null;
+                                              _claimString = value != null
+                                                  ? value['claimform']
+                                                  : null;
                                             });
                                             // print(_selectedValue);
                                             // print(_custName);
@@ -1989,6 +2360,30 @@ class _CreateValuationState extends State<CreateValuation> {
                                     children: [
                                       SizedBox(
                                         height: 20,
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          _claimString != ""
+                                              ? createPdf()
+                                              : Fluttertoast.showToast(
+                                                  msg:
+                                                      'No claim form attached');
+                                        },
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text('Claim Form',
+                                                style: TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            Icon(
+                                              Icons.attach_file,
+                                              color: Colors.blue,
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                       Row(
                                         children: [
@@ -2306,45 +2701,13 @@ class _CreateValuationState extends State<CreateValuation> {
                                         decoration: InputDecoration(
                                             hintText: "Type/Model	 By"),
                                       ),
-                                      // SizedBox(
-                                      //   height: 10,
-                                      // ),
-                                      // Row(
-                                      //   children: [
-                                      //     Text(
-                                      //       "Drive Type",
-                                      //       overflow: TextOverflow.ellipsis,
-                                      //       style: Theme.of(context)
-                                      //           .textTheme
-                                      //           .subtitle2!
-                                      //           .copyWith(),
-                                      //     ),
-                                      //     Text(
-                                      //       "*",
-                                      //       style: Theme.of(context)
-                                      //           .textTheme
-                                      //           .subtitle2!
-                                      //           .copyWith(color: Colors.blue),
-                                      //     )
-                                      //   ],
-                                      // ),
-                                      // TextFormField(
-                                      //   validator: (value) => value!.isEmpty
-                                      //       ? "This field is required"
-                                      //       : null,
-                                      //   controller: _drivetype,
-                                      //   onSaved: (value) => {engineNo},
-                                      //   keyboardType: TextInputType.text,
-                                      //   decoration: InputDecoration(
-                                      //       hintText: "Drive Type"),
-                                      // ),
                                       SizedBox(
                                         height: 10,
                                       ),
                                       Row(
                                         children: [
                                           Text(
-                                            "Transmission	",
+                                            "Handdrive Type",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2364,11 +2727,44 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _transmission,
+                                        controller: _handdrivetype,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "Handdrive Type"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Turbo Charger Description",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _turbochargerdesc,
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Transmission	"),
+                                            hintText:
+                                                "Turbo Charger Description"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2376,7 +2772,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Class of Use",
+                                            "Foot Break ok",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2396,11 +2792,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _classofuse,
+                                        controller: _footbreakok,
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Enter Class of Use"),
+                                            hintText: "Foot Break ok"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2408,7 +2804,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Log Book No",
+                                            "Frontnearside1",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2428,11 +2824,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _logbookno,
+                                        controller: _frontnearside1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Log Book No"),
+                                            hintText: "Frontnearside1"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2440,7 +2836,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Endorsement",
+                                            "Frontoffside1",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2460,11 +2856,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _endorsement,
+                                        controller: _frontoffside1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Endorsement"),
+                                            hintText: "Frontoffside1"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2472,7 +2868,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "LBook Owner",
+                                            "Rearnearside1",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2492,11 +2888,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _lbookowner,
+                                        controller: _rearnearside1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Enter LBook Owner"),
+                                            hintText: "Rearnearside1"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2504,7 +2900,524 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Load Capacity",
+                                            "Rearnearsideouter1",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearnearsideouter1,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "Enter Load Capacity"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Rearoffsideinner1",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearoffsideinner1,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "Rearoffsideinner1"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "rearoffsideouter1 ",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearoffsideouter1,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "rearoffsideouter1"),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "sparetyre1",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _sparetyre1,
+                                        onSaved: (value) => {},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "sparetyre1"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "frontnearside2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _frontnearside2,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "frontnearside2"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "frontoffside2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _frontoffside2,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "frontoffside2"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "rearnearside2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearnearside2,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "rearnearside2"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "rearnearsideouter2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearnearsideouter2,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "rearnearsideouter2"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "rearoffsideinner2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearoffsideinner2,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "rearoffsideinner2"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "rearoffsideouter2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _rearoffsideouter2,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "rearoffsideouter2"),
+                                      ),
+
+                                      //new
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "sparetyre2",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _sparetyre2,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "sparetyre2"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "steeringboxstatus",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _steeringboxstatus,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "steeringboxstatus"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "jointsdefect",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _jointsdefect,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "jointsdefect"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "bodyworkok",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _bodyworkok,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "bodyworkok"),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "repairgoodstandard",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _repairgoodstandard,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "repairgoodstandard"),
+                                      ),
+
+                                      //new
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "windscreendoor",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _windscreendoor,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "windscreendoor"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "antitheftdevicedesc",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _antitheftdevicedesc,
+                                        onSaved: (value) => {remarks},
+                                        keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "antitheftdevicedesc"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "loadcapacity",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
@@ -2528,61 +3441,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Enter Load Capacity"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      // Row(
-                                      //   children: [
-                                      //     Text(
-                                      //       "No of Owners",
-                                      //       overflow: TextOverflow.ellipsis,
-                                      //       style: Theme.of(context)
-                                      //           .textTheme
-                                      //           .subtitle2!
-                                      //           .copyWith(),
-                                      //     ),
-                                      //     Text(
-                                      //       "*",
-                                      //       style: Theme.of(context)
-                                      //           .textTheme
-                                      //           .subtitle2!
-                                      //           .copyWith(color: Colors.blue),
-                                      //     )
-                                      //   ],
-                                      // ),
-                                      // TextFormField(
-                                      //   validator: (value) => value!.isEmpty
-                                      //       ? "This field is required"
-                                      //       : null,
-                                      //   controller: _noofowners,
-                                      //   onSaved: (value) => {engineNo},
-                                      //   keyboardType: TextInputType.text,
-                                      //   decoration: InputDecoration(
-                                      //       hintText: "No of Owners"),
-                                      // ),
-                                      CheckboxListTile(
-                                        controlAffinity:
-                                            ListTileControlAffinity.trailing,
-                                        title: Text(
-                                          'Insurance Valid?',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .subtitle2!
-                                              .copyWith(),
-                                        ),
-                                        value: isOther6,
-                                        activeColor: Colors.blue,
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            isOther6 = value!;
-                                          });
-                                        },
-                                      ),
-                                      SizedBox(
-                                        height: 10,
+                                            hintText: "loadcapacity"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2590,24 +3449,34 @@ class _CreateValuationState extends State<CreateValuation> {
                                       Row(
                                         children: [
                                           Text(
-                                            "Road Worthy Notes ",
+                                            "seatingcapacity",
                                             overflow: TextOverflow.ellipsis,
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
                                         ],
                                       ),
                                       TextFormField(
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
-                                        controller: _roadworthynotes,
-                                        onSaved: (value) => {engineNo},
+                                        controller: _seatingcapacity,
+                                        onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "No of Owners"),
+                                            hintText: "seatingcapacity"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
                                       ),
                                     ],
                                   ),
@@ -2899,15 +3768,31 @@ class _CreateValuationState extends State<CreateValuation> {
                                           )
                                         ],
                                       ),
-                                      TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        controller: _fuelby,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Fuel by"),
+                                      SearchableDropdown(
+                                        hint: Text(
+                                          'Select Fuel ',
+                                        ),
+
+                                        isExpanded: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _selectedFuel = value!;
+                                          });
+
+                                          _dropdownError = null;
+                                        },
+
+                                        // isCaseSensitiveSearch: true,
+                                        searchHint: Text(
+                                          'Select Fuel ',
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                        items: items.map((String items) {
+                                          return DropdownMenuItem(
+                                            child: Text(items),
+                                            value: items,
+                                          );
+                                        }).toList(),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2938,6 +3823,35 @@ class _CreateValuationState extends State<CreateValuation> {
                                         controller: _origin,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
+                                        decoration: InputDecoration(
+                                            hintText: "Country of origin"),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "No.of Batteries",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
+                                        controller: _noofbatteries,
+                                        onSaved: (value) => {engineNo},
+                                        keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
                                             hintText: "Country of origin"),
                                       ),
@@ -3334,6 +4248,369 @@ class _CreateValuationState extends State<CreateValuation> {
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
+                                      "Common Features",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline6!
+                                          .copyWith(
+                                              fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Turbo charger'),
+                                            selected: turbocharger,
+                                            value: turbocharger,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                turbocharger = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Light Fitted'),
+                                            selected: lightfitted,
+                                            value: lightfitted,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                lightfitted = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Light fitted ok'),
+                                            selected: lightfittedok,
+                                            value: lightfittedok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                lightfittedok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Dipswitch ok'),
+                                            selected: dipswitchok,
+                                            value: dipswitchok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                dipswitchok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Lightdip ok'),
+                                            selected: lightdipok,
+                                            value: lightdipok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                lightdipok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Rear light clean'),
+                                            selected: rearlightclean,
+                                            value: rearlightclean,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                rearlightclean = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('handbrake ok'),
+                                            selected: handbrakeok,
+                                            value: handbrakeok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                handbrakeok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('hydraulic system ok'),
+                                            selected: hydraulicsystemok,
+                                            value: hydraulicsystemok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                hydraulicsystemok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('servo ok'),
+                                            selected: servook,
+                                            value: servook,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                servook = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('handbreak margin ok'),
+                                            selected: handbreakmarginok,
+                                            value: handbreakmarginok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                handbreakmarginok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('foot break margin ok'),
+                                            selected: footbreakmarginok,
+                                            value: footbreakmarginok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                footbreakmarginok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('balljointsok'),
+                                            selected: balljointsok,
+                                            value: balljointsok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                balljointsok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('joint status'),
+                                            selected: jointsstatus,
+                                            value: jointsstatus,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                jointsstatus = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('wheel alignment'),
+                                            selected: wheelalignment,
+                                            value: wheelalignment,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                wheelalignment = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('wheel balanced'),
+                                            selected: wheelbalanced,
+                                            value: wheelbalanced,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                wheelbalanced = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('chassis ok'),
+                                            selected: chassisok,
+                                            value: chassisok,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                chassisok = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('fuel pump tank'),
+                                            selected: fuelpumptank,
+                                            value: fuelpumptank,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                fuelpumptank = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title:
+                                                Text('antitheft device fitted'),
+                                            selected: antitheftdevicefitted,
+                                            value: antitheftdevicefitted,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                antitheftdevicefitted = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Flexible(
+                                            child: CheckboxListTile(
+                                              title: Text('vehicle fit'),
+                                              selected: vehiclefit,
+                                              value: vehiclefit,
+                                              activeColor: Colors.blue,
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  vehiclefit = value!;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          Flexible(
+                                            child: CheckboxListTile(
+                                              title:
+                                                  Text('vehicle conform rules'),
+                                              selected: vehicleconformrules,
+                                              value: vehicleconformrules,
+                                              activeColor: Colors.blue,
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  vehicleconformrules = value!;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ]),
+                                    Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.end,
+                                        children: [
+                                          Flexible(
+                                            child: CheckboxListTile(
+                                              title:
+                                                  Text('speed governor fitted'),
+                                              selected: speedgovernorfitted,
+                                              value: speedgovernorfitted,
+                                              activeColor: Colors.blue,
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  speedgovernorfitted = value!;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ]),
+                                  ],
+                                ),
+                              )),
+                          Card(
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              elevation: 0.9,
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                    left: 0, right: 0, top: 30, bottom: 30),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
                                       "Uncommon Features",
                                       style: Theme.of(context)
                                           .textTheme
@@ -3388,11 +4665,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                             title:
                                                 Text('Power Sliding Door RHF'),
                                             selected: powerslidingrhfdoor,
-                                            value: powerslidinglhfdoor,
+                                            value: powerslidingrhfdoor,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                powerslidinglhrdoor = value!;
+                                                powerslidingrhfdoor = value!;
                                               });
                                             },
                                           ),
@@ -3401,12 +4678,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                           child: CheckboxListTile(
                                             title:
                                                 Text('Power Sliding Door LHF'),
-                                            selected: powerwindowsrhr,
-                                            value: powerwindowsrhr,
+                                            selected: powerslidinglhfdoor,
+                                            value: powerslidinglhfdoor,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                powerwindowsrhr = value!;
+                                                powerslidinglhfdoor = value!;
                                               });
                                             },
                                           ),
@@ -3420,12 +4697,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                           child: CheckboxListTile(
                                             title:
                                                 Text('Power Sliding Door RHR'),
-                                            selected: powerwindowslhr,
-                                            value: powerwindowslhr,
+                                            selected: powerslidingrhrdoor,
+                                            value: powerslidingrhrdoor,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                powerwindowslhr = value!;
+                                                powerslidingrhrdoor = value!;
                                               });
                                             },
                                           ),
@@ -3483,12 +4760,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                         Flexible(
                                           child: CheckboxListTile(
                                             title: Text('Bucket Seats'),
-                                            selected: roofrails,
-                                            value: roofrails,
+                                            selected: uphostrybucketseat,
+                                            value: uphostrybucketseat,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                roofrails = value!;
+                                                uphostrybucketseat = value!;
                                               });
                                             },
                                           ),
@@ -3497,12 +4774,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                           child: CheckboxListTile(
                                             title: Text(
                                                 'Power Seat Adjustment RHF'),
-                                            selected: rearspoiler,
-                                            value: rearspoiler,
+                                            selected: powerseatrhfadjustment,
+                                            value: powerseatrhfadjustment,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                rearspoiler = value!;
+                                                powerseatrhfadjustment = value!;
                                               });
                                             },
                                           ),
@@ -3516,12 +4793,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                           child: CheckboxListTile(
                                             title: Text(
                                                 'Power Seat Adjustment LHF'),
-                                            selected: sidesteps,
-                                            value: sidesteps,
+                                            selected: powerseatlhfadjustment,
+                                            value: powerseatlhfadjustment,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                sidesteps = value!;
+                                                powerseatlhfadjustment = value!;
                                               });
                                             },
                                           ),
@@ -3663,6 +4940,797 @@ class _CreateValuationState extends State<CreateValuation> {
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
                                     Text(
+                                      "FARM MACHINERY",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline6!
+                                          .copyWith(
+                                              fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Tractors'),
+                                            selected: tractors,
+                                            value: tractors,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                tractors = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Plaughs'),
+                                            selected: plaughs,
+                                            value: plaughs,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                plaughs = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Seeders'),
+                                            selected: seeders,
+                                            value: seeders,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                seeders = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Combine Harvester'),
+                                            selected: combineharvester,
+                                            value: combineharvester,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                combineharvester = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Sprayers'),
+                                            selected: sprayers,
+                                            value: sprayers,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                sprayers = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Culters'),
+                                            selected: culters,
+                                            value: culters,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                culters = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Balers'),
+                                            selected: balers,
+                                            value: balers,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                balers = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                          Card(
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              elevation: 0.9,
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                    left: 0, right: 0, top: 30, bottom: 30),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Tankers",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline6!
+                                          .copyWith(
+                                              fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title:
+                                                Text('Ordinary fuel tankers'),
+                                            selected: ordinaryfueltankers,
+                                            value: ordinaryfueltankers,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                ordinaryfueltankers = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Water tanker'),
+                                            selected: watertanker,
+                                            value: watertanker,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                watertanker = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Exhauster'),
+                                            selected: exhauster,
+                                            value: exhauster,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                exhauster = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title:
+                                                Text('Specialized fuel tanker'),
+                                            selected: specializedfueltanker,
+                                            value: specializedfueltanker,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                specializedfueltanker = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                          Card(
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              elevation: 0.9,
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                    left: 0, right: 0, top: 30, bottom: 30),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "Articulated Trucks",
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headline6!
+                                          .copyWith(
+                                              fontWeight: FontWeight.bold),
+                                    ),
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Divider(color: Colors.blue),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Open side body'),
+                                            selected: opensidebody,
+                                            value: opensidebody,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                opensidebody = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Closed side body'),
+                                            selected: closedsidebody,
+                                            value: closedsidebody,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                closedsidebody = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Flexible(
+                                          child: CheckboxListTile(
+                                            title: Text('Trailers'),
+                                            selected: trailers,
+                                            value: trailers,
+                                            activeColor: Colors.blue,
+                                            onChanged: (bool? value) {
+                                              setState(() {
+                                                trailers = value!;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              )),
+                          Card(
+                            margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                            elevation: 0.9,
+                            shape: RoundedRectangleBorder(
+                                side: BorderSide(
+                                    color: Colors.blueAccent, width: 1),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10.0))),
+                            child: Padding(
+                              padding: EdgeInsets.only(
+                                  left: 0, right: 0, top: 30, bottom: 30),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "CPM",
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headline6!
+                                        .copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(
+                                    height: 20,
+                                  ),
+                                  Divider(color: Colors.blue),
+                                  SizedBox(
+                                    height: 10,
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Crawlee excavator'),
+                                          selected: crawleeexcavator,
+                                          value: crawleeexcavator,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              crawleeexcavator = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Backhoe Wheel loader'),
+                                          selected: backhoewheelloader,
+                                          value: backhoewheelloader,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              backhoewheelloader = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Roller'),
+                                          selected: roller,
+                                          value: roller,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              roller = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Fixed Crane'),
+                                          selected: fixedcrane,
+                                          value: fixedcrane,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              fixedcrane = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Roller Crane'),
+                                          selected: rollercrane,
+                                          value: rollercrane,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              rollercrane = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Mobile Crane'),
+                                          selected: mobilecrane,
+                                          value: mobilecrane,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              mobilecrane = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title:
+                                              Text('Hiab fitted crane truck'),
+                                          selected: hiabfittedcranetruck,
+                                          value: hiabfittedcranetruck,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              hiabfittedcranetruck = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Prime Mover'),
+                                          selected: primemover,
+                                          value: primemover,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              primemover = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text(
+                                              'Prime mover filled with railer crane'),
+                                          selected:
+                                              primemoverfilledwithrailercrane,
+                                          value:
+                                              primemoverfilledwithrailercrane,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              primemoverfilledwithrailercrane =
+                                                  value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Low loader trailer'),
+                                          selected: lowloadertrailer,
+                                          value: lowloadertrailer,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              lowloadertrailer = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Concrete Mixer'),
+                                          selected: concretemixer,
+                                          value: concretemixer,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              concretemixer = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Top Mac Rollers'),
+                                          selected: topmacrollers,
+                                          value: topmacrollers,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              topmacrollers = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Air Compressor'),
+                                          selected: aircompressor,
+                                          value: aircompressor,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              aircompressor = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text(
+                                              'Special purpose construction machinery'),
+                                          selected:
+                                              specialpurposeconstructionmachinery,
+                                          value:
+                                              specialpurposeconstructionmachinery,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              specialpurposeconstructionmachinery =
+                                                  value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Battery Powered Lift'),
+                                          selected: batterypoweredlift,
+                                          value: batterypoweredlift,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              batterypoweredlift = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text(
+                                              'Battery Powered Scissor lift'),
+                                          selected: batterypoweredscissorlift,
+                                          value: batterypoweredscissorlift,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              batterypoweredscissorlift =
+                                                  value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Boom lift'),
+                                          selected: boomlift,
+                                          value: boomlift,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              boomlift = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Dump truck'),
+                                          selected: dumptruck,
+                                          value: dumptruck,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              dumptruck = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Backhee loader'),
+                                          selected: backheeloader,
+                                          value: backheeloader,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              backheeloader = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text(
+                                              'Special purpose construction machinery'),
+                                          selected:
+                                              specialpurposeconstructionmachinery,
+                                          value:
+                                              specialpurposeconstructionmachinery,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              specialpurposeconstructionmachinery =
+                                                  value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Battery Powered Lift'),
+                                          selected: batterypoweredlift,
+                                          value: batterypoweredlift,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              batterypoweredlift = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Vaccum pump system'),
+                                          selected: vaccumpumpsystem,
+                                          value: vaccumpumpsystem,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              vaccumpumpsystem = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Dry air compressor'),
+                                          selected: dryaircompressor,
+                                          value: dryaircompressor,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              dryaircompressor = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text(
+                                              'Transformer oil purifizaton plant'),
+                                          selected:
+                                              transformeroilpurifizatonplant,
+                                          value: transformeroilpurifizatonplant,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              transformeroilpurifizatonplant =
+                                                  value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Diesel Generator'),
+                                          selected: dieselgenerator,
+                                          value: dieselgenerator,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              dieselgenerator = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Plate Compactor'),
+                                          selected: platecompactor,
+                                          value: platecompactor,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              platecompactor = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: CheckboxListTile(
+                                          title: Text('Twin Drum Roller'),
+                                          selected: twindrumroller,
+                                          value: twindrumroller,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              twindrumroller = value!;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Card(
+                              margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              elevation: 0.9,
+                              shape: RoundedRectangleBorder(
+                                  side: BorderSide(
+                                      color: Colors.blueAccent, width: 1),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10.0))),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                    left: 0, right: 0, top: 30, bottom: 30),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
                                       "Radio/Music Systems",
                                       style: Theme.of(context)
                                           .textTheme
@@ -3695,7 +5763,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ),
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: Text('Inbuilt'),
+                                            title: Text('Inbuilt CD/DVD'),
                                             selected: inbuiltcd,
                                             value: inbuiltcd,
                                             activeColor: Colors.blue,
@@ -3870,13 +5938,13 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: Text('CD/DVD Player'),
-                                            selected: inbuiltcd,
-                                            value: inbuiltcd,
+                                            title: Text('FuseBox Bypassed'),
+                                            selected: fuseboxbypassed,
+                                            value: fuseboxbypassed,
                                             activeColor: Colors.blue,
                                             onChanged: (bool? value) {
                                               setState(() {
-                                                inbuiltcd = value!;
+                                                fuseboxbypassed = value!;
                                               });
                                             },
                                           ),
@@ -4132,7 +6200,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       children: [
                                         Flexible(
                                           child: CheckboxListTile(
-                                            title: Text('Geer Lever Lock'),
+                                            title: Text('Gear Lever Lock'),
                                             selected: gearleverlock,
                                             value: gearleverlock,
                                             activeColor: Colors.blue,
@@ -5052,20 +7120,553 @@ class _CreateValuationState extends State<CreateValuation> {
               ),
             ))
         : iscameraopen == true
-            ? MaterialApp(
-                home: SafeArea(
-                  child: Scaffold(
-                    backgroundColor: Colors.black,
-                    body: Container(
-                      height: MediaQuery.of(context).size.height,
-                      width: MediaQuery.of(context).size.width,
-                      child: _isCameraPermissionGranted
-                          ? _isCameraInitialized
-                              ? ListView(
-                                  shrinkWrap: true,
-                                  physics: ScrollPhysics(),
+            ? Scaffold(
+                backgroundColor: Colors.black,
+                body: _isCameraPermissionGranted
+                    ? _isCameraInitialized
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              SingleChildScrollView(
+                                child: AspectRatio(
+                                  aspectRatio:
+                                      1 / controller!.value.aspectRatio,
+                                  child: Stack(
+                                    children: [
+                                      CameraPreview(
+                                        controller!,
+                                        child: LayoutBuilder(builder:
+                                            (BuildContext context,
+                                                BoxConstraints constraints) {
+                                          return GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTapDown: (details) =>
+                                                onViewFinderTap(
+                                                    details, constraints),
+                                          );
+                                        }),
+                                      ),
+                                      // TODO: Uncomment to preview the overlay
+                                      // Center(
+                                      //   child: Image.asset(
+                                      //     'assets/camera_aim.png',
+                                      //     color: Colors.greenAccent,
+                                      //     width: 150,
+                                      //     height: 150,
+                                      //   ),
+                                      // ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16.0,
+                                          8.0,
+                                          16.0,
+                                          8.0,
+                                        ),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Align(
+                                              alignment: Alignment.topRight,
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black87,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                    left: 8.0,
+                                                    right: 8.0,
+                                                  ),
+                                                  child: DropdownButton<
+                                                      ResolutionPreset>(
+                                                    dropdownColor:
+                                                        Colors.black87,
+                                                    underline: Container(),
+                                                    value:
+                                                        currentResolutionPreset,
+                                                    items: [
+                                                      for (ResolutionPreset preset
+                                                          in resolutionPresets)
+                                                        DropdownMenuItem(
+                                                          child: Text(
+                                                            preset
+                                                                .toString()
+                                                                .split('.')[1]
+                                                                .toUpperCase(),
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                          value: preset,
+                                                        )
+                                                    ],
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        currentResolutionPreset =
+                                                            value!;
+                                                        _isCameraInitialized =
+                                                            false;
+                                                      });
+                                                      onNewCameraSelected(
+                                                          controller!
+                                                              .description);
+                                                    },
+                                                    hint: Text("Select item"),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0, top: 16.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.all(8.0),
+                                                  child: Text(
+                                                    _currentExposureOffset
+                                                            .toStringAsFixed(
+                                                                1) +
+                                                        'x',
+                                                    style: TextStyle(
+                                                        color: Colors.black),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              child: RotatedBox(
+                                                quarterTurns: 3,
+                                                child: Container(
+                                                  height: 30,
+                                                  child: Slider(
+                                                    value:
+                                                        _currentExposureOffset,
+                                                    min:
+                                                        _minAvailableExposureOffset,
+                                                    max:
+                                                        _maxAvailableExposureOffset,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentExposureOffset =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setExposureOffset(
+                                                              value);
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Slider(
+                                                    value: _currentZoomLevel,
+                                                    min: _minAvailableZoom,
+                                                    max: _maxAvailableZoom,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentZoomLevel =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setZoomLevel(value);
+                                                    },
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black87,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        _currentZoomLevel
+                                                                .toStringAsFixed(
+                                                                    1) +
+                                                            'x',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () async {
+                                                    image = await takePicture();
+                                                    File image1 =
+                                                        File(image!.path);
+
+                                                    int currentUnix = DateTime
+                                                            .now()
+                                                        .millisecondsSinceEpoch;
+
+                                                    String fileFormat = image1
+                                                        .path
+                                                        .split('.')
+                                                        .last;
+                                                    setState(() {
+                                                      iscameraopen = false;
+                                                    });
+                                                    iscameraopen = false;
+                                                    // GallerySaver.saveImage(
+                                                    //         image!.path)
+                                                    // .then((path) {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (BuildContext
+                                                          context) {
+                                                        return _SystemPadding(
+                                                          child: AlertDialog(
+                                                            contentPadding:
+                                                                const EdgeInsets
+                                                                    .all(16.0),
+                                                            content: Row(
+                                                              children: <
+                                                                  Widget>[
+                                                                Expanded(
+                                                                  child:
+                                                                      TextFormField(
+                                                                    controller:
+                                                                        _itemDescController,
+                                                                    keyboardType:
+                                                                        TextInputType
+                                                                            .text,
+                                                                    autofocus:
+                                                                        true,
+                                                                    decoration: const InputDecoration(
+                                                                        labelText:
+                                                                            'Enter Description',
+                                                                        hintText:
+                                                                            'Description'),
+                                                                  ),
+                                                                )
+                                                              ],
+                                                            ),
+                                                            actions: <Widget>[
+                                                              TextButton(
+                                                                  child: const Text(
+                                                                      'CANCEL'),
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  }),
+                                                              TextButton(
+                                                                  child:
+                                                                      const Text(
+                                                                          'OKAY'),
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    setState(
+                                                                        () {
+                                                                      String?
+                                                                          description =
+                                                                          _itemDescController
+                                                                              .text
+                                                                              .trim();
+                                                                      print(
+                                                                          description);
+                                                                      final bytes =
+                                                                          Io.File(image!.path)
+                                                                              .readAsBytesSync();
+
+                                                                      String
+                                                                          imageFile =
+                                                                          base64Encode(
+                                                                              bytes);
+                                                                      images = Images(
+                                                                          filename:
+                                                                              description,
+                                                                          attachment:
+                                                                              imageFile);
+                                                                      _addImage(
+                                                                          image!);
+                                                                      _addImages(
+                                                                          images!);
+                                                                      _addDescription(
+                                                                          description);
+                                                                    });
+                                                                  })
+                                                            ],
+                                                          ),
+                                                        );
+                                                      },
+                                                    );
+                                                    // });
+                                                    print(fileFormat);
+                                                  },
+                                                  child: Stack(
+                                                    alignment: Alignment.center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.white
+                                                                : Colors
+                                                                    .white38,
+                                                        size: 80,
+                                                      ),
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.blue
+                                                                : Colors.white,
+                                                        size: 65,
+                                                      ),
+                                                      _isVideoCameraSelected &&
+                                                              _isRecordingInProgress
+                                                          ? Icon(
+                                                              Icons
+                                                                  .stop_rounded,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 32,
+                                                            )
+                                                          : Container(),
+                                                    ],
+                                                  ),
+                                                ),
+                                                InkWell(
+                                                  onTap: image != null
+                                                      ? () {
+                                                          // Navigator.of(context)
+                                                          //     .push(
+                                                          //   MaterialPageRoute(
+                                                          //     builder: (context) =>
+                                                          //         PreviewScreen(
+                                                          //       image: image!,
+                                                          //       fileList:
+                                                          //           imageslist,
+                                                          //     ),
+                                                          //   ),
+                                                          // );
+                                                        }
+                                                      : null,
+                                                  child: Container(
+                                                    width: 60,
+                                                    height: 60,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                      border: Border.all(
+                                                        color: Colors.white,
+                                                        width: 2,
+                                                      ),
+                                                      image: image != null
+                                                          ? DecorationImage(
+                                                              image: FileImage(
+                                                                File(image!
+                                                                    .path),
+                                                              ),
+                                                              fit: BoxFit.cover,
+                                                            )
+                                                          : null,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
                                   children: [
-                                    AspectRatio(
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          16.0, 8.0, 16.0, 8.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.off;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.off,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.flash_off,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.off
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.auto;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.auto,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.flash_auto,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.auto
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.always;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.always,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.flash_on,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.always
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.torch;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.torch,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.highlight,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.torch
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Center(
+                            child: Text(
+                              'LOADING',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(),
+                          Text(
+                            'Permission denied',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
+                          ),
+                          SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () {
+                              getPermissionStatus();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Give permission',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              )
+            : islogbookcameraopen == true
+                ? Scaffold(
+                    backgroundColor: Colors.black,
+                    body: _isCameraPermissionGranted
+                        ? _isCameraInitialized
+                            ? Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  SingleChildScrollView(
+                                    child: AspectRatio(
                                       aspectRatio:
                                           1 / controller!.value.aspectRatio,
                                       child: Stack(
@@ -5282,11 +7883,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                                   children: [
                                                     InkWell(
                                                       onTap: () async {
-                                                        image =
+                                                        logbbok =
                                                             await takePicture();
                                                         File image1 =
-                                                            File(image!.path);
-
+                                                            File(logbbok!.path);
                                                         int currentUnix = DateTime
                                                                 .now()
                                                             .millisecondsSinceEpoch;
@@ -5296,85 +7896,93 @@ class _CreateValuationState extends State<CreateValuation> {
                                                                 .split('.')
                                                                 .last;
                                                         setState(() {
-                                                          iscameraopen = false;
+                                                          islogbookcameraopen =
+                                                              false;
                                                         });
-                                                        iscameraopen = false;
-                                                        GallerySaver.saveImage(
-                                                                image!.path)
-                                                            .then((path) {
-                                                          showDialog(
-                                                            context: context,
-                                                            builder:
-                                                                (BuildContext
-                                                                    context) {
-                                                              return _SystemPadding(
-                                                                child:
-                                                                    AlertDialog(
-                                                                  contentPadding:
-                                                                      const EdgeInsets
-                                                                              .all(
-                                                                          16.0),
-                                                                  content: Row(
-                                                                    children: <
-                                                                        Widget>[
-                                                                      Expanded(
-                                                                        child:
-                                                                            TextFormField(
-                                                                          controller:
-                                                                              _itemDescController,
-                                                                          keyboardType:
-                                                                              TextInputType.text,
-                                                                          autofocus:
-                                                                              true,
-                                                                          decoration: const InputDecoration(
-                                                                              labelText: 'Enter Description',
-                                                                              hintText: 'Description'),
-                                                                        ),
-                                                                      )
-                                                                    ],
-                                                                  ),
-                                                                  actions: <
+                                                        islogbookcameraopen =
+                                                            false;
+                                                        // GallerySaver.saveImage(
+                                                        //         logbbok!.path)
+                                                        //     .then((path) {
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              context) {
+                                                            return _SystemPadding(
+                                                              child:
+                                                                  AlertDialog(
+                                                                contentPadding:
+                                                                    const EdgeInsets
+                                                                            .all(
+                                                                        16.0),
+                                                                content: Row(
+                                                                  children: <
                                                                       Widget>[
-                                                                    TextButton(
-                                                                        child: const Text(
-                                                                            'CANCEL'),
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                        }),
-                                                                    TextButton(
-                                                                        child: const Text(
-                                                                            'OKAY'),
-                                                                        onPressed:
-                                                                            () {
-                                                                          Navigator.pop(
-                                                                              context);
-                                                                          setState(
-                                                                              () {
-                                                                            String?
-                                                                                description =
-                                                                                _itemDescController.text.trim();
-                                                                            print(description);
-                                                                            final bytes =
-                                                                                Io.File(image!.path).readAsBytesSync();
-
-                                                                            String
-                                                                                imageFile =
-                                                                                base64Encode(bytes);
-                                                                            images =
-                                                                                Images(filename: description, attachment: imageFile);
-                                                                            _addImage(image!);
-                                                                            _addImages(images!);
-                                                                            _addDescription(description);
-                                                                          });
-                                                                        })
+                                                                    Expanded(
+                                                                      child:
+                                                                          TextFormField(
+                                                                        controller:
+                                                                            _logBookDescController,
+                                                                        keyboardType:
+                                                                            TextInputType.text,
+                                                                        autofocus:
+                                                                            true,
+                                                                        decoration: const InputDecoration(
+                                                                            labelText:
+                                                                                'Enter Description',
+                                                                            hintText:
+                                                                                'Description'),
+                                                                      ),
+                                                                    )
                                                                   ],
                                                                 ),
-                                                              );
-                                                            },
-                                                          );
-                                                        });
+                                                                actions: <
+                                                                    Widget>[
+                                                                  TextButton(
+                                                                      child: const Text(
+                                                                          'CANCEL'),
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                      }),
+                                                                  TextButton(
+                                                                      child: const Text(
+                                                                          'OKAY'),
+                                                                      onPressed:
+                                                                          () {
+                                                                        Navigator.pop(
+                                                                            context);
+                                                                        setState(
+                                                                            () {
+                                                                          String?
+                                                                              description =
+                                                                              _logBookDescController.text.trim();
+                                                                          print(
+                                                                              description);
+                                                                          final bytes =
+                                                                              Io.File(logbbok!.path).readAsBytesSync();
+
+                                                                          String
+                                                                              imageFile =
+                                                                              base64Encode(bytes);
+                                                                          logbooks = Images(
+                                                                              filename: description,
+                                                                              attachment: imageFile);
+                                                                          _addLogBookImage(
+                                                                              logbbok!);
+                                                                          _addLogBookImages(
+                                                                              logbooks!);
+                                                                          _addLogBookDescription(
+                                                                              description);
+                                                                        });
+                                                                      })
+                                                                ],
+                                                              ),
+                                                            );
+                                                          },
+                                                        );
+                                                        // });
                                                         print(fileFormat);
                                                       },
                                                       child: Stack(
@@ -5415,7 +8023,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                       ),
                                                     ),
                                                     InkWell(
-                                                      onTap: image != null
+                                                      onTap: logbbok != null
                                                           ? () {
                                                               // Navigator.of(context)
                                                               //     .push(
@@ -5444,11 +8052,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                                             color: Colors.white,
                                                             width: 2,
                                                           ),
-                                                          image: image != null
+                                                          image: logbbok != null
                                                               ? DecorationImage(
                                                                   image:
                                                                       FileImage(
-                                                                    File(image!
+                                                                    File(logbbok!
                                                                         .path),
                                                                   ),
                                                                   fit: BoxFit
@@ -5466,743 +8074,187 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                     ),
-                                    Expanded(
-                                      child: SingleChildScrollView(
-                                        physics: BouncingScrollPhysics(),
-                                        child: Column(
-                                          children: [
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  top: 8.0),
-                                              child: Row(
-                                                children: [],
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                      16.0, 8.0, 16.0, 8.0),
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () async {
-                                                      setState(() {
-                                                        _currentFlashMode =
-                                                            FlashMode.off;
-                                                      });
-                                                      await controller!
-                                                          .setFlashMode(
-                                                        FlashMode.off,
-                                                      );
-                                                    },
-                                                    child: Icon(
-                                                      Icons.flash_off,
-                                                      color:
-                                                          _currentFlashMode ==
-                                                                  FlashMode.off
-                                                              ? Colors.amber
-                                                              : Colors.white,
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () async {
-                                                      setState(() {
-                                                        _currentFlashMode =
-                                                            FlashMode.auto;
-                                                      });
-                                                      await controller!
-                                                          .setFlashMode(
-                                                        FlashMode.auto,
-                                                      );
-                                                    },
-                                                    child: Icon(
-                                                      Icons.flash_auto,
-                                                      color:
-                                                          _currentFlashMode ==
-                                                                  FlashMode.auto
-                                                              ? Colors.amber
-                                                              : Colors.white,
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () async {
-                                                      setState(() {
-                                                        _currentFlashMode =
-                                                            FlashMode.always;
-                                                      });
-                                                      await controller!
-                                                          .setFlashMode(
-                                                        FlashMode.always,
-                                                      );
-                                                    },
-                                                    child: Icon(
-                                                      Icons.flash_on,
-                                                      color:
-                                                          _currentFlashMode ==
-                                                                  FlashMode
-                                                                      .always
-                                                              ? Colors.amber
-                                                              : Colors.white,
-                                                    ),
-                                                  ),
-                                                  InkWell(
-                                                    onTap: () async {
-                                                      setState(() {
-                                                        _currentFlashMode =
-                                                            FlashMode.torch;
-                                                      });
-                                                      await controller!
-                                                          .setFlashMode(
-                                                        FlashMode.torch,
-                                                      );
-                                                    },
-                                                    child: Icon(
-                                                      Icons.highlight,
-                                                      color:
-                                                          _currentFlashMode ==
-                                                                  FlashMode
-                                                                      .torch
-                                                              ? Colors.amber
-                                                              : Colors.white,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : Center(
-                                  child: Text(
-                                    'LOADING',
-                                    style: TextStyle(color: Colors.white),
                                   ),
-                                )
-                          : Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Row(),
-                                Text(
-                                  'Permission denied',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                  ),
-                                ),
-                                SizedBox(height: 24),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    getPermissionStatus();
-                                  },
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      'Give permission',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 24,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                ),
-              )
-            : islogbookcameraopen == true
-                ? MaterialApp(
-                    home: Scaffold(
-                      backgroundColor: Colors.black,
-                      body: Container(
-                        height: MediaQuery.of(context).size.height,
-                        width: MediaQuery.of(context).size.width,
-                        child: _isCameraPermissionGranted
-                            ? _isCameraInitialized
-                                ? ListView(
-                                    shrinkWrap: true,
-                                    physics: ScrollPhysics(),
-                                    children: [
-                                      AspectRatio(
-                                        aspectRatio:
-                                            1 / controller!.value.aspectRatio,
-                                        child: Stack(
-                                          children: [
-                                            CameraPreview(
-                                              controller!,
-                                              child: LayoutBuilder(builder:
-                                                  (BuildContext context,
-                                                      BoxConstraints
-                                                          constraints) {
-                                                return GestureDetector(
-                                                  behavior:
-                                                      HitTestBehavior.opaque,
-                                                  onTapDown: (details) =>
-                                                      onViewFinderTap(
-                                                          details, constraints),
-                                                );
-                                              }),
-                                            ),
-                                            // TODO: Uncomment to preview the overlay
-                                            // Center(
-                                            //   child: Image.asset(
-                                            //     'assets/camera_aim.png',
-                                            //     color: Colors.greenAccent,
-                                            //     width: 150,
-                                            //     height: 150,
-                                            //   ),
-                                            // ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.fromLTRB(
-                                                16.0,
-                                                8.0,
-                                                16.0,
-                                                8.0,
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.end,
-                                                children: [
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.topRight,
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.black87,
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10.0),
-                                                      ),
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .only(
-                                                          left: 8.0,
-                                                          right: 8.0,
-                                                        ),
-                                                        child: DropdownButton<
-                                                            ResolutionPreset>(
-                                                          dropdownColor:
-                                                              Colors.black87,
-                                                          underline:
-                                                              Container(),
-                                                          value:
-                                                              currentResolutionPreset,
-                                                          items: [
-                                                            for (ResolutionPreset preset
-                                                                in resolutionPresets)
-                                                              DropdownMenuItem(
-                                                                child: Text(
-                                                                  preset
-                                                                      .toString()
-                                                                      .split(
-                                                                          '.')[1]
-                                                                      .toUpperCase(),
-                                                                  style: TextStyle(
-                                                                      color: Colors
-                                                                          .white),
-                                                                ),
-                                                                value: preset,
-                                                              )
-                                                          ],
-                                                          onChanged: (value) {
-                                                            setState(() {
-                                                              currentResolutionPreset =
-                                                                  value!;
-                                                              _isCameraInitialized =
-                                                                  false;
-                                                            });
-                                                            onNewCameraSelected(
-                                                                controller!
-                                                                    .description);
-                                                          },
-                                                          hint: Text(
-                                                              "Select item"),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  // Spacer(),
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                            right: 8.0,
-                                                            top: 16.0),
-                                                    child: Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white,
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(10.0),
-                                                      ),
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(8.0),
-                                                        child: Text(
-                                                          _currentExposureOffset
-                                                                  .toStringAsFixed(
-                                                                      1) +
-                                                              'x',
-                                                          style: TextStyle(
-                                                              color:
-                                                                  Colors.black),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Expanded(
-                                                    child: RotatedBox(
-                                                      quarterTurns: 3,
-                                                      child: Container(
-                                                        height: 30,
-                                                        child: Slider(
-                                                          value:
-                                                              _currentExposureOffset,
-                                                          min:
-                                                              _minAvailableExposureOffset,
-                                                          max:
-                                                              _maxAvailableExposureOffset,
-                                                          activeColor:
-                                                              Colors.white,
-                                                          inactiveColor:
-                                                              Colors.white30,
-                                                          onChanged:
-                                                              (value) async {
-                                                            setState(() {
-                                                              _currentExposureOffset =
-                                                                  value;
-                                                            });
-                                                            await controller!
-                                                                .setExposureOffset(
-                                                                    value);
-                                                          },
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: Slider(
-                                                          value:
-                                                              _currentZoomLevel,
-                                                          min:
-                                                              _minAvailableZoom,
-                                                          max:
-                                                              _maxAvailableZoom,
-                                                          activeColor:
-                                                              Colors.white,
-                                                          inactiveColor:
-                                                              Colors.white30,
-                                                          onChanged:
-                                                              (value) async {
-                                                            setState(() {
-                                                              _currentZoomLevel =
-                                                                  value;
-                                                            });
-                                                            await controller!
-                                                                .setZoomLevel(
-                                                                    value);
-                                                          },
-                                                        ),
-                                                      ),
-                                                      Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                    .only(
-                                                                right: 8.0),
-                                                        child: Container(
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color:
-                                                                Colors.black87,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                          ),
-                                                          child: Padding(
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .all(8.0),
-                                                            child: Text(
-                                                              _currentZoomLevel
-                                                                      .toStringAsFixed(
-                                                                          1) +
-                                                                  'x',
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .white),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      InkWell(
-                                                        onTap: () async {
-                                                          logbbok =
-                                                              await takePicture();
-                                                          File image1 = File(
-                                                              logbbok!.path);
-                                                          int currentUnix =
-                                                              DateTime.now()
-                                                                  .millisecondsSinceEpoch;
-
-                                                          String fileFormat =
-                                                              image1.path
-                                                                  .split('.')
-                                                                  .last;
-                                                          setState(() {
-                                                            islogbookcameraopen =
-                                                                false;
-                                                          });
-                                                          islogbookcameraopen =
-                                                              false;
-                                                          GallerySaver
-                                                                  .saveImage(
-                                                                      logbbok!
-                                                                          .path)
-                                                              .then((path) {
-                                                            showDialog(
-                                                              context: context,
-                                                              builder:
-                                                                  (BuildContext
-                                                                      context) {
-                                                                return _SystemPadding(
-                                                                  child:
-                                                                      AlertDialog(
-                                                                    contentPadding:
-                                                                        const EdgeInsets.all(
-                                                                            16.0),
-                                                                    content:
-                                                                        Row(
-                                                                      children: <
-                                                                          Widget>[
-                                                                        Expanded(
-                                                                          child:
-                                                                              TextFormField(
-                                                                            controller:
-                                                                                _logBookDescController,
-                                                                            keyboardType:
-                                                                                TextInputType.text,
-                                                                            autofocus:
-                                                                                true,
-                                                                            decoration:
-                                                                                const InputDecoration(labelText: 'Enter Description', hintText: 'Description'),
-                                                                          ),
-                                                                        )
-                                                                      ],
-                                                                    ),
-                                                                    actions: <
-                                                                        Widget>[
-                                                                      TextButton(
-                                                                          child: const Text(
-                                                                              'CANCEL'),
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.pop(context);
-                                                                          }),
-                                                                      TextButton(
-                                                                          child: const Text(
-                                                                              'OKAY'),
-                                                                          onPressed:
-                                                                              () {
-                                                                            Navigator.pop(context);
-                                                                            setState(() {
-                                                                              String? description = _logBookDescController.text.trim();
-                                                                              print(description);
-                                                                              final bytes = Io.File(logbbok!.path).readAsBytesSync();
-
-                                                                              String imageFile = base64Encode(bytes);
-                                                                              logbooks = Images(filename: description, attachment: imageFile);
-                                                                              _addLogBookImage(logbbok!);
-                                                                              _addLogBookImages(logbooks!);
-                                                                              _addLogBookDescription(description);
-                                                                            });
-                                                                          })
-                                                                    ],
-                                                                  ),
-                                                                );
-                                                              },
-                                                            );
-                                                          });
-                                                          print(fileFormat);
-                                                        },
-                                                        child: Stack(
-                                                          alignment:
-                                                              Alignment.center,
-                                                          children: [
-                                                            Icon(
-                                                              Icons.circle,
-                                                              color: _isVideoCameraSelected
-                                                                  ? Colors.white
-                                                                  : Colors
-                                                                      .white38,
-                                                              size: 80,
-                                                            ),
-                                                            Icon(
-                                                              Icons.circle,
-                                                              color:
-                                                                  _isVideoCameraSelected
-                                                                      ? Colors
-                                                                          .blue
-                                                                      : Colors
-                                                                          .white,
-                                                              size: 65,
-                                                            ),
-                                                            _isVideoCameraSelected &&
-                                                                    _isRecordingInProgress
-                                                                ? Icon(
-                                                                    Icons
-                                                                        .stop_rounded,
-                                                                    color: Colors
-                                                                        .white,
-                                                                    size: 32,
-                                                                  )
-                                                                : Container(),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      InkWell(
-                                                        onTap: logbbok != null
-                                                            ? () {
-                                                                // Navigator.of(context)
-                                                                //     .push(
-                                                                //   MaterialPageRoute(
-                                                                //     builder: (context) =>
-                                                                //         PreviewScreen(
-                                                                //       image: image!,
-                                                                //       fileList:
-                                                                //           imageslist,
-                                                                //     ),
-                                                                //   ),
-                                                                // );
-                                                              }
-                                                            : null,
-                                                        child: Container(
-                                                          width: 60,
-                                                          height: 60,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color: Colors.black,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10.0),
-                                                            border: Border.all(
-                                                              color:
-                                                                  Colors.white,
-                                                              width: 2,
-                                                            ),
-                                                            image: logbbok !=
-                                                                    null
-                                                                ? DecorationImage(
-                                                                    image:
-                                                                        FileImage(
-                                                                      File(logbbok!
-                                                                          .path),
-                                                                    ),
-                                                                    fit: BoxFit
-                                                                        .cover,
-                                                                  )
-                                                                : null,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: SingleChildScrollView(
-                                          physics: BouncingScrollPhysics(),
-                                          child: Column(
-                                            children: [
-                                              Padding(
-                                                padding: const EdgeInsets.only(
-                                                    top: 8.0),
-                                                child: Row(
-                                                  children: [],
-                                                ),
-                                              ),
-                                              Padding(
-                                                padding:
-                                                    const EdgeInsets.fromLTRB(
-                                                        16.0, 8.0, 16.0, 8.0),
-                                                child: Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        setState(() {
-                                                          _currentFlashMode =
-                                                              FlashMode.off;
-                                                        });
-                                                        await controller!
-                                                            .setFlashMode(
-                                                          FlashMode.off,
-                                                        );
-                                                      },
-                                                      child: Icon(
-                                                        Icons.flash_off,
-                                                        color:
-                                                            _currentFlashMode ==
-                                                                    FlashMode
-                                                                        .off
-                                                                ? Colors.amber
-                                                                : Colors.white,
-                                                      ),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        setState(() {
-                                                          _currentFlashMode =
-                                                              FlashMode.auto;
-                                                        });
-                                                        await controller!
-                                                            .setFlashMode(
-                                                          FlashMode.auto,
-                                                        );
-                                                      },
-                                                      child: Icon(
-                                                        Icons.flash_auto,
-                                                        color:
-                                                            _currentFlashMode ==
-                                                                    FlashMode
-                                                                        .auto
-                                                                ? Colors.amber
-                                                                : Colors.white,
-                                                      ),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        setState(() {
-                                                          _currentFlashMode =
-                                                              FlashMode.always;
-                                                        });
-                                                        await controller!
-                                                            .setFlashMode(
-                                                          FlashMode.always,
-                                                        );
-                                                      },
-                                                      child: Icon(
-                                                        Icons.flash_on,
-                                                        color:
-                                                            _currentFlashMode ==
-                                                                    FlashMode
-                                                                        .always
-                                                                ? Colors.amber
-                                                                : Colors.white,
-                                                      ),
-                                                    ),
-                                                    InkWell(
-                                                      onTap: () async {
-                                                        setState(() {
-                                                          _currentFlashMode =
-                                                              FlashMode.torch;
-                                                        });
-                                                        await controller!
-                                                            .setFlashMode(
-                                                          FlashMode.torch,
-                                                        );
-                                                      },
-                                                      child: Icon(
-                                                        Icons.highlight,
-                                                        color:
-                                                            _currentFlashMode ==
-                                                                    FlashMode
-                                                                        .torch
-                                                                ? Colors.amber
-                                                                : Colors.white,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              )
-                                            ],
+                                  Expanded(
+                                    child: Column(
+                                      children: [
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 8.0),
+                                          child: Row(
+                                            children: [],
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  )
-                                : Center(
-                                    child: Text(
-                                      'LOADING',
-                                      style: TextStyle(color: Colors.white),
+                                        Padding(
+                                          padding: const EdgeInsets.fromLTRB(
+                                              16.0, 8.0, 16.0, 8.0),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Expanded(
+                                                child: InkWell(
+                                                  onTap: () async {
+                                                    setState(() {
+                                                      _currentFlashMode =
+                                                          FlashMode.off;
+                                                    });
+                                                    await controller!
+                                                        .setFlashMode(
+                                                      FlashMode.off,
+                                                    );
+                                                  },
+                                                  child: Icon(
+                                                    Icons.flash_off,
+                                                    color: _currentFlashMode ==
+                                                            FlashMode.off
+                                                        ? Colors.amber
+                                                        : Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: InkWell(
+                                                  onTap: () async {
+                                                    setState(() {
+                                                      _currentFlashMode =
+                                                          FlashMode.auto;
+                                                    });
+                                                    await controller!
+                                                        .setFlashMode(
+                                                      FlashMode.auto,
+                                                    );
+                                                  },
+                                                  child: Icon(
+                                                    Icons.flash_auto,
+                                                    color: _currentFlashMode ==
+                                                            FlashMode.auto
+                                                        ? Colors.amber
+                                                        : Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: InkWell(
+                                                  onTap: () async {
+                                                    setState(() {
+                                                      _currentFlashMode =
+                                                          FlashMode.always;
+                                                    });
+                                                    await controller!
+                                                        .setFlashMode(
+                                                      FlashMode.always,
+                                                    );
+                                                  },
+                                                  child: Icon(
+                                                    Icons.flash_on,
+                                                    color: _currentFlashMode ==
+                                                            FlashMode.always
+                                                        ? Colors.amber
+                                                        : Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                child: InkWell(
+                                                  onTap: () async {
+                                                    setState(() {
+                                                      _currentFlashMode =
+                                                          FlashMode.torch;
+                                                    });
+                                                    await controller!
+                                                        .setFlashMode(
+                                                      FlashMode.torch,
+                                                    );
+                                                  },
+                                                  child: Icon(
+                                                    Icons.highlight,
+                                                    color: _currentFlashMode ==
+                                                            FlashMode.torch
+                                                        ? Colors.amber
+                                                        : Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        )
+                                      ],
                                     ),
-                                  )
-                            : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Row(),
-                                  Text(
-                                    'Permission denied',
+                                  ),
+                                ],
+                              )
+                            : Center(
+                                child: Text(
+                                  'LOADING',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              )
+                        : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Row(),
+                              Text(
+                                'Permission denied',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                ),
+                              ),
+                              SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: () {
+                                  getPermissionStatus();
+                                },
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    'Give permission',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 24,
                                     ),
                                   ),
-                                  SizedBox(height: 24),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      getPermissionStatus();
-                                    },
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        'Give permission',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 24,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                      ),
-                    ),
+                            ],
+                          ),
                   )
                 : Container();
   }
 
   _fetchInstructions() async {
     String url = await Config.getBaseUrl();
+
+    URLQueryParams urlQueryParams = new URLQueryParams();
+    urlQueryParams.append('custid', _custId);
+    urlQueryParams.append('hrid', _hrid);
+    urlQueryParams.append('typeid', '1');
+    urlQueryParams.append('revised', revised);
+    String qParams = urlQueryParams.toString();
+    final stringurl = widget.custID == null
+        ? (url +
+            'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=3&revised=$revised')
+        : (url +
+            'valuation/custinstruction/?custid=${widget.custID}&hrid=$_hrid&typeid=3&revised=$revised');
     HttpClientResponse response = await Config.getRequestObject(
-        url +
-            'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=3&revised=$revised',
-        Config.get);
+      stringurl,
+      Config.get,
+    );
     if (response != null) {
-      print(url +
-          'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=1&revised=$revised');
-      print(response);
+      print(stringurl);
+      print(response.compressionState);
+      bool _validURL = Uri.parse(url +
+              'valuation/custinstruction/?custid=$_custId&hrid=$_hrid&typeid=3&revised=$revised')
+          .isAbsolute;
+      print(_validURL);
       response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
-        var jsonResponse = json.decode(data);
+        var jsonResponse = jsonDecode(data);
+        print(jsonResponse);
         setState(() {
           valuationsJson = jsonResponse;
-          instructionsString = valuationsJson.join(",");
-          saveAssessments();
+          // instructionsString = valuationsJson.join(",");
+          // saveAssessments();
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -6219,7 +8271,7 @@ class _CreateValuationState extends State<CreateValuation> {
               _instruction.forEach((instruction) {
                 setState(() {});
 
-                print(_owner);
+                print(_make);
               });
             }
           });
@@ -6248,8 +8300,8 @@ class _CreateValuationState extends State<CreateValuation> {
         var jsonResponse = json.decode(data);
         setState(() {
           fleetJson = jsonResponse;
-          fleetString = valuationsJson.join(",");
-          saveAssessments();
+          // fleetString = valuationsJson.join(",");
+          // saveAssessments();
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -6284,7 +8336,7 @@ class _CreateValuationState extends State<CreateValuation> {
   Widget getListTile1(val) {
     return ListTile(
       leading: Text(val['regno'] ?? ''),
-      title: Text(val['owner'] ?? ''),
+      title: Text(val['customer'] ?? ''),
       trailing: Text(val['location'] ?? ''),
     );
   }
@@ -6292,8 +8344,8 @@ class _CreateValuationState extends State<CreateValuation> {
 
 Widget getListTile2(val) {
   return ListTile(
-    leading: Text(val['custname'] ?? ''),
-    title: Text(val['noofveh'].toString() ?? ''),
+    leading: Text(val['noofveh'].toString()),
+    title: Text(val['custname'] ?? ''),
     trailing: Text(val['location'] ?? ''),
   );
 }

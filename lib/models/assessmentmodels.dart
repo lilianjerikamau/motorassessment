@@ -15,6 +15,7 @@ class Assesssment {
       this.driven,
       this.userid,
       this.custname,
+      this.customer,
       this.regno,
       this.custid,
       this.revised,
@@ -46,10 +47,12 @@ class Assesssment {
 
   int? userid;
   int? id;
+
   String? damegesobserved;
   String? paintwork;
   String? steering;
   String? brakes;
+  String? customer;
   bool? driven;
   String? make;
   String? engineno;
@@ -83,12 +86,13 @@ class Assesssment {
 
   factory Assesssment.fromJson(Map<String, dynamic> json) => Assesssment(
         userid: json["userid"],
+        customer: json["customer"],
         id: json["id"],
         custid: json["custid"],
         date: json["date"],
         regno: json['regno'],
         make: json["make"],
-        custname: json["customer"],
+        custname: json["custname"],
         drivenby: json['drivenby'],
         towed: json["towed"],
         cashinlieu: json["cashinlieu"],
@@ -106,6 +110,7 @@ class Assesssment {
         driven: json["driven"],
       );
   static Map<String, dynamic> toJson(Assesssment assesssment) => {
+        'customer': assesssment.customer,
         'driven': assesssment.driven,
         'id': assesssment.id,
         'custid': assesssment.custid,

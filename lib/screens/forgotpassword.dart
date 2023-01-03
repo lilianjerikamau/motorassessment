@@ -56,7 +56,10 @@ class _CheckUserState extends State<CheckUser> with RouteAware {
         return true;
       },
       child: Scaffold(
-        appBar: AppBar(title: Text('Forgot Password')),
+        appBar: AppBar(
+          title: Text('Forgot Password'),
+          automaticallyImplyLeading: false,
+        ),
         body: _userVerified
             ? VerifyEmail(_context)
             : Container(
