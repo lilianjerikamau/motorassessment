@@ -807,6 +807,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "0.27.5"
+  search_choices:
+    dependency: "direct dev"
+    description:
+      name: search_choices
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "2.2.1"
   search_page:
     dependency: "direct dev"
     description:

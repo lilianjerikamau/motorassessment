@@ -66,6 +66,7 @@ List<String> listOfInstructiontypes = [
 List techniciansJson = [];
 List customersJson = [];
 List instructionsJson = [];
+List claimFormJson = [];
 List valuationsJson = [];
 List fleetJson = [];
 List assessmentJson = [];

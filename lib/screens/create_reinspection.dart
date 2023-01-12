@@ -377,6 +377,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                           "brakes": brakes,
                           "paintwork": paintwork,
                           "RHF": RHF,
+
                           "LHR": LHR,
                           "RHR": RHR,
                           "LHF": LHF,
@@ -1937,7 +1938,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 : null,
                                             controller: _year,
                                             onSaved: (value) => {engineNo},
-                                            keyboardType: TextInputType.text,
+                                            keyboardType: TextInputType.number,
                                             decoration: InputDecoration(
                                                 hintText: "Year"),
                                           ),

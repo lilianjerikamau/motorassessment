@@ -571,7 +571,7 @@ class _CreateValuationState extends State<CreateValuation> {
                     String fromanyotherplace = _fromanyotherplace.text.trim();
                     // String noofdiscs = _noofdiscs.text.trim();
                     String vinplatedetails = _vinplatedetails.text.trim();
-                    String? seatingcapacity = _seatingcapacity.text.trim();
+                    String seatingcapacity = _seatingcapacity.text.trim();
                     var doubleseatingcapacity = double.parse(seatingcapacity);
                     String injectiontype = _injectiontype.text.trim();
                     String noofcylinders = _noofcylinders.text.trim();
@@ -628,6 +628,8 @@ class _CreateValuationState extends State<CreateValuation> {
                           "enginecapacity": enginecap,
                           "engineno": engineno,
                           "make": make,
+                          "type":"",
+                          // "vehiclefit":"",
                           "inspectionplace": inspectionplace,
                           "musicsystemvalue":
                               musicsystemval != "" ? musicsystemval : "0",
@@ -813,7 +815,7 @@ class _CreateValuationState extends State<CreateValuation> {
                           "opensidebody": opensidebody,
                           "closedsidebody": closedsidebody,
                           "trailers": trailers,
-                          "fuseboxbypasses": fuseboxbypassed,
+                          "fuseboxbypassed": fuseboxbypassed,
 
                           //other
                           "turbocharger": turbocharger,
@@ -3314,6 +3316,13 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
                                         ],
                                       ),
                                       TextFormField(
@@ -3336,6 +3345,13 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .subtitle2!
                                                 .copyWith(),
                                           ),
+                                          Text(
+                                            "*",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
                                         ],
                                       ),
                                       TextFormField(
@@ -3439,7 +3455,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             : null,
                                         controller: _loadcapacity,
                                         onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
+                                        keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
                                             hintText: "loadcapacity"),
                                       ),
@@ -3471,7 +3487,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             : null,
                                         controller: _seatingcapacity,
                                         onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
+                                        keyboardType: TextInputType.number,
                                         decoration: InputDecoration(
                                             hintText: "seatingcapacity"),
                                       ),
