@@ -34,6 +34,20 @@ class Supplementary {
       this.location,
       this.custname,
       this.customer});
+  Supplementary.fromMap(Map<dynamic, dynamic> data)
+      : userid= data['userid'],
+  custid= data['custId'],
+  assessmentid = data['assessmentId'],
+  photolist= data['newImagesList'];
+
+  Map<String, dynamic> toMap() {
+    return {
+    'userid': userid,
+    'custid':custid,
+    'assessmentid' : assessmentid,
+    'photolist': photolist,
+    };
+  }
 
   int? userid;
   String? make;
@@ -42,6 +56,7 @@ class Supplementary {
   bool? cashinlieu;
   int? instructionno;
   int? custid;
+  int? assessmentid;
   String? regno;
   String? model;
   String? year;

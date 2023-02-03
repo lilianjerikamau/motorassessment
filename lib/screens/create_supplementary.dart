@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
@@ -9,8 +10,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:motorassesmentapp/models/supplementary_model.dart';
 import 'package:motorassesmentapp/screens/create_instruction.dart';
 import 'package:motorassesmentapp/screens/home.dart';
+import 'package:motorassesmentapp/screens/save_supplementary.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:http/http.dart' as http;
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
@@ -37,6 +40,7 @@ import 'package:gallery_saver/gallery_saver.dart';
 import '../main.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import '../database/db_helper.dart';
 
 class CreateSupplementary extends StatefulWidget {
   CreateSupplementary({Key? key}) : super(key: key);
@@ -47,7 +51,7 @@ class CreateSupplementary extends StatefulWidget {
 
 class _CreateSupplementaryState extends State<CreateSupplementary> {
   late User _loggedInUser;
-
+  DBHelper dbHelper = DBHelper();
   int? _userid;
   int? _custid;
   int? _custId;
@@ -83,7 +87,12 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
   String? _location;
   String? _claimno;
   String? customersString;
-  String? assessmentsString;
+  String? supplementaryString;
+  String? assessmentString;
+  int? transmissionid;
+  int? drivetypeid;
+  int? index;
+  late Random random;
   List<Customer> _customers = [];
   List<Instruction> _instruction = [];
 
@@ -216,7 +225,7 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
 
   Future<void> saveAssessments() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setString('assessmentslist', assessmentsString!);
+    prefs.setString('assessmentslist', assessmentString!);
     print('user info:');
     // printWrapped(customersString!);
     getInstructions();
@@ -319,14 +328,14 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
     var status = await Permission.camera.status;
 
     if (status.isGranted) {
-      log('Camera Permission: GRANTED');
+      print('Camera Permission: GRANTED');
       setState(() {
         _isCameraPermissionGranted = true;
       });
       // Set and initialize the new camera
       onNewCameraSelected(cameras[0]);
     } else {
-      log('Camera Permission: DENIED');
+      print('Camera Permission: DENIED');
     }
   }
 
@@ -341,8 +350,8 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
         var jsonResponse = json.decode(data);
         setState(() {
           supassessmentJson = jsonResponse;
-          // assessmentsString = supassessmentJson.join(",");
-          // saveAssessments();
+          assessmentString = supassessmentJson.join(",");
+          saveAssessments();
         });
         print(jsonResponse);
         var list = jsonResponse as List;
@@ -378,14 +387,12 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
 
   @override
   void initState() {
-    // _checkNetwork();
-    // if (string.contains('Online')) {
-    //   _fetchCustomers();
-    //   _fetchInstructions();
-    //   List supassessmentJson = [];
-    // } else {
-    //   getInstructions();
-    // }
+
+    random = new Random();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     onNewCameraSelected(cameras[0]);
@@ -406,7 +413,7 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
     isFinancierSelected = false;
     iscameraopen = false;
     _isLoading = false;
-
+    _fetchCustomers();
     super.initState();
   }
 
@@ -609,39 +616,83 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                       message: 'Sending Supplementary',
                     );
                     dial.show();
-                    String demoUrl = await Config.getBaseUrl();
-                    Uri url = Uri.parse(demoUrl + 'valuation/supplementary/');
-                    print(url);
+                    setState(() {
+                      supplementaryString = jsonEncode(<String, dynamic>{
+                        "userid": _userid,
+                        "custid": _custId,
+                        "assessmentid": _assessmentId,
+                        "photolist": newImagesList,
+                      });
+                    });
+                    try {
+                      final result = await InternetAddress.lookup('google.com');
+                      if (result.isNotEmpty &&
+                          result[0].rawAddress.isNotEmpty) {
+                        String demoUrl = await Config.getBaseUrl();
+                        Uri url =
+                            Uri.parse(demoUrl + 'valuation/supplementary/');
+                        print(url);
 
-                    final response = await http.post(url,
-                        headers: <String, String>{
-                          'Content-Type': 'application/json',
-                        },
-                        body: jsonEncode(<String, dynamic>{
-                          "userid": _userid,
-                          "custid": _custId,
-                          "assessmentid": _assessmentId,
+                        final response = await http.post(url,
+                            headers: <String, String>{
+                              'Content-Type': 'application/json',
+                            },
+                            body: jsonEncode(<String, dynamic>{
+                              "userid": _userid,
+                              "custid": _custId,
+                              "assessmentid": _assessmentId,
+                              "photolist": newImagesList,
+                            }));
+
+                        printWrapped(jsonEncode(<String, dynamic>{
                           "photolist": newImagesList,
                         }));
-
-                    printWrapped(jsonEncode(<String, dynamic>{
-                      "photolist": newImagesList,
-                    }));
-                    if (response != null) {
-                      dial.hide();
-                      int statusCode = response.statusCode;
-                      if (statusCode == 200) {
-                        return _showDialog(this.context);
-                      } else {
-                        dial.hide();
-                        print(
-                            "Submit Status code::" + response.body.toString());
-                        showAlertDialog(this.context, response.body);
+                        if (response != null) {
+                          dial.hide();
+                          int statusCode = response.statusCode;
+                          if (statusCode == 200) {
+                            return _showDialog(this.context);
+                          } else {
+                            dial.hide();
+                            print("Submit Status code::" +
+                                response.body.toString());
+                            showAlertDialog(this.context, response.body);
+                          }
+                        } else {
+                          _isLoading = false;
+                          Fluttertoast.showToast(
+                              msg: 'There was no response from the server');
+                        }
                       }
-                    } else {
-                      _isLoading = false;
-                      Fluttertoast.showToast(
-                          msg: 'There was no response from the server');
+                    } on SocketException catch (e) {
+                      print('not connected2');
+                      print(supplementaryString != null);
+                      if (supplementaryString != null) {
+                        dial.show();
+                        dbHelper
+                            .insertSupplementary(
+                          SupplementaryModel(
+                            id: index,
+                            supplementaryjson: supplementaryString,
+                          ),
+                        )
+                            .then((value) {
+                          print('Supplementary saved');
+                          print(index);
+                          dial.hide();
+                          Fluttertoast.showToast(msg: value.toString());
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Savesupplementarys()),
+                          );
+                        }).onError((error, stackTrace) {
+                          print(error.toString());
+                        });
+                      } else {
+                        showAlertDialog(
+                            this.context, 'Valuation not saved,Try again');
+                      }
                     }
                   },
                   child: Text('Yes'))
@@ -790,7 +841,12 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                             break;
 
                           case 1:
-                            _submit();
+                            if (newImagesList == null) {
+                              Fluttertoast.showToast(
+                                  msg: 'Please upload images');
+                            } else {
+                              _submit();
+                            }
                         }
                       });
                     },
@@ -1337,161 +1393,50 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                     ? Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          SingleChildScrollView(
-                            child: AspectRatio(
-                              aspectRatio: 1 / controller!.value.aspectRatio,
-                              child: Stack(
-                                children: [
-                                  CameraPreview(
-                                    controller!,
-                                    child: LayoutBuilder(builder:
-                                        (BuildContext context,
-                                            BoxConstraints constraints) {
-                                      return GestureDetector(
-                                        behavior: HitTestBehavior.opaque,
-                                        onTapDown: (details) => onViewFinderTap(
-                                            details, constraints),
-                                      );
-                                    }),
-                                  ),
-                                  // TODO: Uncomment to preview the overlay
-                                  // Center(
-                                  //   child: Image.asset(
-                                  //     'assets/camera_aim.png',
-                                  //     color: Colors.greenAccent,
-                                  //     width: 150,
-                                  //     height: 150,
-                                  //   ),
-                                  // ),
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      16.0,
-                                      8.0,
-                                      16.0,
-                                      8.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Align(
-                                          alignment: Alignment.topRight,
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.black87,
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(
-                                                left: 8.0,
-                                                right: 8.0,
-                                              ),
-                                              child: DropdownButton<
-                                                  ResolutionPreset>(
-                                                dropdownColor: Colors.black87,
-                                                underline: Container(),
-                                                value: currentResolutionPreset,
-                                                items: [
-                                                  for (ResolutionPreset preset
-                                                      in resolutionPresets)
-                                                    DropdownMenuItem(
-                                                      child: Text(
-                                                        preset
-                                                            .toString()
-                                                            .split('.')[1]
-                                                            .toUpperCase(),
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                      value: preset,
-                                                    )
-                                                ],
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    currentResolutionPreset =
-                                                        value!;
-                                                    _isCameraInitialized =
-                                                        false;
-                                                  });
-                                                  onNewCameraSelected(
-                                                      controller!.description);
-                                                },
-                                                hint: Text("Select item"),
-                                              ),
-                                            ),
-                                          ),
+                          Expanded(
+                            flex: 6,
+                            child: SizedBox(
+                              child: SingleChildScrollView(
+                                child: AspectRatio(
+                                  aspectRatio:
+                                      1 / controller!.value.aspectRatio,
+                                  child: Stack(
+                                    children: [
+                                      CameraPreview(
+                                        controller!,
+                                        child: LayoutBuilder(builder:
+                                            (BuildContext context,
+                                                BoxConstraints constraints) {
+                                          return GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTapDown: (details) =>
+                                                onViewFinderTap(
+                                                    details, constraints),
+                                          );
+                                        }),
+                                      ),
+                                      // TODO: Uncomment to preview the overlay
+                                      // Center(
+                                      //   child: Image.asset(
+                                      //     'assets/camera_aim.png',
+                                      //     color: Colors.greenAccent,
+                                      //     width: 150,
+                                      //     height: 150,
+                                      //   ),
+                                      // ),
+                                      Padding(
+                                        padding: const EdgeInsets.fromLTRB(
+                                          16.0,
+                                          8.0,
+                                          16.0,
+                                          8.0,
                                         ),
-                                        // Spacer(),
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                              right: 8.0, top: 16.0),
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.white,
-                                              borderRadius:
-                                                  BorderRadius.circular(10.0),
-                                            ),
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: Text(
-                                                _currentExposureOffset
-                                                        .toStringAsFixed(1) +
-                                                    'x',
-                                                style: TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: RotatedBox(
-                                            quarterTurns: 3,
-                                            child: Container(
-                                              height: 30,
-                                              child: Slider(
-                                                value: _currentExposureOffset,
-                                                min:
-                                                    _minAvailableExposureOffset,
-                                                max:
-                                                    _maxAvailableExposureOffset,
-                                                activeColor: Colors.white,
-                                                inactiveColor: Colors.white30,
-                                                onChanged: (value) async {
-                                                  setState(() {
-                                                    _currentExposureOffset =
-                                                        value;
-                                                  });
-                                                  await controller!
-                                                      .setExposureOffset(value);
-                                                },
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Row(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
-                                            Expanded(
-                                              child: Slider(
-                                                value: _currentZoomLevel,
-                                                min: _minAvailableZoom,
-                                                max: _maxAvailableZoom,
-                                                activeColor: Colors.white,
-                                                inactiveColor: Colors.white30,
-                                                onChanged: (value) async {
-                                                  setState(() {
-                                                    _currentZoomLevel = value;
-                                                  });
-                                                  await controller!
-                                                      .setZoomLevel(value);
-                                                },
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0),
+                                            Align(
+                                              alignment: Alignment.topRight,
                                               child: Container(
                                                 decoration: BoxDecoration(
                                                   color: Colors.black87,
@@ -1501,201 +1446,346 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                                                 ),
                                                 child: Padding(
                                                   padding:
+                                                      const EdgeInsets.only(
+                                                    left: 8.0,
+                                                    right: 8.0,
+                                                  ),
+                                                  child: DropdownButton<
+                                                      ResolutionPreset>(
+                                                    dropdownColor:
+                                                        Colors.black87,
+                                                    underline: Container(),
+                                                    value:
+                                                        currentResolutionPreset,
+                                                    items: [
+                                                      for (ResolutionPreset preset
+                                                          in resolutionPresets)
+                                                        DropdownMenuItem(
+                                                          child: Text(
+                                                            preset
+                                                                .toString()
+                                                                .split('.')[1]
+                                                                .toUpperCase(),
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .white),
+                                                          ),
+                                                          value: preset,
+                                                        )
+                                                    ],
+                                                    onChanged: (value) {
+                                                      setState(() {
+                                                        currentResolutionPreset =
+                                                            value!;
+                                                        _isCameraInitialized =
+                                                            false;
+                                                      });
+                                                      onNewCameraSelected(
+                                                          controller!
+                                                              .description);
+                                                    },
+                                                    hint: Text("Select item"),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Spacer(),
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                  right: 8.0, top: 16.0),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10.0),
+                                                ),
+                                                child: Padding(
+                                                  padding:
                                                       const EdgeInsets.all(8.0),
                                                   child: Text(
-                                                    _currentZoomLevel
+                                                    _currentExposureOffset
                                                             .toStringAsFixed(
                                                                 1) +
                                                         'x',
                                                     style: TextStyle(
-                                                        color: Colors.white),
+                                                        color: Colors.black),
                                                   ),
                                                 ),
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            InkWell(
-                                              onTap: () async {
-                                                image = await takePicture();
-                                                File image1 = File(image!.path);
-
-                                                int currentUnix = DateTime.now()
-                                                    .millisecondsSinceEpoch;
-
-                                                String fileFormat =
-                                                    image1.path.split('.').last;
-                                                setState(() {
-                                                  iscameraopen = false;
-                                                });
-                                                iscameraopen = false;
-                                                // GallerySaver.saveImage(
-                                                //         image!.path)
-                                                //     .then((path) {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return _SystemPadding(
-                                                      child: AlertDialog(
-                                                        contentPadding:
-                                                            const EdgeInsets
-                                                                .all(16.0),
-                                                        content: Row(
-                                                          children: <Widget>[
-                                                            Expanded(
-                                                              child:
-                                                                  TextFormField(
-                                                                controller:
-                                                                    _itemDescController,
-                                                                keyboardType:
-                                                                    TextInputType
-                                                                        .text,
-                                                                autofocus: true,
-                                                                decoration: const InputDecoration(
-                                                                    labelText:
-                                                                        'Enter Description',
-                                                                    hintText:
-                                                                        'Description'),
-                                                              ),
-                                                            )
-                                                          ],
-                                                        ),
-                                                        actions: <Widget>[
-                                                          TextButton(
-                                                              child: const Text(
-                                                                  'CANCEL'),
-                                                              onPressed: () {
-                                                                Navigator.pop(
-                                                                    context);
-                                                              }),
-                                                          TextButton(
-                                                              child: const Text(
-                                                                  'OKAY'),
-                                                              onPressed: () {
-                                                                Navigator.pop(
-                                                                    context);
-                                                                setState(() {
-                                                                  String?
-                                                                      description =
-                                                                      _itemDescController
-                                                                          .text
-                                                                          .trim();
-                                                                  print(
-                                                                      description);
-                                                                  final bytes = Io.File(
-                                                                          image!
-                                                                              .path)
-                                                                      .readAsBytesSync();
-
-                                                                  String
-                                                                      imageFile =
-                                                                      base64Encode(
-                                                                          bytes);
-                                                                  images = Images(
-                                                                      filename:
-                                                                          description,
-                                                                      attachment:
-                                                                          imageFile);
-                                                                  _addImage(
-                                                                      image!);
-                                                                  _addImages(
-                                                                      images!);
-                                                                  _addDescription(
-                                                                      description);
-                                                                });
-                                                              })
-                                                        ],
+                                            Expanded(
+                                              child: RotatedBox(
+                                                quarterTurns: 3,
+                                                child: Container(
+                                                  height: 30,
+                                                  child: Slider(
+                                                    value:
+                                                        _currentExposureOffset,
+                                                    min:
+                                                        _minAvailableExposureOffset,
+                                                    max:
+                                                        _maxAvailableExposureOffset,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentExposureOffset =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setExposureOffset(
+                                                              value);
+                                                    },
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: Slider(
+                                                    value: _currentZoomLevel,
+                                                    min: _minAvailableZoom,
+                                                    max: _maxAvailableZoom,
+                                                    activeColor: Colors.white,
+                                                    inactiveColor:
+                                                        Colors.white30,
+                                                    onChanged: (value) async {
+                                                      setState(() {
+                                                        _currentZoomLevel =
+                                                            value;
+                                                      });
+                                                      await controller!
+                                                          .setZoomLevel(value);
+                                                    },
+                                                  ),
+                                                ),
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black87,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              10.0),
+                                                    ),
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Text(
+                                                        _currentZoomLevel
+                                                                .toStringAsFixed(
+                                                                    1) +
+                                                            'x',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
                                                       ),
-                                                    );
-                                                  },
-                                                );
-                                                // });
-                                                print(fileFormat);
-                                              },
-                                              child: Stack(
-                                                alignment: Alignment.center,
-                                                children: [
-                                                  Icon(
-                                                    Icons.circle,
-                                                    color:
-                                                        _isVideoCameraSelected
-                                                            ? Colors.white
-                                                            : Colors.white38,
-                                                    size: 80,
+                                                    ),
                                                   ),
-                                                  Icon(
-                                                    Icons.circle,
-                                                    color:
-                                                        _isVideoCameraSelected
-                                                            ? Colors.blue
-                                                            : Colors.white,
-                                                    size: 65,
-                                                  ),
-                                                  _isVideoCameraSelected &&
-                                                          _isRecordingInProgress
-                                                      ? Icon(
-                                                          Icons.stop_rounded,
-                                                          color: Colors.white,
-                                                          size: 32,
-                                                        )
-                                                      : Container(),
-                                                ],
-                                              ),
-                                            ),
-                                            InkWell(
-                                              onTap: image != null
-                                                  ? () {
-                                                      // Navigator.of(context)
-                                                      //     .push(
-                                                      //   MaterialPageRoute(
-                                                      //     builder: (context) =>
-                                                      //         PreviewScreen(
-                                                      //       image: image!,
-                                                      //       fileList:
-                                                      //           imageslist,
-                                                      //     ),
-                                                      //   ),
-                                                      // );
-                                                    }
-                                                  : null,
-                                              child: Container(
-                                                width: 60,
-                                                height: 60,
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                  border: Border.all(
-                                                    color: Colors.white,
-                                                    width: 2,
-                                                  ),
-                                                  image: image != null
-                                                      ? DecorationImage(
-                                                          image: FileImage(
-                                                            File(image!.path),
-                                                          ),
-                                                          fit: BoxFit.cover,
-                                                        )
-                                                      : null,
                                                 ),
-                                              ),
+                                              ],
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceAround,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () async {
+                                                    image = await takePicture();
+                                                    File image1 =
+                                                        File(image!.path);
+
+                                                    int currentUnix = DateTime
+                                                            .now()
+                                                        .millisecondsSinceEpoch;
+
+                                                    String fileFormat = image1
+                                                        .path
+                                                        .split('.')
+                                                        .last;
+                                                    setState(() {
+                                                      iscameraopen = false;
+                                                    });
+                                                    iscameraopen = false;
+                                                    // GallerySaver.saveImage(
+                                                    //         image!.path)
+                                                    //     .then((path) {
+                                                    showDialog(
+                                                      context: context,
+                                                      builder: (BuildContext
+                                                          context) {
+                                                        return _SystemPadding(
+                                                          child: AlertDialog(
+                                                            contentPadding:
+                                                                const EdgeInsets
+                                                                    .all(16.0),
+                                                            content: Row(
+                                                              children: <
+                                                                  Widget>[
+                                                                Expanded(
+                                                                  child:
+                                                                      TextFormField(
+                                                                    controller:
+                                                                        _itemDescController,
+                                                                    keyboardType:
+                                                                        TextInputType
+                                                                            .text,
+                                                                    autofocus:
+                                                                        true,
+                                                                    decoration: const InputDecoration(
+                                                                        labelText:
+                                                                            'Enter Description',
+                                                                        hintText:
+                                                                            'Description'),
+                                                                  ),
+                                                                )
+                                                              ],
+                                                            ),
+                                                            actions: <Widget>[
+                                                              TextButton(
+                                                                  child: const Text(
+                                                                      'CANCEL'),
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                  }),
+                                                              TextButton(
+                                                                  child:
+                                                                      const Text(
+                                                                          'OKAY'),
+                                                                  onPressed:
+                                                                      () {
+                                                                    Navigator.pop(
+                                                                        context);
+                                                                    setState(
+                                                                        () {
+                                                                      String?
+                                                                          description =
+                                                                          _itemDescController
+                                                                              .text
+                                                                              .trim();
+                                                                      print(
+                                                                          description);
+                                                                      final bytes =
+                                                                          Io.File(image!.path)
+                                                                              .readAsBytesSync();
+
+                                                                      String
+                                                                          imageFile =
+                                                                          base64Encode(
+                                                                              bytes);
+                                                                      images = Images(
+                                                                          filename:
+                                                                              description,
+                                                                          attachment:
+                                                                              imageFile);
+                                                                      _addImage(
+                                                                          image!);
+                                                                      _addImages(
+                                                                          images!);
+                                                                      _addDescription(
+                                                                          description);
+                                                                    });
+                                                                  })
+                                                            ],
+                                                          ),
+                                                        );
+                                                      },
+                                                    );
+                                                    // });
+                                                    print(fileFormat);
+                                                  },
+                                                  child: Stack(
+                                                    alignment: Alignment.center,
+                                                    children: [
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.white
+                                                                : Colors
+                                                                    .white38,
+                                                        size: 80,
+                                                      ),
+                                                      Icon(
+                                                        Icons.circle,
+                                                        color:
+                                                            _isVideoCameraSelected
+                                                                ? Colors.white
+                                                                : Colors.blue,
+                                                        size: 65,
+                                                      ),
+                                                      _isVideoCameraSelected &&
+                                                              _isRecordingInProgress
+                                                          ? Icon(
+                                                              Icons
+                                                                  .stop_rounded,
+                                                              color:
+                                                                  Colors.white,
+                                                              size: 32,
+                                                            )
+                                                          : Container(),
+                                                    ],
+                                                  ),
+                                                ),
+                                                // InkWell(
+                                                //   onTap: image != null
+                                                //       ? () {
+                                                //           // Navigator.of(context)
+                                                //           //     .push(
+                                                //           //   MaterialPageRoute(
+                                                //           //     builder: (context) =>
+                                                //           //         PreviewScreen(
+                                                //           //       image: image!,
+                                                //           //       fileList:
+                                                //           //           imageslist,
+                                                //           //     ),
+                                                //           //   ),
+                                                //           // );
+                                                //         }
+                                                //       : null,
+                                                //   child: Container(
+                                                //     width: 60,
+                                                //     height: 60,
+                                                //     decoration: BoxDecoration(
+                                                //       color: Colors.black,
+                                                //       borderRadius:
+                                                //           BorderRadius.circular(
+                                                //               10.0),
+                                                //       border: Border.all(
+                                                //         color: Colors.white,
+                                                //         width: 2,
+                                                //       ),
+                                                //       image: image != null
+                                                //           ? DecorationImage(
+                                                //               image: FileImage(
+                                                //                 File(image!.path),
+                                                //               ),
+                                                //               fit: BoxFit.cover,
+                                                //             )
+                                                //           : null,
+                                                //     ),
+                                                //   ),
+                                                // ),
+                                              ],
                                             ),
                                           ],
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                           ),
-                          Expanded(
+                          Flexible(
                             child: Column(
                               children: [
                                 Padding(

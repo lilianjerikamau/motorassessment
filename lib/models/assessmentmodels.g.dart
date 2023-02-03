@@ -35,9 +35,7 @@ Assesssment _$AssesssmentFromJson(Map<String, dynamic> json) => Assesssment(
       RHR: json['RHR'] as String?,
       LHF: json['LHF'] as String?,
       Spare: json['Spare'] as String?,
-      photolist: (json['photolist'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList(),
+      photolist: json['photolist'] as String?,
       owner: json['owner'] as String?,
       claimno: json['claimno'] as String?,
       chassisno: json['chassisno'] as String?,

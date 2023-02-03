@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
+import 'package:motorassesmentapp/models/dropdown_items.dart';
 import 'package:motorassesmentapp/models/usermodels.dart';
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
 
@@ -66,6 +67,26 @@ List<String> listOfInstructiontypes = [
 List techniciansJson = [];
 List customersJson = [];
 List instructionsJson = [];
+List transmissiontype = [
+  Dropdownval(
+      id: 1, name: "Automatic"),
+  Dropdownval(
+      id: 2, name: "Manual"),
+  Dropdownval(id: 3, name: "Tiptronic"),
+  Dropdownval(id: 4, name: "N/A"),
+
+];
+List drivetype = [
+  Dropdownval(
+      id: 1, name: "2WD"),
+  Dropdownval(
+      id: 2, name: "4WD"),
+  Dropdownval(id: 3, name: "4*2"),
+  Dropdownval(id: 4, name: "6*2"),
+  Dropdownval(id: 5, name: "6*4"),
+  Dropdownval(id: 6, name: "8*4"),
+  Dropdownval(id: 7, name: "N/A"),
+];
 List claimFormJson = [];
 List valuationsJson = [];
 List fleetJson = [];
@@ -275,1769 +296,1770 @@ class _CreateInstruction extends State<CreateInstruction> {
 
   @override
   Widget build(BuildContext context) {
-    return isBankSelected == false && isFinancierSelected == false
-        ? Scaffold(
-            floatingActionButton: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.bottomLeft,
-                  child: FloatingActionButton.extended(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    onPressed: () {
-                      print("the current form is $currentForm");
-                      setState(() {
-                        var form;
-                        switch (currentForm) {
-                          case 0:
-                            form = _formKey.currentState;
-                            if (currentForm == 0) {
-                              currentForm = 0;
-                              percentageComplete = 50;
-                            }
-                            break;
-                          case 1:
-                            form = _formKey16.currentState;
-                            if (currentForm == 1) {
-                              currentForm = 0;
-                              percentageComplete = 100;
-                            }
-                            break;
-                          case 2:
-                            form = _formKey16.currentState;
-                            if (currentForm == 2) {
-                              currentForm = 1;
-                              percentageComplete = 100;
-                            }
-                            break;
-                        }
-                      });
-                    },
-                    icon: Icon(
-                      currentForm == 0 ? Icons.error : Icons.arrow_back,
-                      color: Colors.blueAccent,
-                    ),
-                    label: Text(currentForm == 0 ? "Invalid" : "Prev"),
-                    heroTag: null,
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: FloatingActionButton.extended(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    onPressed: () {
-                      print("the current form is $currentForm");
-                      setState(() {
-                        var form;
-                        switch (currentForm) {
-                          case 0:
-                            form = _formKey.currentState;
-                            if (form.validate()) {
-                              form.save();
-                              currentForm = 2;
-                            } else {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(
-                                behavior: SnackBarBehavior.floating,
-                                content: Text(
-                                    "Make sure all required fields are filled"),
-                                duration: Duration(seconds: 3),
-                              ));
-                            }
-                            if (form.validate()) {
-                              form.save();
-                              currentForm = 1;
-                              percentageComplete = 25;
-                            } else {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(
-                                behavior: SnackBarBehavior.floating,
-                                content: Text(
-                                    "Make sure all required fields are filled"),
-                                duration: Duration(seconds: 3),
-                              ));
-                            }
-
-                            break;
-
-                          case 1:
-                            form = _formKey16.currentState;
-                            if (form.validate()) {
-                              form.save();
-                              currentForm = 2;
-                              percentageComplete = 100;
-                            } else {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(SnackBar(
-                                behavior: SnackBarBehavior.floating,
-                                content: Text(
-                                    "Make sure all required fields are filled"),
-                                duration: Duration(seconds: 3),
-                              ));
-                            }
-
-                            break;
-                          case 2:
-                        }
-                      });
-                    },
-                    icon: Icon(currentForm == 2
-                        ? Icons.upload_rounded
-                        : Icons.arrow_forward),
-                    label: Text(currentForm == 2 ? "finish" : "next"),
-                  ),
-                ),
-              ],
-            ),
-            appBar: AppBar(
-              backgroundColor: Colors.white,
-              elevation: 0,
-              iconTheme: IconThemeData(color: Colors.black),
-              leading: Builder(
-                builder: (BuildContext context) {
-                  return RotatedBox(
-                    quarterTurns: 1,
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: Colors.black,
-                      ),
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => Home()),
-                        );
-                      },
-                    ),
-                  );
-                },
-              ),
-            ),
-            body: SingleChildScrollView(
-              child: SafeArea(
-                top: true,
-                child: Column(
-                  children: <Widget>[
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: <Widget>[
-                        isLoading ? LinearProgressIndicator() : SizedBox(),
-                        Diagonal(
-                          position: position,
-                          clipHeight: clipHeight,
-                          child: Container(
-                            color: Colors.white,
-                          ),
-                        ),
-                        Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              Text(
-                                'Create Instruction',
-                                style: TextStyle(
-                                  fontSize: 20.0,
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              SizedBox(height: 1.0),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(
-                      height: 0,
-                    ),
-                    [
-                      Form(
-                          key: _formKey,
-                          child: Column(children: <Widget>[
-                            Card(
-                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20, right: 20, top: 30, bottom: 20),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .subtitle2!
-                                            .copyWith(),
-                                      ),
-                                      SizedBox(
-                                        height: 1,
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                            Card(
-                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20, right: 20, top: 10, bottom: 30),
-                                  child: SizedBox(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Select Customer",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        DropdownButtonFormField(
-                                          hint: Text(
-                                            "Select Customer",
-                                          ),
-                                          isExpanded: true,
-                                          onChanged: (String? value) {
-                                            _toggleFinancier();
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                              if (_selectedAccount ==
-                                                  'Selected Value') {
-                                                setState(() {
-                                                  // isBankSelected = false;
-                                                });
-                                              } else if (_selectedAccount ==
-                                                  'Bank') {
-                                                setState(() {
-                                                  // isBankSelected = true;
-                                                });
-                                              }
-                                            });
-                                          },
-                                          onSaved: (String? value) {
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                            });
-                                          },
-                                          validator: (value) {
-                                            if (value != null) {
-                                              return null;
-                                            } else {
-                                              return "can't be empty";
-                                            }
-                                          },
-                                          items:
-                                              listOfCustomers.map((String val) {
-                                            return DropdownMenuItem(
-                                              value: val,
-                                              child: Text(
-                                                val,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Instruction Type	",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        DropdownButtonFormField(
-                                          hint: Text(
-                                            "Instruction Type",
-                                          ),
-                                          // value: _selectedAccount,
-                                          isExpanded: true,
-                                          onChanged: (String? value) {
-                                            _toggleFinancier();
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                              if (_selectedAccount ==
-                                                  'Selected Value') {
-                                                setState(() {
-                                                  // isBankSelected = false;
-                                                });
-                                              } else if (_selectedAccount ==
-                                                  'Bank') {
-                                                setState(() {
-                                                  // isBankSelected = true;
-                                                });
-                                              }
-                                            });
-                                          },
-                                          onSaved: (String? value) {
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                            });
-                                          },
-                                          validator: (value) {
-                                            if (value != null) {
-                                              return null;
-                                            } else {
-                                              return "can't be empty";
-                                            }
-                                          },
-                                          items: listOfInstructiontypes
-                                              .map((String val) {
-                                            return DropdownMenuItem(
-                                              value: val,
-                                              child: Text(
-                                                val,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Broker	",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        DropdownButtonFormField(
-                                          // value: _selectedValue,
-                                          hint: Text(
-                                            "Broker",
-                                          ),
-                                          // value: _selectedAccount,
-                                          isExpanded: true,
-                                          onChanged: (String? value) {
-                                            _toggleFinancier();
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                              if (_selectedAccount ==
-                                                  'Selected Value') {
-                                                setState(() {
-                                                  // isBankSelected = false;
-                                                });
-                                              } else if (_selectedAccount ==
-                                                  'Bank') {
-                                                setState(() {
-                                                  // isBankSelected = true;
-                                                });
-                                              }
-                                            });
-                                          },
-                                          onSaved: (String? value) {
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                            });
-                                          },
-                                          validator: (value) {
-                                            if (value != null) {
-                                              return null;
-                                            } else {
-                                              return "can't be empty";
-                                            }
-                                          },
-                                          items:
-                                              listOfBrokers.map((String val) {
-                                            return DropdownMenuItem(
-                                              value: val,
-                                              child: Text(
-                                                val,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Motor Class",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        DropdownButtonFormField(
-                                          // value: _selectedValue,
-                                          hint: Text(
-                                            "Motor Class",
-                                          ),
-                                          // value: _selectedAccount,
-                                          isExpanded: true,
-                                          onChanged: (String? value) {
-                                            _toggleFinancier();
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                              if (_selectedAccount ==
-                                                  'Selected Value') {
-                                                setState(() {
-                                                  // isBankSelected = false;
-                                                });
-                                              } else if (_selectedAccount ==
-                                                  'Bank') {
-                                                setState(() {
-                                                  // isBankSelected = true;
-                                                });
-                                              }
-                                            });
-                                          },
-                                          onSaved: (String? value) {
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                            });
-                                          },
-                                          validator: (value) {
-                                            if (value != null) {
-                                              return null;
-                                            } else {
-                                              return "can't be empty";
-                                            }
-                                          },
-                                          items: listOfMotorclasses
-                                              .map((String val) {
-                                            return DropdownMenuItem(
-                                              value: val,
-                                              child: Text(
-                                                val,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Drive Type",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        DropdownButtonFormField(
-                                          // value: _selectedValue,
-                                          hint: Text(
-                                            "Drive Type",
-                                          ),
-                                          // value: _selectedAccount,
-                                          isExpanded: true,
-                                          onChanged: (String? value) {
-                                            _toggleFinancier();
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                              if (_selectedAccount ==
-                                                  'Selected Value') {
-                                                setState(() {
-                                                  // isBankSelected = false;
-                                                });
-                                              } else if (_selectedAccount ==
-                                                  'Bank') {
-                                                setState(() {
-                                                  // isBankSelected = true;
-                                                });
-                                              }
-                                            });
-                                          },
-                                          onSaved: (String? value) {
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                            });
-                                          },
-                                          validator: (value) {
-                                            if (value != null) {
-                                              return null;
-                                            } else {
-                                              return "can't be empty";
-                                            }
-                                          },
-                                          items:
-                                              listOfDriveType.map((String val) {
-                                            return DropdownMenuItem(
-                                              value: val,
-                                              child: Text(
-                                                val,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Transmission Type",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        DropdownButtonFormField(
-                                          // value: _selectedValue,
-                                          hint: Text(
-                                            "Transmission Type",
-                                          ),
-                                          // value: _selectedAccount,
-                                          isExpanded: true,
-                                          onChanged: (String? value) {
-                                            _toggleFinancier();
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                              if (_selectedAccount ==
-                                                  'Selected Value') {
-                                                setState(() {
-                                                  // isBankSelected = false;
-                                                });
-                                              } else if (_selectedAccount ==
-                                                  'Bank') {
-                                                setState(() {
-                                                  // isBankSelected = true;
-                                                });
-                                              }
-                                            });
-                                          },
-                                          onSaved: (String? value) {
-                                            setState(() {
-                                              _selectedAccount = value!;
-                                            });
-                                          },
-                                          validator: (value) {
-                                            if (value != null) {
-                                              return null;
-                                            } else {
-                                              return "can't be empty";
-                                            }
-                                          },
-                                          items: listOftransmissiontypes
-                                              .map((String val) {
-                                            return DropdownMenuItem(
-                                              value: val,
-                                              child: Text(
-                                                val,
-                                              ),
-                                            );
-                                          }).toList(),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Description",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        TextFormField(
-                                          controller: _vehiclereg,
-                                          validator: (value) => value!.isEmpty
-                                              ? "This field is required"
-                                              : null,
-                                          onSaved: (value) => {vehicleReg},
-                                          keyboardType: TextInputType.name,
-                                          decoration: InputDecoration(
-                                              hintText: "Enter Description"),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Row(
-                                          children: [
-                                            Text(
-                                              "Transmission Speed",
-                                              overflow: TextOverflow.ellipsis,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(),
-                                            ),
-                                            Text(
-                                              "*",
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .subtitle2!
-                                                  .copyWith(color: Colors.blue),
-                                            )
-                                          ],
-                                        ),
-                                        TextFormField(
-                                          controller: _vehiclereg,
-                                          validator: (value) => value!.isEmpty
-                                              ? "This field is required"
-                                              : null,
-                                          onSaved: (value) => {vehicleReg},
-                                          keyboardType: TextInputType.name,
-                                          decoration: InputDecoration(
-                                              hintText:
-                                                  "Enter Vehicle Registration No"),
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ))
-                          ])),
-                      Form(
-                          key: _formKey16,
-                          child: Column(children: <Widget>[
-                            Card(
-                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20, right: 20, top: 10, bottom: 5),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Instruction Details",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headline6!
-                                            .copyWith(
-                                                fontWeight: FontWeight.bold),
-                                      ),
-                                      SizedBox(
-                                        height: 1,
-                                      ),
-                                    ],
-                                  ),
-                                )),
-                            Card(
-                                margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(10.0))),
-                                child: Padding(
-                                  padding: EdgeInsets.only(
-                                      left: 20, right: 20, top: 30, bottom: 30),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Insured/Owner",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _vehiclereg,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        onSaved: (value) => {vehicleReg},
-                                        keyboardType: TextInputType.name,
-                                        decoration: InputDecoration(
-                                            hintText: "Insured/Owner"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Insured PIN",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _carmodel,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        onSaved: (value) => {carModel},
-                                        keyboardType: TextInputType.name,
-                                        decoration: InputDecoration(
-                                            hintText: "Insured PIN"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Address",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _chassisno,
-                                        onSaved: (value) => {chassisNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Address"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Claim No",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _engineno,
-                                        onSaved: (value) => {engineNo},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Claim No"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Policy No.",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _vehiclecolor,
-                                        onSaved: (value) => {vehicleColor},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Policy No."),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Chassis No*",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _location,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        onSaved: (value) =>
-                                            {installationLocation},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Chassis No*"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Cert No.",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _notracker,
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
-                                        onSaved: (value) => {noTracker},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Cert No."),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Location",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "*",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        readOnly: true,
-                                        initialValue: _costcenter,
-                                        onSaved: (value) => {},
-                                        keyboardType: TextInputType.number,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Vehicle Location"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      // Row(
-                                      //   children: [
-                                      //     Text(
-                                      //       "Installation Branch",
-                                      //       overflow: TextOverflow.ellipsis,
-                                      //       style: Theme.of(context)
-                                      //           .textTheme
-                                      //           .subtitle2!
-                                      //           .copyWith(),
-                                      //     ),
-                                      //     Text(
-                                      //       "*",
-                                      //       style: Theme.of(context)
-                                      //           .textTheme
-                                      //           .subtitle2!
-                                      //           .copyWith(color: Colors.blue),
-                                      //     )
-                                      //   ],
-                                      // ),
-                                      // TextFormField(
-                                      //   readOnly: true,
-                                      //   initialValue: _costcenter,
-                                      //   onSaved: (value) => {},
-                                      //   keyboardType: TextInputType.number,
-                                      //   decoration:  InputDecoration(
-                                      //       hintText:
-                                      //           "Enter Vehicle No of Trackers"),
-                                      // ),
-                                      //  SizedBox(
-                                      //   height: 10,
-                                      // ),
-
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Broker",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Broker"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Reg No",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Reg No"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Make",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Make"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Model",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Model"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Class of Use",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Class of Use"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Log Book No",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Log Book No"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Log Book Free of Endorsement",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText:
-                                                "Enter Log Book Free of Endorsement"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Log Book Owner",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Enter Log Book Owner"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "No of Owners/Logbook",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "No of Owners/Logbook"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Insured Value	",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration:
-                                            InputDecoration(hintText: "0"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Excess",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Forced Value",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration:
-                                            InputDecoration(hintText: "0.0"),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Date of Loss",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextField(
-                                        controller:
-                                            _dateinput, //editing controller of this TextField
-                                        decoration: InputDecoration(
-                                          icon: Icon(
-                                            Icons.calendar_today,
-                                            color: Colors.blue,
-                                          ), //icon of text field
-                                        ),
-                                        readOnly:
-                                            true, //set it true, so that user will not able to edit text
-                                        onTap: () async {
-                                          DateTime? pickedDate =
-                                              await showDatePicker(
-                                                  context: context,
-                                                  initialDate: DateTime.now(),
-                                                  firstDate: DateTime(
-                                                      2000), //DateTime.now() - not to allow to choose before today.
-                                                  lastDate: DateTime(2101));
-
-                                          if (pickedDate != null) {
-                                            print(
-                                                pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
-                                            String formattedDate =
-                                                DateFormat('dd/MM/yyyy')
-                                                    .format(pickedDate);
-                                            print(
-                                                formattedDate); //formatted date output using intl package =>  2021-03-16
-                                            //you can implement different kind of Date Format here according to your requirement
-
-                                            setState(() {
-                                              _dateinput.text =
-                                                  formattedDate; //set output date to TextField value.
-                                            });
-                                          } else {
-                                            print("Date is not selected");
-                                          }
-                                        },
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Claimant(s)	",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration:
-                                            InputDecoration(hintText: ""),
-                                      ),
-                                      SearchableDropdown(
-                                        hint: Text(
-                                          "Assigned To",
-                                        ),
-                                        isExpanded: true,
-                                        onChanged: (value) {
-                                          (value) => value == null
-                                              ? 'field required'
-                                              : null;
-                                          _selectedInstaller = value;
-                                          _techId = value != null
-                                              ? value['empid']
-                                              : null;
-                                          _techName = value != null
-                                              ? value['empname']
-                                              : null;
-                                          setState(() {
-                                            // _selectedValue = value!;
-                                          });
-                                          print(_selectedInstaller);
-                                          print(_techName);
-                                          print(_techId);
-                                        },
-
-                                        value: _selectedInstaller,
-
-                                        // isCaseSensitiveSearch: true,
-                                        searchHint: new Text(
-                                          'Select Assignee ',
-                                          style: new TextStyle(fontSize: 20),
-                                        ),
-                                        items: techniciansJson.map((val) {
-                                          return DropdownMenuItem(
-                                            child: Text(val['empname']),
-                                            value: val,
-                                          );
-                                        }).toList(),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Instructed by",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextFormField(
-                                        controller: _remarks,
-                                        onSaved: (value) => {remarks},
-                                        keyboardType: TextInputType.text,
-                                        decoration: InputDecoration(
-                                            hintText: "Instructed by"),
-                                      ),
-                                      SearchableDropdown(
-                                        hint: Text(
-                                          "Instruction Mode	",
-                                        ),
-                                        isExpanded: true,
-                                        onChanged: (value) {
-                                          (value) => value == null
-                                              ? 'field required'
-                                              : null;
-                                          _selectedInstaller = value;
-                                          _techId = value != null
-                                              ? value['empid']
-                                              : null;
-                                          _techName = value != null
-                                              ? value['empname']
-                                              : null;
-                                          setState(() {
-                                            // _selectedValue = value!;
-                                          });
-                                          print(_selectedInstaller);
-                                          print(_techName);
-                                          print(_techId);
-                                        },
-
-                                        value: _selectedInstaller,
-
-                                        // isCaseSensitiveSearch: true,
-                                        searchHint: new Text(
-                                          'Select Instruction Mode	 ',
-                                          style: new TextStyle(fontSize: 20),
-                                        ),
-                                        items: techniciansJson.map((val) {
-                                          return DropdownMenuItem(
-                                            child: Text(val['empname']),
-                                            value: val,
-                                          );
-                                        }).toList(),
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                      Row(
-                                        children: [
-                                          Text(
-                                            "Report Due Date",
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          Text(
-                                            "",
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(color: Colors.blue),
-                                          )
-                                        ],
-                                      ),
-                                      TextField(
-                                        controller:
-                                            _dateinput, //editing controller of this TextField
-                                        decoration: InputDecoration(
-                                          icon: Icon(
-                                            Icons.calendar_today,
-                                            color: Colors.blue,
-                                          ), //icon of text field
-                                        ),
-                                        readOnly:
-                                            true, //set it true, so that user will not able to edit text
-                                        onTap: () async {
-                                          DateTime? pickedDate =
-                                              await showDatePicker(
-                                                  context: context,
-                                                  initialDate: DateTime.now(),
-                                                  firstDate: DateTime(
-                                                      2000), //DateTime.now() - not to allow to choose before today.
-                                                  lastDate: DateTime(2101));
-
-                                          if (pickedDate != null) {
-                                            print(
-                                                pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
-                                            String formattedDate =
-                                                DateFormat('dd/MM/yyyy')
-                                                    .format(pickedDate);
-                                            print(
-                                                formattedDate); //formatted date output using intl package =>  2021-03-16
-                                            //you can implement different kind of Date Format here according to your requirement
-
-                                            setState(() {
-                                              _dateinput.text =
-                                                  formattedDate; //set output date to TextField value.
-                                            });
-                                          } else {
-                                            print("Date is not selected");
-                                          }
-                                        },
-                                      ),
-                                      SizedBox(
-                                        height: 10,
-                                      ),
-                                    ],
-                                  ),
-                                ))
-                          ])),
-                      Column(children: <Widget>[
-                        Card(
-                            margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.all(Radius.circular(10.0))),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                  left: 20, right: 20, top: 30, bottom: 30),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "",
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headline6!
-                                        .copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  SizedBox(
-                                    height: 10,
-                                  ),
-                                ],
-                              ),
-                            )),
-                      ])
-                    ][currentForm]
-                  ],
-                ),
-              ),
-            ))
-        : isBankSelected == true && isFinancierSelected == false
-            ? WillPopScope(
-                onWillPop: () async {
-                  if (_searchmode) {
-                    setState(() {
-                      _searchmode = false;
-                      _searchString = null;
-                    });
-                    return false;
-                  }
-                  return true;
-                },
-                child: Scaffold(
-                  appBar: AppBar(
-                    title: _searchmode
-                        ? TextFormField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                                hintText: 'Search financier company',
-                                hintStyle: TextStyle(color: Colors.white)),
-                            onChanged: (value) {
-                              setState(() {
-                                _searchString = value;
-                              });
-                            })
-                        : Text('Search Financier '),
-                    actions: <Widget>[
-                      Visibility(
-                        visible: !_searchmode,
-                        child: IconButton(
-                            icon: Icon(Icons.search),
-                            onPressed: () {
-                              setState(() {
-                                _searchmode = true;
-                              });
-                            }),
-                      )
-                    ],
-                  ),
-                  body: Container(
-                    color: Colors.white,
-                    child: Container(),
-                  ),
-                ),
-              )
-            : WillPopScope(
-                onWillPop: () async {
-                  if (_searchmode) {
-                    setState(() {
-                      _searchmode = false;
-                      _searchString = null;
-                    });
-                    return false;
-                  }
-                  return true;
-                },
-                child: Scaffold(
-                    appBar: AppBar(
-                      title: _searchmode
-                          ? TextFormField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                  hintText: 'Search financier name',
-                                  hintStyle: TextStyle(color: Colors.white)),
-                              onChanged: (value) {
-                                setState(() {
-                                  _searchString = value;
-                                });
-                              })
-                          : Text(
-                              'Search Financier by company name,email or phone number'),
-                      actions: <Widget>[
-                        Visibility(
-                          visible: !_searchmode,
-                          child: IconButton(
-                            icon: Icon(Icons.search),
-                            onPressed: () {
-                              setState(() {
-                                _searchmode = true;
-                              });
-                            },
-                          ),
-                        )
-                      ],
-                    ),
-                    body: Container(
-                      color: Colors.white,
-                      child: Container(),
-                    )),
-              );
+    return Scaffold();
+    // return isBankSelected == false && isFinancierSelected == false
+        // ? Scaffold(
+        //     floatingActionButton: Row(
+        //       mainAxisAlignment: MainAxisAlignment.spaceAround,
+        //       children: <Widget>[
+        //         Align(
+        //           alignment: Alignment.bottomLeft,
+        //           child: FloatingActionButton.extended(
+        //             backgroundColor: Colors.white,
+        //             foregroundColor: Colors.black,
+        //             onPressed: () {
+        //               print("the current form is $currentForm");
+        //               setState(() {
+        //                 var form;
+        //                 switch (currentForm) {
+        //                   case 0:
+        //                     form = _formKey.currentState;
+        //                     if (currentForm == 0) {
+        //                       currentForm = 0;
+        //                       percentageComplete = 50;
+        //                     }
+        //                     break;
+        //                   case 1:
+        //                     form = _formKey16.currentState;
+        //                     if (currentForm == 1) {
+        //                       currentForm = 0;
+        //                       percentageComplete = 100;
+        //                     }
+        //                     break;
+        //                   case 2:
+        //                     form = _formKey16.currentState;
+        //                     if (currentForm == 2) {
+        //                       currentForm = 1;
+        //                       percentageComplete = 100;
+        //                     }
+        //                     break;
+        //                 }
+        //               });
+        //             },
+        //             icon: Icon(
+        //               currentForm == 0 ? Icons.error : Icons.arrow_back,
+        //               color: Colors.blueAccent,
+        //             ),
+        //             label: Text(currentForm == 0 ? "Invalid" : "Prev"),
+        //             heroTag: null,
+        //           ),
+        //         ),
+        //         Align(
+        //           alignment: Alignment.bottomRight,
+        //           child: FloatingActionButton.extended(
+        //             backgroundColor: Colors.white,
+        //             foregroundColor: Colors.black,
+        //             onPressed: () {
+        //               print("the current form is $currentForm");
+        //               setState(() {
+        //                 var form;
+        //                 switch (currentForm) {
+        //                   case 0:
+        //                     form = _formKey.currentState;
+        //                     if (form.validate()) {
+        //                       form.save();
+        //                       currentForm = 2;
+        //                     } else {
+        //                       ScaffoldMessenger.of(context)
+        //                           .showSnackBar(SnackBar(
+        //                         behavior: SnackBarBehavior.floating,
+        //                         content: Text(
+        //                             "Make sure all required fields are filled"),
+        //                         duration: Duration(seconds: 3),
+        //                       ));
+        //                     }
+        //                     if (form.validate()) {
+        //                       form.save();
+        //                       currentForm = 1;
+        //                       percentageComplete = 25;
+        //                     } else {
+        //                       ScaffoldMessenger.of(context)
+        //                           .showSnackBar(SnackBar(
+        //                         behavior: SnackBarBehavior.floating,
+        //                         content: Text(
+        //                             "Make sure all required fields are filled"),
+        //                         duration: Duration(seconds: 3),
+        //                       ));
+        //                     }
+        //
+        //                     break;
+        //
+        //                   case 1:
+        //                     form = _formKey16.currentState;
+        //                     if (form.validate()) {
+        //                       form.save();
+        //                       currentForm = 2;
+        //                       percentageComplete = 100;
+        //                     } else {
+        //                       ScaffoldMessenger.of(context)
+        //                           .showSnackBar(SnackBar(
+        //                         behavior: SnackBarBehavior.floating,
+        //                         content: Text(
+        //                             "Make sure all required fields are filled"),
+        //                         duration: Duration(seconds: 3),
+        //                       ));
+        //                     }
+        //
+        //                     break;
+        //                   case 2:
+        //                 }
+        //               });
+        //             },
+        //             icon: Icon(currentForm == 2
+        //                 ? Icons.upload_rounded
+        //                 : Icons.arrow_forward),
+        //             label: Text(currentForm == 2 ? "finish" : "next"),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //     appBar: AppBar(
+        //       backgroundColor: Colors.white,
+        //       elevation: 0,
+        //       iconTheme: IconThemeData(color: Colors.black),
+        //       leading: Builder(
+        //         builder: (BuildContext context) {
+        //           return RotatedBox(
+        //             quarterTurns: 1,
+        //             child: IconButton(
+        //               icon: Icon(
+        //                 Icons.arrow_back,
+        //                 color: Colors.black,
+        //               ),
+        //               onPressed: () {
+        //                 Navigator.pushReplacement(
+        //                   context,
+        //                   MaterialPageRoute(builder: (context) => Home()),
+        //                 );
+        //               },
+        //             ),
+        //           );
+        //         },
+        //       ),
+        //     ),
+        //     body: SingleChildScrollView(
+        //       child: SafeArea(
+        //         top: true,
+        //         child: Column(
+        //           children: <Widget>[
+        //             Stack(
+        //               clipBehavior: Clip.none,
+        //               children: <Widget>[
+        //                 isLoading ? LinearProgressIndicator() : SizedBox(),
+        //                 Diagonal(
+        //                   position: position,
+        //                   clipHeight: clipHeight,
+        //                   child: Container(
+        //                     color: Colors.white,
+        //                   ),
+        //                 ),
+        //                 Center(
+        //                   child: Column(
+        //                     mainAxisAlignment: MainAxisAlignment.center,
+        //                     children: <Widget>[
+        //                       Text(
+        //                         'Create Instruction',
+        //                         style: TextStyle(
+        //                           fontSize: 20.0,
+        //                           color: Colors.black,
+        //                           fontWeight: FontWeight.bold,
+        //                         ),
+        //                         textAlign: TextAlign.center,
+        //                       ),
+        //                       SizedBox(height: 1.0),
+        //                     ],
+        //                   ),
+        //                 ),
+        //               ],
+        //             ),
+        //             SizedBox(
+        //               height: 0,
+        //             ),
+        //             [
+        //               Form(
+        //                   key: _formKey,
+        //                   child: Column(children: <Widget>[
+        //                     Card(
+        //                         margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+        //                         elevation: 0,
+        //                         shape: RoundedRectangleBorder(
+        //                             borderRadius: BorderRadius.all(
+        //                                 Radius.circular(10.0))),
+        //                         child: Padding(
+        //                           padding: EdgeInsets.only(
+        //                               left: 20, right: 20, top: 30, bottom: 20),
+        //                           child: Column(
+        //                             crossAxisAlignment:
+        //                                 CrossAxisAlignment.start,
+        //                             children: [
+        //                               Text(
+        //                                 "",
+        //                                 style: Theme.of(context)
+        //                                     .textTheme
+        //                                     .subtitle2!
+        //                                     .copyWith(),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 1,
+        //                               ),
+        //                             ],
+        //                           ),
+        //                         )),
+        //                     Card(
+        //                         margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+        //                         elevation: 0,
+        //                         shape: RoundedRectangleBorder(
+        //                             borderRadius: BorderRadius.all(
+        //                                 Radius.circular(10.0))),
+        //                         child: Padding(
+        //                           padding: EdgeInsets.only(
+        //                               left: 20, right: 20, top: 10, bottom: 30),
+        //                           child: SizedBox(
+        //                             child: Column(
+        //                               crossAxisAlignment:
+        //                                   CrossAxisAlignment.start,
+        //                               children: [
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Select Customer",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 DropdownButtonFormField(
+        //                                   hint: Text(
+        //                                     "Select Customer",
+        //                                   ),
+        //                                   isExpanded: true,
+        //                                   onChanged: (String? value) {
+        //                                     _toggleFinancier();
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                       if (_selectedAccount ==
+        //                                           'Selected Value') {
+        //                                         setState(() {
+        //                                           // isBankSelected = false;
+        //                                         });
+        //                                       } else if (_selectedAccount ==
+        //                                           'Bank') {
+        //                                         setState(() {
+        //                                           // isBankSelected = true;
+        //                                         });
+        //                                       }
+        //                                     });
+        //                                   },
+        //                                   onSaved: (String? value) {
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                     });
+        //                                   },
+        //                                   validator: (value) {
+        //                                     if (value != null) {
+        //                                       return null;
+        //                                     } else {
+        //                                       return "can't be empty";
+        //                                     }
+        //                                   },
+        //                                   items:
+        //                                       listOfCustomers.map((String val) {
+        //                                     return DropdownMenuItem(
+        //                                       value: val,
+        //                                       child: Text(
+        //                                         val,
+        //                                       ),
+        //                                     );
+        //                                   }).toList(),
+        //                                 ),
+        //                                 SizedBox(
+        //                                   height: 10,
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Instruction Type	",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 DropdownButtonFormField(
+        //                                   hint: Text(
+        //                                     "Instruction Type",
+        //                                   ),
+        //                                   // value: _selectedAccount,
+        //                                   isExpanded: true,
+        //                                   onChanged: (String? value) {
+        //                                     _toggleFinancier();
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                       if (_selectedAccount ==
+        //                                           'Selected Value') {
+        //                                         setState(() {
+        //                                           // isBankSelected = false;
+        //                                         });
+        //                                       } else if (_selectedAccount ==
+        //                                           'Bank') {
+        //                                         setState(() {
+        //                                           // isBankSelected = true;
+        //                                         });
+        //                                       }
+        //                                     });
+        //                                   },
+        //                                   onSaved: (String? value) {
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                     });
+        //                                   },
+        //                                   validator: (value) {
+        //                                     if (value != null) {
+        //                                       return null;
+        //                                     } else {
+        //                                       return "can't be empty";
+        //                                     }
+        //                                   },
+        //                                   items: listOfInstructiontypes
+        //                                       .map((String val) {
+        //                                     return DropdownMenuItem(
+        //                                       value: val,
+        //                                       child: Text(
+        //                                         val,
+        //                                       ),
+        //                                     );
+        //                                   }).toList(),
+        //                                 ),
+        //                                 SizedBox(
+        //                                   height: 10,
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Broker	",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 DropdownButtonFormField(
+        //                                   // value: _selectedValue,
+        //                                   hint: Text(
+        //                                     "Broker",
+        //                                   ),
+        //                                   // value: _selectedAccount,
+        //                                   isExpanded: true,
+        //                                   onChanged: (String? value) {
+        //                                     _toggleFinancier();
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                       if (_selectedAccount ==
+        //                                           'Selected Value') {
+        //                                         setState(() {
+        //                                           // isBankSelected = false;
+        //                                         });
+        //                                       } else if (_selectedAccount ==
+        //                                           'Bank') {
+        //                                         setState(() {
+        //                                           // isBankSelected = true;
+        //                                         });
+        //                                       }
+        //                                     });
+        //                                   },
+        //                                   onSaved: (String? value) {
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                     });
+        //                                   },
+        //                                   validator: (value) {
+        //                                     if (value != null) {
+        //                                       return null;
+        //                                     } else {
+        //                                       return "can't be empty";
+        //                                     }
+        //                                   },
+        //                                   items:
+        //                                       listOfBrokers.map((String val) {
+        //                                     return DropdownMenuItem(
+        //                                       value: val,
+        //                                       child: Text(
+        //                                         val,
+        //                                       ),
+        //                                     );
+        //                                   }).toList(),
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Motor Class",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 DropdownButtonFormField(
+        //                                   // value: _selectedValue,
+        //                                   hint: Text(
+        //                                     "Motor Class",
+        //                                   ),
+        //                                   // value: _selectedAccount,
+        //                                   isExpanded: true,
+        //                                   onChanged: (String? value) {
+        //                                     _toggleFinancier();
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                       if (_selectedAccount ==
+        //                                           'Selected Value') {
+        //                                         setState(() {
+        //                                           // isBankSelected = false;
+        //                                         });
+        //                                       } else if (_selectedAccount ==
+        //                                           'Bank') {
+        //                                         setState(() {
+        //                                           // isBankSelected = true;
+        //                                         });
+        //                                       }
+        //                                     });
+        //                                   },
+        //                                   onSaved: (String? value) {
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                     });
+        //                                   },
+        //                                   validator: (value) {
+        //                                     if (value != null) {
+        //                                       return null;
+        //                                     } else {
+        //                                       return "can't be empty";
+        //                                     }
+        //                                   },
+        //                                   items: listOfMotorclasses
+        //                                       .map((String val) {
+        //                                     return DropdownMenuItem(
+        //                                       value: val,
+        //                                       child: Text(
+        //                                         val,
+        //                                       ),
+        //                                     );
+        //                                   }).toList(),
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Drive Type",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 DropdownButtonFormField(
+        //                                   // value: _selectedValue,
+        //                                   hint: Text(
+        //                                     "Drive Type",
+        //                                   ),
+        //                                   // value: _selectedAccount,
+        //                                   isExpanded: true,
+        //                                   onChanged: (String? value) {
+        //                                     _toggleFinancier();
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                       if (_selectedAccount ==
+        //                                           'Selected Value') {
+        //                                         setState(() {
+        //                                           // isBankSelected = false;
+        //                                         });
+        //                                       } else if (_selectedAccount ==
+        //                                           'Bank') {
+        //                                         setState(() {
+        //                                           // isBankSelected = true;
+        //                                         });
+        //                                       }
+        //                                     });
+        //                                   },
+        //                                   onSaved: (String? value) {
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                     });
+        //                                   },
+        //                                   validator: (value) {
+        //                                     if (value != null) {
+        //                                       return null;
+        //                                     } else {
+        //                                       return "can't be empty";
+        //                                     }
+        //                                   },
+        //                                   items:
+        //                                       listOfDriveType.map((String val) {
+        //                                     return DropdownMenuItem(
+        //                                       value: val,
+        //                                       child: Text(
+        //                                         val,
+        //                                       ),
+        //                                     );
+        //                                   }).toList(),
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Transmission Type",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 DropdownButtonFormField(
+        //                                   // value: _selectedValue,
+        //                                   hint: Text(
+        //                                     "Transmission Type",
+        //                                   ),
+        //                                   // value: _selectedAccount,
+        //                                   isExpanded: true,
+        //                                   onChanged: (String? value) {
+        //                                     _toggleFinancier();
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                       if (_selectedAccount ==
+        //                                           'Selected Value') {
+        //                                         setState(() {
+        //                                           // isBankSelected = false;
+        //                                         });
+        //                                       } else if (_selectedAccount ==
+        //                                           'Bank') {
+        //                                         setState(() {
+        //                                           // isBankSelected = true;
+        //                                         });
+        //                                       }
+        //                                     });
+        //                                   },
+        //                                   onSaved: (String? value) {
+        //                                     setState(() {
+        //                                       _selectedAccount = value!;
+        //                                     });
+        //                                   },
+        //                                   validator: (value) {
+        //                                     if (value != null) {
+        //                                       return null;
+        //                                     } else {
+        //                                       return "can't be empty";
+        //                                     }
+        //                                   },
+        //                                   items: listOftransmissiontypes
+        //                                       .map((String val) {
+        //                                     return DropdownMenuItem(
+        //                                       value: val,
+        //                                       child: Text(
+        //                                         val,
+        //                                       ),
+        //                                     );
+        //                                   }).toList(),
+        //                                 ),
+        //                                 SizedBox(
+        //                                   height: 10,
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Description",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 TextFormField(
+        //                                   controller: _vehiclereg,
+        //                                   validator: (value) => value!.isEmpty
+        //                                       ? "This field is required"
+        //                                       : null,
+        //                                   onSaved: (value) => {vehicleReg},
+        //                                   keyboardType: TextInputType.name,
+        //                                   decoration: InputDecoration(
+        //                                       hintText: "Enter Description"),
+        //                                 ),
+        //                                 SizedBox(
+        //                                   height: 10,
+        //                                 ),
+        //                                 Row(
+        //                                   children: [
+        //                                     Text(
+        //                                       "Transmission Speed",
+        //                                       overflow: TextOverflow.ellipsis,
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(),
+        //                                     ),
+        //                                     Text(
+        //                                       "*",
+        //                                       style: Theme.of(context)
+        //                                           .textTheme
+        //                                           .subtitle2!
+        //                                           .copyWith(color: Colors.blue),
+        //                                     )
+        //                                   ],
+        //                                 ),
+        //                                 TextFormField(
+        //                                   controller: _vehiclereg,
+        //                                   validator: (value) => value!.isEmpty
+        //                                       ? "This field is required"
+        //                                       : null,
+        //                                   onSaved: (value) => {vehicleReg},
+        //                                   keyboardType: TextInputType.name,
+        //                                   decoration: InputDecoration(
+        //                                       hintText:
+        //                                           "Enter Vehicle Registration No"),
+        //                                 ),
+        //                                 SizedBox(
+        //                                   height: 10,
+        //                                 ),
+        //                               ],
+        //                             ),
+        //                           ),
+        //                         ))
+        //                   ])),
+        //               Form(
+        //                   key: _formKey16,
+        //                   child: Column(children: <Widget>[
+        //                     Card(
+        //                         margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+        //                         elevation: 0,
+        //                         shape: RoundedRectangleBorder(
+        //                             borderRadius: BorderRadius.all(
+        //                                 Radius.circular(10.0))),
+        //                         child: Padding(
+        //                           padding: EdgeInsets.only(
+        //                               left: 20, right: 20, top: 10, bottom: 5),
+        //                           child: Column(
+        //                             crossAxisAlignment:
+        //                                 CrossAxisAlignment.start,
+        //                             children: [
+        //                               Text(
+        //                                 "Instruction Details",
+        //                                 style: Theme.of(context)
+        //                                     .textTheme
+        //                                     .headline6!
+        //                                     .copyWith(
+        //                                         fontWeight: FontWeight.bold),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 1,
+        //                               ),
+        //                             ],
+        //                           ),
+        //                         )),
+        //                     Card(
+        //                         margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+        //                         elevation: 0,
+        //                         shape: RoundedRectangleBorder(
+        //                             borderRadius: BorderRadius.all(
+        //                                 Radius.circular(10.0))),
+        //                         child: Padding(
+        //                           padding: EdgeInsets.only(
+        //                               left: 20, right: 20, top: 30, bottom: 30),
+        //                           child: Column(
+        //                             crossAxisAlignment:
+        //                                 CrossAxisAlignment.start,
+        //                             children: [
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Insured/Owner",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "*",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _vehiclereg,
+        //                                 validator: (value) => value!.isEmpty
+        //                                     ? "This field is required"
+        //                                     : null,
+        //                                 onSaved: (value) => {vehicleReg},
+        //                                 keyboardType: TextInputType.name,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Insured/Owner"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Insured PIN",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "*",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _carmodel,
+        //                                 validator: (value) => value!.isEmpty
+        //                                     ? "This field is required"
+        //                                     : null,
+        //                                 onSaved: (value) => {carModel},
+        //                                 keyboardType: TextInputType.name,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Insured PIN"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Address",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _chassisno,
+        //                                 onSaved: (value) => {chassisNo},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Address"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Claim No",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _engineno,
+        //                                 onSaved: (value) => {engineNo},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Claim No"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Policy No.",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _vehiclecolor,
+        //                                 onSaved: (value) => {vehicleColor},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Policy No."),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Chassis No*",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "*",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _location,
+        //                                 validator: (value) => value!.isEmpty
+        //                                     ? "This field is required"
+        //                                     : null,
+        //                                 onSaved: (value) =>
+        //                                     {installationLocation},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Chassis No*"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Cert No.",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "*",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _notracker,
+        //                                 validator: (value) => value!.isEmpty
+        //                                     ? "This field is required"
+        //                                     : null,
+        //                                 onSaved: (value) => {noTracker},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Cert No."),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Location",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "*",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 readOnly: true,
+        //                                 initialValue: _costcenter,
+        //                                 onSaved: (value) => {},
+        //                                 keyboardType: TextInputType.number,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Vehicle Location"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               // Row(
+        //                               //   children: [
+        //                               //     Text(
+        //                               //       "Installation Branch",
+        //                               //       overflow: TextOverflow.ellipsis,
+        //                               //       style: Theme.of(context)
+        //                               //           .textTheme
+        //                               //           .subtitle2!
+        //                               //           .copyWith(),
+        //                               //     ),
+        //                               //     Text(
+        //                               //       "*",
+        //                               //       style: Theme.of(context)
+        //                               //           .textTheme
+        //                               //           .subtitle2!
+        //                               //           .copyWith(color: Colors.blue),
+        //                               //     )
+        //                               //   ],
+        //                               // ),
+        //                               // TextFormField(
+        //                               //   readOnly: true,
+        //                               //   initialValue: _costcenter,
+        //                               //   onSaved: (value) => {},
+        //                               //   keyboardType: TextInputType.number,
+        //                               //   decoration:  InputDecoration(
+        //                               //       hintText:
+        //                               //           "Enter Vehicle No of Trackers"),
+        //                               // ),
+        //                               //  SizedBox(
+        //                               //   height: 10,
+        //                               // ),
+        //
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Broker",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Broker"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Reg No",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Reg No"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Make",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Make"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Model",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Model"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Class of Use",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Class of Use"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Log Book No",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Log Book No"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Log Book Free of Endorsement",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText:
+        //                                         "Enter Log Book Free of Endorsement"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Log Book Owner",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Enter Log Book Owner"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "No of Owners/Logbook",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "No of Owners/Logbook"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Insured Value	",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration:
+        //                                     InputDecoration(hintText: "0"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Excess",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Forced Value",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration:
+        //                                     InputDecoration(hintText: "0.0"),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Date of Loss",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextField(
+        //                                 controller:
+        //                                     _dateinput, //editing controller of this TextField
+        //                                 decoration: InputDecoration(
+        //                                   icon: Icon(
+        //                                     Icons.calendar_today,
+        //                                     color: Colors.blue,
+        //                                   ), //icon of text field
+        //                                 ),
+        //                                 readOnly:
+        //                                     true, //set it true, so that user will not able to edit text
+        //                                 onTap: () async {
+        //                                   DateTime? pickedDate =
+        //                                       await showDatePicker(
+        //                                           context: context,
+        //                                           initialDate: DateTime.now(),
+        //                                           firstDate: DateTime(
+        //                                               2000), //DateTime.now() - not to allow to choose before today.
+        //                                           lastDate: DateTime(2101));
+        //
+        //                                   if (pickedDate != null) {
+        //                                     print(
+        //                                         pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
+        //                                     String formattedDate =
+        //                                         DateFormat('dd/MM/yyyy')
+        //                                             .format(pickedDate);
+        //                                     print(
+        //                                         formattedDate); //formatted date output using intl package =>  2021-03-16
+        //                                     //you can implement different kind of Date Format here according to your requirement
+        //
+        //                                     setState(() {
+        //                                       _dateinput.text =
+        //                                           formattedDate; //set output date to TextField value.
+        //                                     });
+        //                                   } else {
+        //                                     print("Date is not selected");
+        //                                   }
+        //                                 },
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Claimant(s)	",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration:
+        //                                     InputDecoration(hintText: ""),
+        //                               ),
+        //                               SearchableDropdown(
+        //                                 hint: Text(
+        //                                   "Assigned To",
+        //                                 ),
+        //                                 isExpanded: true,
+        //                                 onChanged: (value) {
+        //                                   (value) => value == null
+        //                                       ? 'field required'
+        //                                       : null;
+        //                                   _selectedInstaller = value;
+        //                                   _techId = value != null
+        //                                       ? value['empid']
+        //                                       : null;
+        //                                   _techName = value != null
+        //                                       ? value['empname']
+        //                                       : null;
+        //                                   setState(() {
+        //                                     // _selectedValue = value!;
+        //                                   });
+        //                                   print(_selectedInstaller);
+        //                                   print(_techName);
+        //                                   print(_techId);
+        //                                 },
+        //
+        //                                 value: _selectedInstaller,
+        //
+        //                                 // isCaseSensitiveSearch: true,
+        //                                 searchHint: new Text(
+        //                                   'Select Assignee ',
+        //                                   style: new TextStyle(fontSize: 20),
+        //                                 ),
+        //                                 items: techniciansJson.map((val) {
+        //                                   return DropdownMenuItem(
+        //                                     child: Text(val['empname']),
+        //                                     value: val,
+        //                                   );
+        //                                 }).toList(),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Instructed by",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextFormField(
+        //                                 controller: _remarks,
+        //                                 onSaved: (value) => {remarks},
+        //                                 keyboardType: TextInputType.text,
+        //                                 decoration: InputDecoration(
+        //                                     hintText: "Instructed by"),
+        //                               ),
+        //                               SearchableDropdown(
+        //                                 hint: Text(
+        //                                   "Instruction Mode	",
+        //                                 ),
+        //                                 isExpanded: true,
+        //                                 onChanged: (value) {
+        //                                   (value) => value == null
+        //                                       ? 'field required'
+        //                                       : null;
+        //                                   _selectedInstaller = value;
+        //                                   _techId = value != null
+        //                                       ? value['empid']
+        //                                       : null;
+        //                                   _techName = value != null
+        //                                       ? value['empname']
+        //                                       : null;
+        //                                   setState(() {
+        //                                     // _selectedValue = value!;
+        //                                   });
+        //                                   print(_selectedInstaller);
+        //                                   print(_techName);
+        //                                   print(_techId);
+        //                                 },
+        //
+        //                                 value: _selectedInstaller,
+        //
+        //                                 // isCaseSensitiveSearch: true,
+        //                                 searchHint: new Text(
+        //                                   'Select Instruction Mode	 ',
+        //                                   style: new TextStyle(fontSize: 20),
+        //                                 ),
+        //                                 items: techniciansJson.map((val) {
+        //                                   return DropdownMenuItem(
+        //                                     child: Text(val['empname']),
+        //                                     value: val,
+        //                                   );
+        //                                 }).toList(),
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                               Row(
+        //                                 children: [
+        //                                   Text(
+        //                                     "Report Due Date",
+        //                                     overflow: TextOverflow.ellipsis,
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(),
+        //                                   ),
+        //                                   Text(
+        //                                     "",
+        //                                     style: Theme.of(context)
+        //                                         .textTheme
+        //                                         .subtitle2!
+        //                                         .copyWith(color: Colors.blue),
+        //                                   )
+        //                                 ],
+        //                               ),
+        //                               TextField(
+        //                                 controller:
+        //                                     _dateinput, //editing controller of this TextField
+        //                                 decoration: InputDecoration(
+        //                                   icon: Icon(
+        //                                     Icons.calendar_today,
+        //                                     color: Colors.blue,
+        //                                   ), //icon of text field
+        //                                 ),
+        //                                 readOnly:
+        //                                     true, //set it true, so that user will not able to edit text
+        //                                 onTap: () async {
+        //                                   DateTime? pickedDate =
+        //                                       await showDatePicker(
+        //                                           context: context,
+        //                                           initialDate: DateTime.now(),
+        //                                           firstDate: DateTime(
+        //                                               2000), //DateTime.now() - not to allow to choose before today.
+        //                                           lastDate: DateTime(2101));
+        //
+        //                                   if (pickedDate != null) {
+        //                                     print(
+        //                                         pickedDate); //pickedDate output format => 2021-03-10 00:00:00.000
+        //                                     String formattedDate =
+        //                                         DateFormat('dd/MM/yyyy')
+        //                                             .format(pickedDate);
+        //                                     print(
+        //                                         formattedDate); //formatted date output using intl package =>  2021-03-16
+        //                                     //you can implement different kind of Date Format here according to your requirement
+        //
+        //                                     setState(() {
+        //                                       _dateinput.text =
+        //                                           formattedDate; //set output date to TextField value.
+        //                                     });
+        //                                   } else {
+        //                                     print("Date is not selected");
+        //                                   }
+        //                                 },
+        //                               ),
+        //                               SizedBox(
+        //                                 height: 10,
+        //                               ),
+        //                             ],
+        //                           ),
+        //                         ))
+        //                   ])),
+        //               Column(children: <Widget>[
+        //                 Card(
+        //                     margin: EdgeInsets.fromLTRB(10, 10, 10, 10),
+        //                     elevation: 0,
+        //                     shape: RoundedRectangleBorder(
+        //                         borderRadius:
+        //                             BorderRadius.all(Radius.circular(10.0))),
+        //                     child: Padding(
+        //                       padding: EdgeInsets.only(
+        //                           left: 20, right: 20, top: 30, bottom: 30),
+        //                       child: Column(
+        //                         crossAxisAlignment: CrossAxisAlignment.start,
+        //                         children: [
+        //                           Text(
+        //                             "",
+        //                             style: Theme.of(context)
+        //                                 .textTheme
+        //                                 .headline6!
+        //                                 .copyWith(fontWeight: FontWeight.bold),
+        //                           ),
+        //                           SizedBox(
+        //                             height: 10,
+        //                           ),
+        //                         ],
+        //                       ),
+        //                     )),
+        //               ])
+        //             ][currentForm]
+        //           ],
+        //         ),
+        //       ),
+        //     ))
+        // : isBankSelected == true && isFinancierSelected == false
+        //      WillPopScope(
+        //         onWillPop: () async {
+        //           if (_searchmode) {
+        //             setState(() {
+        //               _searchmode = false;
+        //               _searchString = null;
+        //             });
+        //             return false;
+        //           }
+        //           return true;
+        //         },
+        //         child: Scaffold(
+        //           appBar: AppBar(
+        //             title: _searchmode
+        //                 ? TextFormField(
+        //                     controller: _searchController,
+        //                     decoration: InputDecoration(
+        //                         hintText: 'Search financier company',
+        //                         hintStyle: TextStyle(color: Colors.white)),
+        //                     onChanged: (value) {
+        //                       setState(() {
+        //                         _searchString = value;
+        //                       });
+        //                     })
+        //                 : Text('Search Financier '),
+        //             actions: <Widget>[
+        //               Visibility(
+        //                 visible: !_searchmode,
+        //                 child: IconButton(
+        //                     icon: Icon(Icons.search),
+        //                     onPressed: () {
+        //                       setState(() {
+        //                         _searchmode = true;
+        //                       });
+        //                     }),
+        //               )
+        //             ],
+        //           ),
+        //           body: Container(
+        //             color: Colors.white,
+        //             child: Container(),
+        //           ),
+        //         ),
+        //       )
+        //     : WillPopScope(
+        //         onWillPop: () async {
+        //           if (_searchmode) {
+        //             setState(() {
+        //               _searchmode = false;
+        //               _searchString = null;
+        //             });
+        //             return false;
+        //           }
+        //           return true;
+        //         },
+        //         child: Scaffold(
+        //             appBar: AppBar(
+        //               title: _searchmode
+        //                   ? TextFormField(
+        //                       controller: _searchController,
+        //                       decoration: InputDecoration(
+        //                           hintText: 'Search financier name',
+        //                           hintStyle: TextStyle(color: Colors.white)),
+        //                       onChanged: (value) {
+        //                         setState(() {
+        //                           _searchString = value;
+        //                         });
+        //                       })
+        //                   : Text(
+        //                       'Search Financier by company name,email or phone number'),
+        //               actions: <Widget>[
+        //                 Visibility(
+        //                   visible: !_searchmode,
+        //                   child: IconButton(
+        //                     icon: Icon(Icons.search),
+        //                     onPressed: () {
+        //                       setState(() {
+        //                         _searchmode = true;
+        //                       });
+        //                     },
+        //                   ),
+        //                 )
+        //               ],
+        //             ),
+        //             body: Container(
+        //               color: Colors.white,
+        //               child: Container(),
+        //             )),
+        //       );
   }
 
-  _fetchCustomers() async {
-    String url = await Config.getBaseUrl();
-
-    HttpClientResponse response = await Config.getRequestObject(
-        url + 'trackerjobcard/customer/?type=1&param=', Config.get);
-    if (response != null) {
-      print(response);
-      response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
-        var jsonResponse = json.decode(data);
-        setState(() {
-          customersJson = jsonResponse;
-        });
-        print(jsonResponse);
-        var list = jsonResponse as List;
-        List<Customer> result = list.map<Customer>((json) {
-          return Customer.fromJson(json);
-        }).toList();
-        if (result.isNotEmpty) {
-          setState(() {
-            result.sort((a, b) =>
-                a.company!.toLowerCase().compareTo(b.company!.toLowerCase()));
-            _customers = result;
-          });
-        } else {
-          setState(() {
-            _message = 'You have not been assigned any customers';
-          });
-        }
-      });
-    } else {
-      print('response is null ');
-    }
-  }
+  // _fetchCustomers() async {
+  //   String url = await Config.getBaseUrl();
+  //
+  //   HttpClientResponse response = await Config.getRequestObject(
+  //       url + 'trackerjobcard/customer/?type=1&param=', Config.get);
+  //   if (response != null) {
+  //     print(response);
+  //     response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
+  //       var jsonResponse = json.decode(data);
+  //       setState(() {
+  //         customersJson = jsonResponse;
+  //       });
+  //       print(jsonResponse);
+  //       var list = jsonResponse as List;
+  //       List<Customer> result = list.map<Customer>((json) {
+  //         return Customer.fromJson(json);
+  //       }).toList();
+  //       if (result.isNotEmpty) {
+  //         setState(() {
+  //           result.sort((a, b) =>
+  //               a.company!.toLowerCase().compareTo(b.company!.toLowerCase()));
+  //           _customers = result;
+  //         });
+  //       } else {
+  //         setState(() {
+  //           _message = 'You have not been assigned any customers';
+  //         });
+  //       }
+  //     });
+  //   } else {
+  //     print('response is null ');
+  //   }
+  // }
 
   // late User _loggedInUser;
   // User? _loggedInUser;
-  Widget getListTile(val) {
-    return ListTile(
-      leading: Text(val['mobile'] ?? ''),
-      title: Text(val['company'] ?? ''),
-      trailing: Text(val['email'] ?? ''),
-    );
-  }
+  // Widget getListTile(val) {
+  //   return ListTile(
+  //     leading: Text(val['mobile'] ?? ''),
+  //     title: Text(val['company'] ?? ''),
+  //     trailing: Text(val['email'] ?? ''),
+  //   );
+  // }
 }
 
 void showAlertDialog(BuildContext context, String message) {

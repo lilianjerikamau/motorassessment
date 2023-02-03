@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:motorassesmentapp/provider/assessment_provider.dart';
 import 'package:motorassesmentapp/screens/create_instruction.dart';
 import 'package:motorassesmentapp/screens/login_screen.dart';
 import 'package:camera/camera.dart';
-
+import 'package:provider/provider.dart';
 List<CameraDescription> cameras = [];
 Future<void> main() async {
   try {
@@ -20,11 +21,18 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(
-          scaffoldBackgroundColor: Colors.white, primaryColor: Colors.white),
-      home: LoginPage(),
-      debugShowCheckedModeBanner: false,
+    return
+    ChangeNotifierProvider(
+      create: (_) => AsessmentProvider(),
+
+      child: Builder(builder: (context) {
+        WidgetsFlutterBinding.ensureInitialized();
+        return MaterialApp(
+          // theme: ThemeData(
+          //     scaffoldBackgroundColor: Colors.white, primaryColor: Colors.white),
+          home:  LoginPage(),
+        );
+      }),
     );
   }
 }

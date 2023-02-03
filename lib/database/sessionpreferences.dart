@@ -183,7 +183,17 @@ class SessionPreferences {
         // apiallowsalestoanycustomer: sharedPreferences.getBool(_apiCustomer),
         companyname: sharedPreferences.getString(_companyName));
   }
-
+  Future<Customer> getSelectedCustomer() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    return Customer(
+        custid: sharedPreferences.getInt(_custId),
+        // custcode: sharedPreferences.getString(_custCode),
+        company: sharedPreferences.getString(_company));
+        // pricelist: sharedPreferences.getInt(_priceList),
+        // balance: sharedPreferences.getDouble(_custBalance),
+        // availcreditlimit: sharedPreferences.getDouble(_custAvailableCredit),
+        // creditlimit: sharedPreferences.getDouble(_custCreditLimit));
+  }
   Future<CompanySettings> getCompanySettings() async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     return CompanySettings(

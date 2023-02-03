@@ -68,24 +68,24 @@ class Valuation {
   String? customer;
 
   factory Valuation.fromJson(Map<String, dynamic> json) => Valuation(
-        userid: json["userid"],
-        customer: json["customer"],
-        id: json["id"],
-        custid: json["custid"],
-        regno: json['regno'],
-        make: json["make"],
-        drivenby: json['drivenby'],
-        towed: json["towed"],
-        cashinlieu: json["cashinlieu"],
-        instructionno: json['companyname'],
-        owner: json["owner"],
-        claimno: json['claimno'],
-        custname: json["customer"],
-        chassisno: json["chassisno"],
-        policyno: json["policyno"],
-        location: json['location'],
-        model: json["model"],
-      );
+    userid: json["userid"],
+    customer: json["customer"],
+    id: json["id"],
+    custid: json["custid"],
+    regno: json['regno'],
+    make: json["make"],
+    drivenby: json['drivenby'],
+    towed: json["towed"],
+    cashinlieu: json["cashinlieu"],
+    instructionno: json['companyname'],
+    owner: json["owner"],
+    claimno: json['claimno'],
+    custname: json["customer"],
+    chassisno: json["chassisno"],
+    policyno: json["policyno"],
+    location: json['location'],
+    model: json["model"],
+  );
 
   Map<String, dynamic> toJson() => {};
 }

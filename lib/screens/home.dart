@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -24,6 +25,8 @@ import 'package:motorassesmentapp/screens/create_supplementary.dart';
 import 'package:motorassesmentapp/screens/create_valuationstd.dart';
 import 'package:motorassesmentapp/screens/assessment_history_screen.dart';
 import 'package:motorassesmentapp/screens/reinspection_history_screen.dart';
+import 'package:motorassesmentapp/screens/save_assessmets.dart';
+
 import 'package:motorassesmentapp/screens/sidemenu/side_menu.dart';
 import 'package:motorassesmentapp/screens/valuation_history_screen.dart';
 import 'package:progress_dialog/progress_dialog.dart';
@@ -76,6 +79,10 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     checkGps();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     SessionPreferences().getLoggedInUser().then((user) {
       setState(() {
         _loggedInUser = user;
@@ -152,9 +159,9 @@ class _HomeState extends State<Home> {
     long = position.longitude.toString();
     lat = position.latitude.toString();
 
-    setState(() {
-      //refresh UI
-    });
+    // setState(() {
+    //   //refresh UI
+    // });
 
     LocationSettings locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high, //accuracy of the location data
@@ -171,10 +178,10 @@ class _HomeState extends State<Home> {
       long = position.longitude.toString();
       lat = position.latitude.toString();
 
-      setState(() {
+      // setState(() {
         //refresh UI on update
         postLocation();
-      });
+      // });
     });
   }
 
@@ -222,6 +229,17 @@ class _HomeState extends State<Home> {
             isReinspectionTapped == false &&
             isStandardValuationTapped == false
         ? Scaffold(
+      // floatingActionButton: IconButton(
+      //     icon: Icon(
+      //       Icons.save,
+      //       color: Colors.blue,
+      //     ),
+      //     onPressed: () async {
+      //       Navigator.pushReplacement(
+      //         context,
+      //         MaterialPageRoute(builder: (context) =>  SaveAssessments()),
+      //       );
+      //     }),
             backgroundColor: Colors.grey[200],
             drawer: SideMenu(),
             appBar: AppBar(
@@ -262,6 +280,7 @@ class _HomeState extends State<Home> {
                       print('----------------> CALLS MADE !!!!!!!!!!!');
                       dial.hide();
                     }),
+
               ],
               backgroundColor: Colors.white,
               elevation: 0.0,

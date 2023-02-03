@@ -10,8 +10,13 @@ import 'package:motorassesmentapp/screens/create_valuationstd.dart';
 import 'package:motorassesmentapp/screens/home.dart';
 import 'package:motorassesmentapp/screens/login_screen.dart';
 import 'package:motorassesmentapp/screens/newpass.dart';
+import 'package:motorassesmentapp/screens/save_supplementary.dart';
+import 'package:motorassesmentapp/screens/save_valuations.dart';
 import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:url_launcher/url_launcher.dart';
+
+import '../save_assessmets.dart';
+import '../save_reinspection.dart';
 
 class SideMenu extends StatefulWidget {
   @override
@@ -128,14 +133,14 @@ class _SideMenuState extends State<SideMenu> {
                   Icons.assessment,
                   color: Colors.black,
                 ),
-                title: Text('Create Assessment',
+                title: Text('Saved Assessments',
                     style: TextStyle(
                       color: Colors.black,
                     )),
                 onTap: () => {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => CreateAssesment()),
+                    MaterialPageRoute(builder: (context) => SaveAssessments()),
                   ),
                 },
               ),
@@ -144,14 +149,14 @@ class _SideMenuState extends State<SideMenu> {
                   Icons.check_circle,
                   color: Colors.black,
                 ),
-                title: Text('Create Valuation',
+                title: Text('Saved Valuations',
                     style: TextStyle(
                       color: Colors.black,
                     )),
                 onTap: () => {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => CreateValuation()),
+                    MaterialPageRoute(builder: (context) => SaveValuations()),
                   ),
                 },
               ),
@@ -160,7 +165,7 @@ class _SideMenuState extends State<SideMenu> {
                   Icons.inventory_sharp,
                   color: Colors.black,
                 ),
-                title: Text('Create Re-Inspection',
+                title: Text('Saved Reinspections',
                     style: TextStyle(
                       color: Colors.black,
                     )),
@@ -168,7 +173,7 @@ class _SideMenuState extends State<SideMenu> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => CreateReinspection()),
+                        builder: (context) => SaveReinspections()),
                   ),
                 },
               ),
@@ -177,7 +182,7 @@ class _SideMenuState extends State<SideMenu> {
                   Icons.work,
                   color: Colors.black,
                 ),
-                title: Text('Create Supplementary',
+                title: Text('Saved Supplementarys',
                     style: TextStyle(
                       color: Colors.black,
                     )),
@@ -185,7 +190,7 @@ class _SideMenuState extends State<SideMenu> {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => CreateSupplementary()),
+                        builder: (context) => Savesupplementarys()),
                   ),
                 },
               ),

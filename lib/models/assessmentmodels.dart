@@ -6,12 +6,15 @@ part 'assessmentmodels.g.dart';
 
 @JsonSerializable()
 class Assesssment {
+
+
   Assesssment(
       {this.id,
       this.brakes,
       this.damegesobserved,
       this.paintwork,
       this.steering,
+        this.type,
       this.driven,
       this.userid,
       this.custname,
@@ -23,6 +26,8 @@ class Assesssment {
       this.instructionno,
       this.drivenby,
       this.towed,
+        this.remarks,
+        this.yardname,
       this.make,
       this.model,
       this.year,
@@ -45,14 +50,73 @@ class Assesssment {
       this.date,
       this.engineno});
 
+  Assesssment.fromMap(Map<dynamic, dynamic> data)
+      : id = data['id'],
+        userid = data['userid'],
+        paintwork = data['revised'],
+        steering = data['cashinlieu'],
+        brakes = data['instructionno'],
+        driven = data['driven'],
+        towed = data['towed'],
+        remarks = data['remarks'],
+        make = data['make'],
+        yardname = data['yardname'],
+        regno = data['regno'],
+        model = data['model'],
+        type = data['type'],
+        year = data['year'],
+        mileage = data['mileage'],
+        color = data['color'],
+        pav = data['pav'],
+        salvage = data['salvage'],
+        RHF = data['RHF'],
+        LHR = data['LHR'],
+        RHR = data['RHR'],
+        LHF = data['LHF'],
+        Spare = data['Spare'],
+        damegesobserved = data['damagesobserved'],
+        photolist = data['photolist'];
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'userid': userid,
+      'paintwork': paintwork,
+      'steering': steering,
+      'brakes': brakes,
+      'driven': driven,
+      'remarks': remarks,
+      'make' :make,
+      'yardname' :yardname,
+      'regno' :regno,
+      'model':model,
+      'type':type,
+      'year':year,
+      'mileage' :mileage,
+      'color' :color,
+      'pav' :pav,
+      'salvage' :salvage,
+      'RHF':RHF,
+      'LHR' :LHR,
+      'RHR' :RHR,
+      'LHF':LHF,
+      'Spare':Spare,
+      'damegesobserved':damegesobserved,
+      'photolist':photolist
+    };
+  }
+
   int? userid;
   int? id;
-
   String? damegesobserved;
   String? paintwork;
   String? steering;
   String? brakes;
   String? customer;
+  String? remarks;
+  String? yardname;
+  String? type;
+
+
   bool? driven;
   String? make;
   String? engineno;
@@ -76,7 +140,7 @@ class Assesssment {
   String? RHR;
   String? LHF;
   String? Spare;
-  List<Map<String, dynamic>>? photolist;
+ String? photolist;
   String? owner;
   String? claimno;
   String? chassisno;

@@ -1,12 +1,18 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:math';
+import 'package:motorassesmentapp/screens/save_valuations.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:clippy_flutter/clippy_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:motorassesmentapp/models/valuation_model.dart';
+import '../database/db_helper.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'package:motorassesmentapp/database/sessionpreferences.dart';
@@ -52,25 +58,27 @@ class CreateValuation extends StatefulWidget {
 
 class _CreateValuationState extends State<CreateValuation> {
   late User _loggedInUser;
-
+  DBHelper dbHelper = DBHelper();
+  int? index;
+ late Random random ;
   int? _userid;
   int? _custid;
   int? _custId;
   int? _hrid;
   int? _instructionId;
   int? _fleetId;
+  int? transmissionid;
+  int? drivetypeid;
   String? _policyno;
   String? _chasisno;
   String? _vehiclereg;
-  // String? _make;
   String? _carmodel;
   String? _location;
   String? _claimno;
-
   int? _insuredvalue;
   String? _excess;
   String? _owner;
-
+  String? valuationString;
   String? _username;
   String? _costcenter;
   String? loanofficerName;
@@ -85,7 +93,7 @@ class _CreateValuationState extends State<CreateValuation> {
   String? custName;
   String? custPhone;
   double? loadcapacity;
-  bool _loggedIn = false;
+  bool isInstructionSelected = false;
   String? remarks;
   String? installationLocation;
   List<Customer> _customers = [];
@@ -207,7 +215,6 @@ class _CreateValuationState extends State<CreateValuation> {
   bool closedsidebody = false;
   bool trailers = false;
   bool fuseboxbypassed = false;
-
   bool turbocharger = false;
   bool lightfitted = false;
   bool lightfittedok = false;
@@ -244,7 +251,6 @@ class _CreateValuationState extends State<CreateValuation> {
   static late var financierid;
   static late var _financierName;
   final _drivenby = TextEditingController();
-  // final _make = TextEditingController();
   TextEditingController _searchController = new TextEditingController();
   TextEditingController _noofbatteries = new TextEditingController();
   TextEditingController _handdrivetype = new TextEditingController();
@@ -302,7 +308,6 @@ class _CreateValuationState extends State<CreateValuation> {
   final _brakes = TextEditingController();
   final _roadworthynotes = TextEditingController();
   // final _customerid = TextEditingController();
-
   final _steering = TextEditingController();
   final _noofextracurtains = TextEditingController();
   final _noofextraseats = TextEditingController();
@@ -334,8 +339,8 @@ class _CreateValuationState extends State<CreateValuation> {
   final _spare = TextEditingController();
   final _damagesobserved = TextEditingController();
   final _deliveredby = TextEditingController();
-  // final _owner = TextEditingController();
   final _mechanicalcondition = TextEditingController();
+  final _sparewheelsize = TextEditingController();
   final _origin = TextEditingController();
   final _bodycondition = TextEditingController();
   final _tyres = TextEditingController();
@@ -346,20 +351,13 @@ class _CreateValuationState extends State<CreateValuation> {
   final _antitheftvalue = TextEditingController();
   final _valuer = TextEditingController();
   TextEditingController _reg = TextEditingController();
+  TextEditingController _transmissionspeed = TextEditingController();
   final _assessedvalue = TextEditingController();
   final _sparewheel = TextEditingController();
   final _tyresize = TextEditingController();
   final _antitheftmake = TextEditingController();
-
   final _anyotherantitheftfeature = TextEditingController();
-
   final _noofdoorairbags = TextEditingController();
-
-  // final _claimno = TextEditingController();
-  // final _policyno = TextEditingController();
-  // final _location = TextEditingController();
-  // final _insuredvalue = TextEditingController();
-  // final _excess = TextEditingController();
   final _noofextrakneebags = TextEditingController();
 
   TextEditingController _dateinput = TextEditingController();
@@ -372,6 +370,10 @@ class _CreateValuationState extends State<CreateValuation> {
   List<Images>? newLogbookList = [];
   List<Images>? newimages = [];
   List<Instruction> _instruction = [];
+  _checkIfInstructionIsSelected() {
+    isInstructionSelected = !isInstructionSelected;
+  }
+
   var items = [
     'LPG propelled',
     'LPG/liquid fuel',
@@ -506,7 +508,7 @@ class _CreateValuationState extends State<CreateValuation> {
                     dial.style(
                       message: 'Sending Valuation',
                     );
-                    dial.show();
+
                     String origin = _origin.text.trim();
 
                     String fuelby = _fuelby.text.trim();
@@ -520,8 +522,11 @@ class _CreateValuationState extends State<CreateValuation> {
                     String antitheftvalue = _antitheftvalue.text.trim();
                     String mechanicalcondition =
                         _mechanicalcondition.text.trim();
+                    String sparewheelsize =
+                    _sparewheelsize.text.trim();
                     String valuer = _valuer.text;
                     int noofbatteries = int.parse(_noofbatteries.text.trim());
+
 
                     String assessedvalue = _assessedvalue.text.trim();
                     String rimsize = _rimsize.text.trim();
@@ -576,6 +581,7 @@ class _CreateValuationState extends State<CreateValuation> {
                     String injectiontype = _injectiontype.text.trim();
                     String noofcylinders = _noofcylinders.text.trim();
                     String handdrivetype = _handdrivetype.text.trim();
+                    String transmissionspeed =_transmissionspeed.text.trim();
                     String turbochargerdesc = _turbochargerdesc.text.trim();
                     String footbreakok = _footbreakok.text.trim();
                     String frontnearside1 = _frontnearside1.text.trim();
@@ -604,539 +610,638 @@ class _CreateValuationState extends State<CreateValuation> {
                     String demoUrl = await Config.getBaseUrl();
                     Uri url = Uri.parse(demoUrl + 'valuation/valuation/');
                     print(url);
+                    setState(() {
+                      valuationString = (jsonEncode(<String, dynamic>{
+                        "userid": _userid,
+                        "custid":
+                        widget.custID == null ? _custId : widget.custID,
+                        "revised": revised,
+                        "fleetinstructionno": _fleetId,
+                        "instructionno": _instructionId,
+                        "photolist": newImagesList,
+                        "logbooklist": newLogBookList,
+                        "model": _carmodel != null ? _carmodel : model,
+                        "chassisno": _chasisno != null ? _chasisno : chasisno,
+                        "fuel": _selectedFuel,
+                        "manufactureyear": year,
+                        "origin": origin,
+                        "bodytype": bodytype,
+                        "mileage": mileage,
+                        "enginecapacity": enginecap,
+                        "engineno": engineno,
+                        "make": make,
+                        "type": "",
+                        "sparewheelsize":sparewheelsize,
+                        // "vehiclefit":"",
+                        "inspectionplace": inspectionplace,
+                        "musicsystemvalue":
+                        musicsystemval != "" ? musicsystemval : "0",
+                        "alloy": alloy,
+                        "regno": _vehiclereg != null ? _vehiclereg : reg,
+                        "location": _location,
+                        "suspensionspacers": true,
+                        "noofdiscs": "three",
+                        "registrationdate": registrationdate,
+                        "radiocassette": radiocassette,
+                        "cdplayer": cdplayer,
+                        "cdchanger": cdchanger,
+                        "roadworthy": roadworthy,
+                        "transmissionspeed":transmissionspeed,
+                        "vehicletype":drivetypeid,
+                        "transmissiontype":transmissionid,
+                        // "alarm": alarm,
+                        "roadworthynotes": roadworthynotes,
+                        // "alarmtype": alarmtype,
+                        // "discs": discs,
+                        "validinsurance": validinsurance,
+                        "mechanicalcondition": mechanicalcondition,
+                        "bodycondition": bodycondition,
+                        "tyres": tyres,
+                        "generalcondition": generalcondition,
+                        "extras": extras,
+                        "notes": notes,
+                        "windscreenvalue": windscreenvalue,
+                        "antitheftvalue": antitheftvalue,
+                        "valuer": valuer,
+                        "assessedvalue": assessedvalue,
+                        "sparewheel": sparewheel,
+                        "tyresize": tyresize,
+                        "centrallocking": centrallocking,
+                        "powerwindowsrhf": powerwindowsrhf,
+                        "powerwindowslhf": powerwindowslhf,
+                        "powerwindowsrhr": powerwindowsrhr,
+                        "powerwindowslhr": powerwindowslhr,
+                        "powermirrors": powermirrors,
+                        "powersteering": powersteering,
+                        "airconditioner": airconditioner,
+                        "absbrakes": absbrakes,
+                        "foglights": foglights,
+                        "rearspoiler": rearspoiler,
+                        "sidesteps": sidesteps,
+                        "sunroof": sunroof,
+                        "frontgrilleguard": frontgrilleguard,
+                        "rearbumperguard": rearbumperguard,
+                        "sparewheelcover": sparewheelcover,
+                        "seatcovers": seatcovers,
+                        "turbotimer": turbotimer,
+                        "dashboardairbag": dashboardairbag,
+                        "steeringairbag": steeringairbag,
+                        "alloyrims": alloyrims,
+                        "steelrims": steelrims,
+                        "chromerims": chromerims,
+                        "assessedvalue": 1,
+                        "xenonheadlights": xenonheadlights,
+                        "heightadjustmentsystem": heightadjustmentsystem,
+                        "powerslidingrhfdoor": powerslidingrhfdoor,
+                        "powerslidinglhfdoor": powerslidinglhfdoor,
+                        "powerslidingrhrdoor": powerslidingrhrdoor,
+                        "powerslidinglhrdoor": powerslidinglhrdoor,
+                        "powerbootdoor": powerbootdoor,
+                        "uphostryleatherseat": uphostryleatherseat,
+                        "uphostryfabricseat": uphostryfabricseat,
+                        "uphostrytwotoneseat": uphostrytwotoneseat,
+                        "uphostrybucketseat": uphostrybucketseat,
+                        "powerseatrhfadjustment": powerseatrhfadjustment,
+                        "powerseatlhfadjustment": powerseatlhfadjustment,
+                        "powerseatrhradjustment": powerseatrhradjustment,
+                        "powersteeringadjustment": powersteeringadjustment,
+                        "powerseatlhradjustment": powerseatlhradjustment,
+                        "extralargerims": extralargerims,
+                        "rimsize": rimsize,
+                        "noofextracurtains":
+                        noofextracurtains != "" ? noofextracurtains : "0",
+                        "noofextraseats":
+                        noofextraseats != "" ? noofextraseats : "0",
+                        "noofextrakneebags":
+                        noofextrakneebags != "" ? noofextrakneebags : "0",
+                        "frontwindscreen":
+                        frontwindscreen != "" ? frontwindscreen : "none",
+                        "rearwindscreen":
+                        rearwindscreen != "" ? rearwindscreen : "none",
+                        "doors": doors,
+                        "crackedrearwindscreen": crackedrearwindscreen,
+                        "approxmatewindscreenvalue": 878.08,
+                        "rearwindscreenvalue": 878.08,
+                        "musicsystemmodel": musicsystemmodel,
+                        "musicsystemmake": musicsystemmake,
+                        "inbuiltcassette": inbuiltcassette,
+                        "inbuiltcd": inbuiltcd,
+                        "inbuiltdvd": inbuiltdvd,
+                        "inbuiltmapreader": inbuiltmapreader,
+                        "inbuilthddcardreader": inbuilthddcardreader,
+                        "inbuiltminidisc": inbuiltminidisc,
+                        "inbuiltusb": inbuiltusb,
+                        "inbuiltbluetooth": inbuiltbluetooth,
+                        "inbuilttvscreen": inbuilttvscreen,
+                        "inbuiltcdchanger": inbuiltcdchanger,
+                        "inbuiltsecuritydoorlock": inbuiltsecuritydoorlock,
+                        "inbuiltalarm": inbuiltalarm,
+                        "inbuiltimmobilizer": inbuiltimmobilizer,
+                        "keylessignition": keylessignition,
+                        "trackingdevice": trackingdevice,
+                        "gearleverlock": gearleverlock,
+                        "enginecutoff": enginecutoff,
+                        "anyotherantitheftfeature":
+                        anyotherantitheftfeature != ""
+                            ? anyotherantitheftfeature
+                            : "none",
+                        "anyotherextrafeature": anyotherextrafeature != ""
+                            ? anyotherextrafeature
+                            : "none",
+                        "anyothervehiclefeature": anyothervehiclefeature,
+                        "anyotheraddedfeature": "fcfccf",
+                        "anyothermusicsystem": anyothermusicsystem != ""
+                            ? anyothermusicsystem
+                            : "none",
+                        "noofdoorairbags":
+                        noofdoorairbags != "" ? noofdoorairbags : "0",
+                        "musicsystemdetachable": musicsystemdetachable,
+                        "musicsysteminbuilt": musicsysteminbuilt,
+                        "fittedwithamfmonly": fittedwithamfmonly,
+                        "fittedwithreversecamera": fittedwithreversecamera,
+                        "amfmonly": amfmonly,
+                        "locallyfittedalarm": locallyfittedalarm,
+                        "antitheftmake": antitheftmake,
+                        "roofcarrier": roofcarrier,
+                        "roofrails": true,
+                        "uphostryfabricleatherseat":
+                        uphostryfabricleatherseat,
+                        "dutypaid": dutypaid,
+                        "color": color,
+                        // new features
+                        "noofbattery": noofbatteries,
+                        "crawleeexcavator": crawleeexcavator,
+                        "backhoewheelloader": backhoewheelloader,
+                        "roller": roller,
+                        "fixedcrane": fixedcrane,
+                        "rollercrane": rollercrane,
+                        "mobilecrane": mobilecrane,
+                        "hiabfittedcranetruck": hiabfittedcranetruck,
+                        "primemover": primemover,
+                        "primemoverfilledwithrailercrane":
+                        primemoverfilledwithrailercrane,
+                        "lowloadertrailer": lowloadertrailer,
+                        "concretemixer": concretemixer,
+                        "topmacrollers": topmacrollers,
+                        "aircompressor": aircompressor,
+                        "forklift": forklift,
+                        "specialpurposeconstructionmachinery":
+                        specialpurposeconstructionmachinery,
+                        "batterypoweredlift": batterypoweredlift,
+                        "batterypoweredscissorlift":
+                        batterypoweredscissorlift,
+                        "boomlift": boomlift,
+                        "dumptruck": dumptruck,
+                        "backheeloader": backheeloader,
+                        "vaccumpumpsystem": vaccumpumpsystem,
+                        "dryaircompressor": dryaircompressor,
+                        "transformeroilpurifizatonplant":
+                        transformeroilpurifizatonplant,
+                        "dieselgenerator": dieselgenerator,
+                        "platecompactor": platecompactor,
+                        "twindrumroller": twindrumroller,
+                        "tractors": tractors,
+                        "plaughs": plaughs,
+                        "seeders": seeders,
+                        "combineharvester": combineharvester,
+                        "sprayers": sprayers,
+                        "culters": culters,
+                        "balers": balers,
+                        "ordinaryfueltankers": ordinaryfueltankers,
+                        "watertanker": watertanker,
+                        "exhauster": exhauster,
+                        "specializedfueltanker": specializedfueltanker,
+                        "opensidebody": opensidebody,
+                        "closedsidebody": closedsidebody,
+                        "trailers": trailers,
+                        "fuseboxbypassed": fuseboxbypassed,
 
-                    final response = await http.post(url,
-                        headers: <String, String>{
-                          'Content-Type': 'application/json',
-                        },
-                        body: jsonEncode(<String, dynamic>{
-                          "userid": _userid,
-                          "custid":
-                              widget.custID == null ? _custId : widget.custID,
-                          "revised": revised,
-                          "fleetinstructionno": _fleetId,
-                          "instructionno": _instructionId,
-                          "photolist": newImagesList,
-                          "logbooklist": newLogBookList,
-                          "model": _carmodel != null ? _carmodel : model,
-                          "chassisno": _chasisno != null ? _chasisno : chasisno,
-                          "fuel": _selectedFuel,
-                          "manufactureyear": year,
-                          "origin": origin,
-                          "bodytype": bodytype,
-                          "mileage": mileage,
-                          "enginecapacity": enginecap,
-                          "engineno": engineno,
-                          "make": make,
-                          "type":"",
-                          // "vehiclefit":"",
-                          "inspectionplace": inspectionplace,
-                          "musicsystemvalue":
-                              musicsystemval != "" ? musicsystemval : "0",
-                          "alloy": alloy,
-                          "regno": _vehiclereg != null ? _vehiclereg : reg,
-                          "location": _location,
-                          "suspensionspacers": true,
-                          "noofdiscs": "three",
-                          "registrationdate": registrationdate,
-                          "radiocassette": radiocassette,
-                          "cdplayer": cdplayer,
-                          "cdchanger": cdchanger,
-                          "roadworthy": roadworthy,
-                          // "alarm": alarm,
-                          "roadworthynotes": roadworthynotes,
-                          // "alarmtype": alarmtype,
-                          // "discs": discs,
-                          "validinsurance": validinsurance,
-                          "mechanicalcondition": mechanicalcondition,
-                          "bodycondition": bodycondition,
-                          "tyres": tyres,
-                          "generalcondition": generalcondition,
-                          "extras": extras,
-                          "notes": notes,
-                          "windscreenvalue": windscreenvalue,
-                          "antitheftvalue": antitheftvalue,
-                          "valuer": valuer,
-                          "assessedvalue": assessedvalue,
-                          "sparewheel": sparewheel,
-                          "tyresize": tyresize,
-                          "centrallocking": centrallocking,
-                          "powerwindowsrhf": powerwindowsrhf,
-                          "powerwindowslhf": powerwindowslhf,
-                          "powerwindowsrhr": powerwindowsrhr,
-                          "powerwindowslhr": powerwindowslhr,
-                          "powermirrors": powermirrors,
-                          "powersteering": powersteering,
-                          "airconditioner": airconditioner,
-                          "absbrakes": absbrakes,
-                          "foglights": foglights,
-                          "rearspoiler": rearspoiler,
-                          "sidesteps": sidesteps,
-                          "sunroof": sunroof,
-                          "frontgrilleguard": frontgrilleguard,
-                          "rearbumperguard": rearbumperguard,
-                          "sparewheelcover": sparewheelcover,
-                          "seatcovers": seatcovers,
-                          "turbotimer": turbotimer,
-                          "dashboardairbag": dashboardairbag,
-                          "steeringairbag": steeringairbag,
-                          "alloyrims": alloyrims,
-                          "steelrims": steelrims,
-                          "chromerims": chromerims,
-                          "assessedvalue": 1,
-                          "xenonheadlights": xenonheadlights,
-                          "heightadjustmentsystem": heightadjustmentsystem,
-                          "powerslidingrhfdoor": powerslidingrhfdoor,
-                          "powerslidinglhfdoor": powerslidinglhfdoor,
-                          "powerslidingrhrdoor": powerslidingrhrdoor,
-                          "powerslidinglhrdoor": powerslidinglhrdoor,
-                          "powerbootdoor": powerbootdoor,
-                          "uphostryleatherseat": uphostryleatherseat,
-                          "uphostryfabricseat": uphostryfabricseat,
-                          "uphostrytwotoneseat": uphostrytwotoneseat,
-                          "uphostrybucketseat": uphostrybucketseat,
-                          "powerseatrhfadjustment": powerseatrhfadjustment,
-                          "powerseatlhfadjustment": powerseatlhfadjustment,
-                          "powerseatrhradjustment": powerseatrhradjustment,
-                          "powersteeringadjustment": powersteeringadjustment,
-                          "powerseatlhradjustment": powerseatlhradjustment,
-                          "extralargerims": extralargerims,
-                          "rimsize": rimsize,
-                          "noofextracurtains":
-                              noofextracurtains != "" ? noofextracurtains : "0",
-                          "noofextraseats":
-                              noofextraseats != "" ? noofextraseats : "0",
-                          "noofextrakneebags":
-                              noofextrakneebags != "" ? noofextrakneebags : "0",
-                          "frontwindscreen":
-                              frontwindscreen != "" ? frontwindscreen : "none",
-                          "rearwindscreen":
-                              rearwindscreen != "" ? rearwindscreen : "none",
-                          "doors": doors,
-                          // "yombelts": "vgvgv",
-                          // "fromanyotherplace": "ggvgvhhh",
-                          // "vinplatedetails": "vinplatedetails",
-                          // "injectiontype": "injectiontype",
-                          // "noofcylinders": "noofcylinders",
-                          // "amfmonly": true,
-                          "crackedrearwindscreen": crackedrearwindscreen,
-                          "approxmatewindscreenvalue": 878.08,
-                          "rearwindscreenvalue": 878.08,
-                          "musicsystemmodel": musicsystemmodel,
-                          "musicsystemmake": musicsystemmake,
-                          "inbuiltcassette": inbuiltcassette,
-                          "inbuiltcd": inbuiltcd,
-                          "inbuiltdvd": inbuiltdvd,
-                          "inbuiltmapreader": inbuiltmapreader,
-                          "inbuilthddcardreader": inbuilthddcardreader,
-                          "inbuiltminidisc": inbuiltminidisc,
-                          "inbuiltusb": inbuiltusb,
-                          "inbuiltbluetooth": inbuiltbluetooth,
-                          "inbuilttvscreen": inbuilttvscreen,
-                          "inbuiltcdchanger": inbuiltcdchanger,
-                          "inbuiltsecuritydoorlock": inbuiltsecuritydoorlock,
-                          "inbuiltalarm": inbuiltalarm,
-                          "inbuiltimmobilizer": inbuiltimmobilizer,
-                          "keylessignition": keylessignition,
-                          "trackingdevice": trackingdevice,
-                          "gearleverlock": gearleverlock,
-                          "enginecutoff": enginecutoff,
-                          "anyotherantitheftfeature":
-                              anyotherantitheftfeature != ""
-                                  ? anyotherantitheftfeature
-                                  : "none",
-                          "anyotherextrafeature": anyotherextrafeature != ""
-                              ? anyotherextrafeature
-                              : "none",
-                          "anyothervehiclefeature": anyothervehiclefeature,
-                          "anyotheraddedfeature": "fcfccf",
-                          "anyothermusicsystem": anyothermusicsystem != ""
-                              ? anyothermusicsystem
-                              : "none",
-                          "noofdoorairbags":
-                              noofdoorairbags != "" ? noofdoorairbags : "0",
-                          "musicsystemdetachable": musicsystemdetachable,
-                          "musicsysteminbuilt": musicsysteminbuilt,
-                          "fittedwithamfmonly": fittedwithamfmonly,
-                          "fittedwithreversecamera": fittedwithreversecamera,
-                          "amfmonly": amfmonly,
-                          "locallyfittedalarm": locallyfittedalarm,
-                          "antitheftmake": antitheftmake,
-                          "roofcarrier": roofcarrier,
-                          "roofrails": true,
-                          "uphostryfabricleatherseat":
-                              uphostryfabricleatherseat,
-                          "dutypaid": dutypaid,
-                          "color": color,
+                        //other
+                        "turbocharger": turbocharger,
+                        "lightfitted": lightfitted,
+                        "lightfittedok": lightfittedok,
+                        "dipswitchok": dipswitchok,
+                        "lightdipok": lightdipok,
+                        "rearlightclean": rearlightclean,
+                        "handbrakeok": handbrakeok,
+                        "hydraulicsystemok": hydraulicsystemok,
+                        "servook": servook,
+                        "handbreakmarginok": handbreakmarginok,
+                        "footbreakmarginok": footbreakmarginok,
+                        "balljointsok": balljointsok,
+                        "jointsstatus": jointsstatus,
+                        "wheelalignment": wheelalignment,
+                        "wheelbalanced": wheelbalanced,
+                        "chassisok": chassisok,
+                        "fuelpumptank": fuelpumptank,
+                        "antitheftdevicefitted": antitheftdevicefitted,
+                        "vehiclefit": vehiclefit,
+                        "vehicleconformrules": vehicleconformrules,
+                        "speedgovernorfitted": speedgovernorfitted,
+                        //double
+                        "loadcapacity": intloadcapacity,
+                        //int
+                        "seatingcapacity": doubleseatingcapacity,
+                        //dtring
+                        "handdrivetype": handdrivetype,
+                        "turbochargerdesc": turbochargerdesc,
+                        "footbreakok": footbreakok,
+                        "frontnearside1": frontnearside1,
+                        "frontoffside1": frontoffside1,
+                        "rearnearside1": rearnearside1,
+                        "rearnearsideouter1": rearnearsideouter1,
+                        "rearoffsideinner1": rearoffsideinner1,
+                        "rearoffsideouter1": rearoffsideouter1,
+                        "sparetyre1": sparetyre1,
+                        "frontnearside2": frontnearside2,
+                        "frontoffside2": frontoffside2,
+                        "rearnearside2": rearnearside2,
+                        "rearnearsideouter2": rearnearsideouter2,
+                        "rearoffsideinner2": rearoffsideinner2,
+                        "rearoffsideouter2": rearoffsideouter2,
+                        "sparetyre2": sparetyre2,
+                        "steeringboxstatus": steeringboxstatus,
+                        "jointsdefect": jointsdefect,
+                        "bodyworkok": bodyworkok,
+                        "repairgoodstandard": repairgoodstandard,
+                        "windscreendoor": windscreendoor,
+                        "antitheftdevicedesc": antitheftdevicedesc,
+                      }));
+                    });
+                    try {
 
-                          // new features
-                          "noofbattery": noofbatteries,
-                          "crawleeexcavator": crawleeexcavator,
-                          "backhoewheelloader": backhoewheelloader,
-                          "roller": roller,
-                          "fixedcrane": fixedcrane,
-                          "rollercrane": rollercrane,
-                          "mobilecrane": mobilecrane,
-                          "hiabfittedcranetruck": hiabfittedcranetruck,
-                          "primemover": primemover,
-                          "primemoverfilledwithrailercrane":
-                              primemoverfilledwithrailercrane,
-                          "lowloadertrailer": lowloadertrailer,
-                          "concretemixer": concretemixer,
-                          "topmacrollers": topmacrollers,
-                          "aircompressor": aircompressor,
-                          "forklift": forklift,
-                          "specialpurposeconstructionmachinery":
-                              specialpurposeconstructionmachinery,
-                          "batterypoweredlift": batterypoweredlift,
-                          "batterypoweredscissorlift":
-                              batterypoweredscissorlift,
-                          "boomlift": boomlift,
-                          "dumptruck": dumptruck,
-                          "backheeloader": backheeloader,
-                          "vaccumpumpsystem": vaccumpumpsystem,
-                          "dryaircompressor": dryaircompressor,
-                          "transformeroilpurifizatonplant":
-                              transformeroilpurifizatonplant,
-                          "dieselgenerator": dieselgenerator,
-                          "platecompactor": platecompactor,
-                          "twindrumroller": twindrumroller,
-                          "tractors": tractors,
-                          "plaughs": plaughs,
-                          "seeders": seeders,
-                          "combineharvester": combineharvester,
-                          "sprayers": sprayers,
-                          "culters": culters,
-                          "balers": balers,
-                          "ordinaryfueltankers": ordinaryfueltankers,
-                          "watertanker": watertanker,
-                          "exhauster": exhauster,
-                          "specializedfueltanker": specializedfueltanker,
-                          "opensidebody": opensidebody,
-                          "closedsidebody": closedsidebody,
-                          "trailers": trailers,
-                          "fuseboxbypassed": fuseboxbypassed,
+                      final result = await InternetAddress.lookup(
+                          'google.com');
+                      if (result.isNotEmpty &&
+                          result[0].rawAddress.isNotEmpty) {
+                        // print('connected');
+                        dial.show();
+                        final response = await http
+                            .post(url,
+                                headers: <String, String>{
+                                  'Content-Type': 'application/json',
+                                },
+                                body: jsonEncode(<String, dynamic>{
+                                  "userid": _userid,
+                                  "custid": widget.custID == null
+                                      ? _custId
+                                      : widget.custID,
+                                  "revised": revised,
+                                  "fleetinstructionno": _fleetId,
+                                  "instructionno": _instructionId,
+                                  "photolist": newImagesList,
+                                  "logbooklist": newLogBookList,
+                                  "model":
+                                      _carmodel != null ? _carmodel : model,
+                                  "chassisno":
+                                      _chasisno != null ? _chasisno : chasisno,
+                                  "fuel": _selectedFuel,
+                                  "manufactureyear": year,
+                                  "origin": origin,
+                                  "bodytype": bodytype,
+                                  "mileage": mileage,
+                                  "enginecapacity": enginecap,
+                                  "engineno": engineno,
+                                  "make": make,
+                                  "type": "",
+                                  // "vehiclefit":"",
+                                  "inspectionplace": inspectionplace,
+                                  "musicsystemvalue": musicsystemval != ""
+                                      ? musicsystemval
+                                      : "0",
+                                  "alloy": alloy,
+                                  "regno":
+                                      _vehiclereg != null ? _vehiclereg : reg,
+                                  "location": _location,
+                                  "suspensionspacers": true,
+                                  "noofdiscs": "three",
+                                  "registrationdate": registrationdate,
+                                  "radiocassette": radiocassette,
+                                  "cdplayer": cdplayer,
+                                  "cdchanger": cdchanger,
+                                  "roadworthy": roadworthy,
+                                  // "alarm": alarm,
+                                  "roadworthynotes": roadworthynotes,
+                                  // "alarmtype": alarmtype,
+                                  // "discs": discs,
+                                  "validinsurance": validinsurance,
+                                  "mechanicalcondition": mechanicalcondition,
+                                  "bodycondition": bodycondition,
+                                  "tyres": tyres,
+                                  "generalcondition": generalcondition,
+                                  "extras": extras,
+                                  "notes": notes,
+                                  "windscreenvalue": windscreenvalue,
+                                  "antitheftvalue": antitheftvalue,
+                                  "valuer": valuer,
+                                  "assessedvalue": assessedvalue,
+                                  "sparewheel": sparewheel,
+                                  "tyresize": tyresize,
+                                  "centrallocking": centrallocking,
+                                  "powerwindowsrhf": powerwindowsrhf,
+                                  "powerwindowslhf": powerwindowslhf,
+                                  "powerwindowsrhr": powerwindowsrhr,
+                                  "powerwindowslhr": powerwindowslhr,
+                                  "powermirrors": powermirrors,
+                                  "powersteering": powersteering,
+                                  "airconditioner": airconditioner,
+                                  "absbrakes": absbrakes,
+                                  "foglights": foglights,
+                                  "rearspoiler": rearspoiler,
+                                  "sidesteps": sidesteps,
+                                  "sunroof": sunroof,
+                                  "frontgrilleguard": frontgrilleguard,
+                                  "rearbumperguard": rearbumperguard,
+                                  "sparewheelcover": sparewheelcover,
+                                  "seatcovers": seatcovers,
+                                  "turbotimer": turbotimer,
+                                  "dashboardairbag": dashboardairbag,
+                                  "steeringairbag": steeringairbag,
+                                  "alloyrims": alloyrims,
+                                  "steelrims": steelrims,
+                                  "chromerims": chromerims,
+                                  "assessedvalue": 1,
+                                  "xenonheadlights": xenonheadlights,
+                                  "heightadjustmentsystem":
+                                      heightadjustmentsystem,
+                                  "powerslidingrhfdoor": powerslidingrhfdoor,
+                                  "powerslidinglhfdoor": powerslidinglhfdoor,
+                                  "powerslidingrhrdoor": powerslidingrhrdoor,
+                                  "powerslidinglhrdoor": powerslidinglhrdoor,
+                                  "powerbootdoor": powerbootdoor,
+                                  "uphostryleatherseat": uphostryleatherseat,
+                                  "uphostryfabricseat": uphostryfabricseat,
+                                  "uphostrytwotoneseat": uphostrytwotoneseat,
+                                  "uphostrybucketseat": uphostrybucketseat,
+                                  "powerseatrhfadjustment":
+                                      powerseatrhfadjustment,
+                                  "powerseatlhfadjustment":
+                                      powerseatlhfadjustment,
+                                  "powerseatrhradjustment":
+                                      powerseatrhradjustment,
+                                  "powersteeringadjustment":
+                                      powersteeringadjustment,
+                                  "powerseatlhradjustment":
+                                      powerseatlhradjustment,
+                                  "extralargerims": extralargerims,
+                                  "rimsize": rimsize,
+                                  "noofextracurtains": noofextracurtains != ""
+                                      ? noofextracurtains
+                                      : "0",
+                                  "noofextraseats": noofextraseats != ""
+                                      ? noofextraseats
+                                      : "0",
+                                  "noofextrakneebags": noofextrakneebags != ""
+                                      ? noofextrakneebags
+                                      : "0",
+                                  "frontwindscreen": frontwindscreen != ""
+                                      ? frontwindscreen
+                                      : "none",
+                                  "rearwindscreen": rearwindscreen != ""
+                                      ? rearwindscreen
+                                      : "none",
+                                  "doors": doors,
+                                  // "yombelts": "vgvgv",
+                                  // "fromanyotherplace": "ggvgvhhh",
+                                  // "vinplatedetails": "vinplatedetails",
+                                  // "injectiontype": "injectiontype",
+                                  // "noofcylinders": "noofcylinders",
+                                  // "amfmonly": true,
+                                  "crackedrearwindscreen":
+                                      crackedrearwindscreen,
+                                  "approxmatewindscreenvalue": 878.08,
+                                  "rearwindscreenvalue": 878.08,
+                                  "musicsystemmodel": musicsystemmodel,
+                                  "musicsystemmake": musicsystemmake,
+                                  "inbuiltcassette": inbuiltcassette,
+                                  "inbuiltcd": inbuiltcd,
+                                  "inbuiltdvd": inbuiltdvd,
+                                  "inbuiltmapreader": inbuiltmapreader,
+                                  "inbuilthddcardreader": inbuilthddcardreader,
+                                  "inbuiltminidisc": inbuiltminidisc,
+                                  "inbuiltusb": inbuiltusb,
+                                  "inbuiltbluetooth": inbuiltbluetooth,
+                                  "inbuilttvscreen": inbuilttvscreen,
+                                  "inbuiltcdchanger": inbuiltcdchanger,
+                                  "inbuiltsecuritydoorlock":
+                                      inbuiltsecuritydoorlock,
+                                  "inbuiltalarm": inbuiltalarm,
+                                  "inbuiltimmobilizer": inbuiltimmobilizer,
+                                  "keylessignition": keylessignition,
+                                  "trackingdevice": trackingdevice,
+                                  "gearleverlock": gearleverlock,
+                                  "enginecutoff": enginecutoff,
+                                  "anyotherantitheftfeature":
+                                      anyotherantitheftfeature != ""
+                                          ? anyotherantitheftfeature
+                                          : "none",
+                                  "anyotherextrafeature":
+                                      anyotherextrafeature != ""
+                                          ? anyotherextrafeature
+                                          : "none",
+                                  "anyothervehiclefeature":
+                                      anyothervehiclefeature,
+                                  "anyotheraddedfeature": "fcfccf",
+                                  "anyothermusicsystem":
+                                      anyothermusicsystem != ""
+                                          ? anyothermusicsystem
+                                          : "none",
+                                  "noofdoorairbags": noofdoorairbags != ""
+                                      ? noofdoorairbags
+                                      : "0",
+                                  "musicsystemdetachable":
+                                      musicsystemdetachable,
+                                  "musicsysteminbuilt": musicsysteminbuilt,
+                                  "fittedwithamfmonly": fittedwithamfmonly,
+                                  "fittedwithreversecamera":
+                                      fittedwithreversecamera,
+                                  "amfmonly": amfmonly,
+                                  "locallyfittedalarm": locallyfittedalarm,
+                                  "antitheftmake": antitheftmake,
+                                  "roofcarrier": roofcarrier,
+                                  "roofrails": true,
+                                  "uphostryfabricleatherseat":
+                                      uphostryfabricleatherseat,
+                                  "dutypaid": dutypaid,
+                                  "color": color,
 
-                          //other
-                          "turbocharger": turbocharger,
-                          "lightfitted": lightfitted,
-                          "lightfittedok": lightfittedok,
-                          "dipswitchok": dipswitchok,
-                          "lightdipok": lightdipok,
-                          "rearlightclean": rearlightclean,
-                          "handbrakeok": handbrakeok,
-                          "hydraulicsystemok": hydraulicsystemok,
-                          "servook": servook,
-                          "handbreakmarginok": handbreakmarginok,
-                          "footbreakmarginok": footbreakmarginok,
-                          "balljointsok": balljointsok,
-                          "jointsstatus": jointsstatus,
-                          "wheelalignment": wheelalignment,
-                          "wheelbalanced": wheelbalanced,
-                          "chassisok": chassisok,
-                          "fuelpumptank": fuelpumptank,
-                          "antitheftdevicefitted": antitheftdevicefitted,
-                          "vehiclefit": vehiclefit,
-                          "vehicleconformrules": vehicleconformrules,
-                          "speedgovernorfitted": speedgovernorfitted,
+                                  // new features
+                                  "noofbattery": noofbatteries,
+                                  "crawleeexcavator": crawleeexcavator,
+                                  "backhoewheelloader": backhoewheelloader,
+                                  "roller": roller,
+                                  "fixedcrane": fixedcrane,
+                                  "rollercrane": rollercrane,
+                                  "mobilecrane": mobilecrane,
+                                  "hiabfittedcranetruck": hiabfittedcranetruck,
+                                  "primemover": primemover,
+                                  "primemoverfilledwithrailercrane":
+                                      primemoverfilledwithrailercrane,
+                                  "lowloadertrailer": lowloadertrailer,
+                                  "concretemixer": concretemixer,
+                                  "topmacrollers": topmacrollers,
+                                  "aircompressor": aircompressor,
+                                  "forklift": forklift,
+                                  "specialpurposeconstructionmachinery":
+                                      specialpurposeconstructionmachinery,
+                                  "batterypoweredlift": batterypoweredlift,
+                                  "batterypoweredscissorlift":
+                                      batterypoweredscissorlift,
+                                  "boomlift": boomlift,
+                                  "dumptruck": dumptruck,
+                                  "backheeloader": backheeloader,
+                                  "vaccumpumpsystem": vaccumpumpsystem,
+                                  "dryaircompressor": dryaircompressor,
+                                  "transformeroilpurifizatonplant":
+                                      transformeroilpurifizatonplant,
+                                  "dieselgenerator": dieselgenerator,
+                                  "platecompactor": platecompactor,
+                                  "twindrumroller": twindrumroller,
+                                  "tractors": tractors,
+                                  "plaughs": plaughs,
+                                  "seeders": seeders,
+                                  "combineharvester": combineharvester,
+                                  "sprayers": sprayers,
+                                  "culters": culters,
+                                  "balers": balers,
+                                  "ordinaryfueltankers": ordinaryfueltankers,
+                                  "watertanker": watertanker,
+                                  "exhauster": exhauster,
+                                  "specializedfueltanker":
+                                      specializedfueltanker,
+                                  "opensidebody": opensidebody,
+                                  "closedsidebody": closedsidebody,
+                                  "trailers": trailers,
+                                  "fuseboxbypassed": fuseboxbypassed,
 
-                          //double
-                          "loadcapacity": intloadcapacity,
-                          //int
-                          "seatingcapacity": doubleseatingcapacity,
-                          //dtring
-                          "handdrivetype": handdrivetype,
-                          "turbochargerdesc": turbochargerdesc,
-                          "footbreakok": footbreakok,
-                          "frontnearside1": frontnearside1,
-                          "frontoffside1": frontoffside1,
-                          "rearnearside1": rearnearside1,
-                          "rearnearsideouter1": rearnearsideouter1,
-                          "rearoffsideinner1": rearoffsideinner1,
-                          "rearoffsideouter1": rearoffsideouter1,
-                          "sparetyre1": sparetyre1,
-                          "frontnearside2": frontnearside2,
-                          "frontoffside2": frontoffside2,
-                          "rearnearside2": rearnearside2,
-                          "rearnearsideouter2": rearnearsideouter2,
-                          "rearoffsideinner2": rearoffsideinner2,
-                          "rearoffsideouter2": rearoffsideouter2,
-                          "sparetyre2": sparetyre2,
-                          "steeringboxstatus": steeringboxstatus,
-                          "jointsdefect": jointsdefect,
-                          "bodyworkok": bodyworkok,
-                          "repairgoodstandard": repairgoodstandard,
-                          "windscreendoor": windscreendoor,
-                          "antitheftdevicedesc": antitheftdevicedesc,
-                        }));
-                    log(jsonEncode(<String, dynamic>{
-                      "userid": _userid,
-                      "custid": widget.custID == null ? _custId : widget.custID,
-                      "revised": revised,
-                      "fleetinstructionno": _fleetId,
-                      "instructionno": _instructionId,
-                      "photolist": newImagesList,
-                      "logbooklist": newLogBookList,
-                      "model": _carmodel != null ? _carmodel : model,
-                      "chassisno": _chasisno != null ? _chasisno : chasisno,
-                      "fuel": _selectedFuel,
-                      "manufactureyear": year,
-                      "origin": origin,
-                      "bodytype": bodytype,
-                      "mileage": mileage,
-                      "enginecapacity": enginecap,
-                      "engineno": engineno,
-                      "make": make,
-                      "inspectionplace": inspectionplace,
-                      "musicsystemvalue":
-                          musicsystemval != "" ? musicsystemval : "0",
-                      "alloy": alloy,
-                      "regno": _vehiclereg != null ? _vehiclereg : reg,
-                      "location": _location,
-                      "suspensionspacers": true,
-                      "noofdiscs": "three",
-                      "registrationdate": registrationdate,
-                      "radiocassette": radiocassette,
-                      "cdplayer": cdplayer,
-                      "cdchanger": cdchanger,
-                      "roadworthy": roadworthy,
-                      // "alarm": alarm,
-                      "roadworthynotes": roadworthynotes,
-                      // "alarmtype": alarmtype,
-                      // "discs": discs,
-                      "validinsurance": validinsurance,
-                      "mechanicalcondition": mechanicalcondition,
-                      "bodycondition": bodycondition,
-                      "tyres": tyres,
-                      "generalcondition": generalcondition,
-                      "extras": extras,
-                      "notes": notes,
-                      "windscreenvalue": windscreenvalue,
-                      "antitheftvalue": antitheftvalue,
-                      "valuer": valuer,
-                      "assessedvalue": assessedvalue,
-                      "sparewheel": sparewheel,
-                      "tyresize": tyresize,
-                      "centrallocking": centrallocking,
-                      "powerwindowsrhf": powerwindowsrhf,
-                      "powerwindowslhf": powerwindowslhf,
-                      "powerwindowsrhr": powerwindowsrhr,
-                      "powerwindowslhr": powerwindowslhr,
-                      "powermirrors": powermirrors,
-                      "powersteering": powersteering,
-                      "airconditioner": airconditioner,
-                      "absbrakes": absbrakes,
-                      "foglights": foglights,
-                      "rearspoiler": rearspoiler,
-                      "sidesteps": sidesteps,
-                      "sunroof": sunroof,
-                      "frontgrilleguard": frontgrilleguard,
-                      "rearbumperguard": rearbumperguard,
-                      "sparewheelcover": sparewheelcover,
-                      "seatcovers": seatcovers,
-                      "turbotimer": turbotimer,
-                      "dashboardairbag": dashboardairbag,
-                      "steeringairbag": steeringairbag,
-                      "alloyrims": alloyrims,
-                      "steelrims": steelrims,
-                      "chromerims": chromerims,
-                      "assessedvalue": 1,
-                      "xenonheadlights": xenonheadlights,
-                      "heightadjustmentsystem": heightadjustmentsystem,
-                      "powerslidingrhfdoor": powerslidingrhfdoor,
-                      "powerslidinglhfdoor": powerslidinglhfdoor,
-                      "powerslidingrhrdoor": powerslidingrhrdoor,
-                      "powerslidinglhrdoor": powerslidinglhrdoor,
-                      "powerbootdoor": powerbootdoor,
-                      "uphostryleatherseat": uphostryleatherseat,
-                      "uphostryfabricseat": uphostryfabricseat,
-                      "uphostrytwotoneseat": uphostrytwotoneseat,
-                      "uphostrybucketseat": uphostrybucketseat,
-                      "powerseatrhfadjustment": powerseatrhfadjustment,
-                      "powerseatlhfadjustment": powerseatlhfadjustment,
-                      "powerseatrhradjustment": powerseatrhradjustment,
-                      "powersteeringadjustment": powersteeringadjustment,
-                      "powerseatlhradjustment": powerseatlhradjustment,
-                      "extralargerims": extralargerims,
-                      "rimsize": rimsize,
-                      "noofextracurtains":
-                          noofextracurtains != "" ? noofextracurtains : "0",
-                      "noofextraseats":
-                          noofextraseats != "" ? noofextraseats : "0",
-                      "noofextrakneebags":
-                          noofextrakneebags != "" ? noofextrakneebags : "0",
-                      "frontwindscreen":
-                          frontwindscreen != "" ? frontwindscreen : "none",
-                      "rearwindscreen":
-                          rearwindscreen != "" ? rearwindscreen : "none",
-                      "doors": doors,
-                      // "yombelts": "vgvgv",
-                      // "fromanyotherplace": "ggvgvhhh",
-                      // "vinplatedetails": "vinplatedetails",
-                      // "injectiontype": "injectiontype",
-                      // "noofcylinders": "noofcylinders",
-                      // "amfmonly": true,
-                      "crackedrearwindscreen": crackedrearwindscreen,
-                      "approxmatewindscreenvalue": 878.08,
-                      "rearwindscreenvalue": 878.08,
-                      "musicsystemmodel": musicsystemmodel,
-                      "musicsystemmake": musicsystemmake,
-                      "inbuiltcassette": inbuiltcassette,
-                      "inbuiltcd": inbuiltcd,
-                      "inbuiltdvd": inbuiltdvd,
-                      "inbuiltmapreader": inbuiltmapreader,
-                      "inbuilthddcardreader": inbuilthddcardreader,
-                      "inbuiltminidisc": inbuiltminidisc,
-                      "inbuiltusb": inbuiltusb,
-                      "inbuiltbluetooth": inbuiltbluetooth,
-                      "inbuilttvscreen": inbuilttvscreen,
-                      "inbuiltcdchanger": inbuiltcdchanger,
-                      "inbuiltsecuritydoorlock": inbuiltsecuritydoorlock,
-                      "inbuiltalarm": inbuiltalarm,
-                      "inbuiltimmobilizer": inbuiltimmobilizer,
-                      "keylessignition": keylessignition,
-                      "trackingdevice": trackingdevice,
-                      "gearleverlock": gearleverlock,
-                      "enginecutoff": enginecutoff,
-                      "anyotherantitheftfeature": anyotherantitheftfeature != ""
-                          ? anyotherantitheftfeature
-                          : "none",
-                      "anyotherextrafeature": anyotherextrafeature != ""
-                          ? anyotherextrafeature
-                          : "none",
-                      "anyothervehiclefeature": anyothervehiclefeature,
-                      "anyotheraddedfeature": "fcfccf",
-                      "anyothermusicsystem": anyothermusicsystem != ""
-                          ? anyothermusicsystem
-                          : "none",
-                      "noofdoorairbags":
-                          noofdoorairbags != "" ? noofdoorairbags : "0",
-                      "musicsystemdetachable": musicsystemdetachable,
-                      "musicsysteminbuilt": musicsysteminbuilt,
-                      "fittedwithamfmonly": fittedwithamfmonly,
-                      "fittedwithreversecamera": fittedwithreversecamera,
-                      "amfmonly": amfmonly,
-                      "locallyfittedalarm": locallyfittedalarm,
-                      "antitheftmake": antitheftmake,
-                      "roofcarrier": roofcarrier,
-                      "roofrails": true,
-                      "uphostryfabricleatherseat": uphostryfabricleatherseat,
-                      "dutypaid": dutypaid,
-                      "color": color,
+                                  //other
+                                  "turbocharger": turbocharger,
+                                  "lightfitted": lightfitted,
+                                  "lightfittedok": lightfittedok,
+                                  "dipswitchok": dipswitchok,
+                                  "lightdipok": lightdipok,
+                                  "rearlightclean": rearlightclean,
+                                  "handbrakeok": handbrakeok,
+                                  "hydraulicsystemok": hydraulicsystemok,
+                                  "servook": servook,
+                                  "handbreakmarginok": handbreakmarginok,
+                                  "footbreakmarginok": footbreakmarginok,
+                                  "balljointsok": balljointsok,
+                                  "jointsstatus": jointsstatus,
+                                  "wheelalignment": wheelalignment,
+                                  "wheelbalanced": wheelbalanced,
+                                  "chassisok": chassisok,
+                                  "fuelpumptank": fuelpumptank,
+                                  "antitheftdevicefitted":
+                                      antitheftdevicefitted,
+                                  "vehiclefit": vehiclefit,
+                                  "vehicleconformrules": vehicleconformrules,
+                                  "speedgovernorfitted": speedgovernorfitted,
 
-                      // new features
-                      "noofbattery": noofbatteries,
-                      "crawleeexcavator": crawleeexcavator,
-                      "backhoewheelloader": backhoewheelloader,
-                      "roller": roller,
-                      "fixedcrane": fixedcrane,
-                      "rollercrane": rollercrane,
-                      "mobilecrane": mobilecrane,
-                      "hiabfittedcranetruck": hiabfittedcranetruck,
-                      "primemover": primemover,
-                      "primemoverfilledwithrailercrane":
-                          primemoverfilledwithrailercrane,
-                      "lowloadertrailer": lowloadertrailer,
-                      "concretemixer": concretemixer,
-                      "topmacrollers": topmacrollers,
-                      "aircompressor": aircompressor,
-                      "forklift": forklift,
-                      "specialpurposeconstructionmachinery":
-                          specialpurposeconstructionmachinery,
-                      "batterypoweredlift": batterypoweredlift,
-                      "batterypoweredscissorlift": batterypoweredscissorlift,
-                      "boomlift": boomlift,
-                      "dumptruck": dumptruck,
-                      "backheeloader": backheeloader,
-                      "vaccumpumpsystem": vaccumpumpsystem,
-                      "dryaircompressor": dryaircompressor,
-                      "transformeroilpurifizatonplant":
-                          transformeroilpurifizatonplant,
-                      "dieselgenerator": dieselgenerator,
-                      "platecompactor": platecompactor,
-                      "twindrumroller": twindrumroller,
-                      "tractors": tractors,
-                      "plaughs": plaughs,
-                      "seeders": seeders,
-                      "combineharvester": combineharvester,
-                      "sprayers": sprayers,
-                      "culters": culters,
-                      "balers": balers,
-                      "ordinaryfueltankers": ordinaryfueltankers,
-                      "watertanker": watertanker,
-                      "exhauster": exhauster,
-                      "specializedfueltanker": specializedfueltanker,
-                      "opensidebody": opensidebody,
-                      "closedsidebody": closedsidebody,
-                      "trailers": trailers,
-                      "fuseboxbypasses": fuseboxbypassed,
+                                  //double
+                                  "loadcapacity": intloadcapacity,
+                                  //int
+                                  "seatingcapacity": doubleseatingcapacity,
+                                  //dtring
+                                  "handdrivetype": handdrivetype,
+                                  "turbochargerdesc": turbochargerdesc,
+                                  "footbreakok": footbreakok,
+                                  "frontnearside1": frontnearside1,
+                                  "frontoffside1": frontoffside1,
+                                  "rearnearside1": rearnearside1,
+                                  "rearnearsideouter1": rearnearsideouter1,
+                                  "rearoffsideinner1": rearoffsideinner1,
+                                  "rearoffsideouter1": rearoffsideouter1,
+                                  "sparetyre1": sparetyre1,
+                                  "frontnearside2": frontnearside2,
+                                  "frontoffside2": frontoffside2,
+                                  "rearnearside2": rearnearside2,
+                                  "rearnearsideouter2": rearnearsideouter2,
+                                  "rearoffsideinner2": rearoffsideinner2,
+                                  "rearoffsideouter2": rearoffsideouter2,
+                                  "sparetyre2": sparetyre2,
+                                  "steeringboxstatus": steeringboxstatus,
+                                  "jointsdefect": jointsdefect,
+                                  "bodyworkok": bodyworkok,
+                                  "repairgoodstandard": repairgoodstandard,
+                                  "windscreendoor": windscreendoor,
+                                  "antitheftdevicedesc": antitheftdevicedesc,
+                                }))
+                            .timeout(
+                          Duration(seconds: 45),
+                          onTimeout: () {
+                            // Time has run out, do what you wanted to do
+                            return http.Response(
+                                'Your valuation has been saved,make sure your connection is stable and try again later!',
+                                408); // Request Timeout response status code
+                          },
+                        );
+                        if (response != null) {
 
-                      //other
-                      "turbocharger": turbocharger,
-                      "lightfitted": lightfitted,
-                      "lightfittedok": lightfittedok,
-                      "dipswitchok": dipswitchok,
-                      "lightdipok": lightdipok,
-                      "rearlightclean": rearlightclean,
-                      "handbrakeok": handbrakeok,
-                      "hydraulicsystemok": hydraulicsystemok,
-                      "servook": servook,
-                      "handbreakmarginok": handbreakmarginok,
-                      "footbreakmarginok": footbreakmarginok,
-                      "balljointsok": balljointsok,
-                      "jointsstatus": jointsstatus,
-                      "wheelalignment": wheelalignment,
-                      "wheelbalanced": wheelbalanced,
-                      "chassisok": chassisok,
-                      "fuelpumptank": fuelpumptank,
-                      "antitheftdevicefitted": antitheftdevicefitted,
-                      "vehiclefit": vehiclefit,
-                      "vehicleconformrules": vehicleconformrules,
-                      "speedgovernorfitted": speedgovernorfitted,
-
-                      //double
-                      "loadcapacity": intloadcapacity,
-                      //int
-                      "seatingcapacity": doubleseatingcapacity,
-                      //dtring
-                      "handdrivetype": handdrivetype,
-                      "turbochargerdesc": turbochargerdesc,
-                      "footbreakok": footbreakok,
-                      "frontnearside1": frontnearside1,
-                      "frontoffside1": frontoffside1,
-                      "rearnearside1": rearnearside1,
-                      "rearnearsideouter1": rearnearsideouter1,
-                      "rearoffsideinner1": rearoffsideinner1,
-                      "rearoffsideouter1": rearoffsideouter1,
-                      "sparetyre1": sparetyre1,
-                      "frontnearside2": frontnearside2,
-                      "frontoffside2": frontoffside2,
-                      "rearnearside2": rearnearside2,
-                      "rearnearsideouter2": rearnearsideouter2,
-                      "rearoffsideinner2": rearoffsideinner2,
-                      "rearoffsideouter2": rearoffsideouter2,
-                      "sparetyre2": sparetyre2,
-                      "steeringboxstatus": steeringboxstatus,
-                      "jointsdefect": jointsdefect,
-                      "bodyworkok": bodyworkok,
-                      "repairgoodstandard": repairgoodstandard,
-                      "windscreendoor": windscreendoor,
-                      "antitheftdevicedesc": antitheftdevicedesc,
-                    }));
-                    if (response != null) {
-                      dial.hide();
-                      int statusCode = response.statusCode;
-                      if (statusCode == 200) {
-                        return _showDialog(this.context);
+                          int statusCode = response.statusCode;
+                          if (statusCode == 200) {
+                            dial.hide();
+                            return _showDialog(this.context);
+                          } else {
+                            dial.hide();
+                            print("Submit Status code::" +
+                                response.body.toString());
+                            showAlertDialog(this.context, response.body);
+                          }
+                        } else {
+                          print('no response');
+                          dial.hide();
+                          Fluttertoast.showToast(
+                              msg: 'There was no response from the server');
+                        }
                       } else {
-                        print(
-                            "Submit Status code::" + response.body.toString());
-                        showAlertDialog(this.context, response.body);
+                        // print('not connected1');
+                        // dbHelper
+                        //     .insertValuation(
+                        //   ValuationModel(
+                        //     id: index,
+                        //     valuationjson: valuationString,
+                        //   ),
+                        // )
+                        //     .then((value) {
+                        //   print('valuation saved');
+                        //   Navigator.pop(context);
+                        //   showAlertDialog(this.context,
+                        //       'Your valuation has been saved, Try later when your connection is stable');
+                        // }).onError((error, stackTrace) {
+                        //   print(error.toString());
+                        // });
                       }
-                    } else {
-                      dial.hide();
-                      Fluttertoast.showToast(
-                          msg: 'There was no response from the server');
+                    } on SocketException catch (_) {
+                      print('not connected2');
+                      print(valuationString !=null);
+                      if(valuationString !=null) {
+                        dial.show();
+                        dbHelper
+                            .insertValuation(
+                          ValuationModel(
+                            id: index,
+                            valuationjson: valuationString,
+                          ),
+                        )
+                            .then((value) {
+                          print('valuation saved');
+                          print(index);
+                          dial.hide();
+                              Fluttertoast.showToast(
+                                  msg:
+                                      value.toString());
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => SaveValuations()),
+                          );
+                        }).onError((error, stackTrace) {
+                          print(error.toString());
+                        });
+                      }else{
+                        showAlertDialog(this.context,
+                            'Valuation not saved,Try again');
+                      }
                     }
                   },
                   child: Text('Yes'))
@@ -1149,7 +1254,6 @@ class _CreateValuationState extends State<CreateValuation> {
     Widget okButton = TextButton(
       child: Text("OK"),
       onPressed: () {
-        Navigator.of(context).pop();
         Navigator.of(context)
             .push(MaterialPageRoute(builder: (context) => Home()));
       },
@@ -1205,26 +1309,7 @@ class _CreateValuationState extends State<CreateValuation> {
         default:
           string = 'Offline';
       }
-      // 2.
-      // setState(() {
-      //   if (string.contains('Offline')) {
-      //     Fluttertoast.showToast(
-      //         msg:
-      //             'No internet,your assessment will be posted once you are connected to the internet!');
-      //     // saveAssessments();
-      //   } else {
-      //     // _submit();
-      //   }
-      // });
-      // 3.
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(
-      //     content: Text(
-      //       string,
-      //       style: TextStyle(fontSize: 30),
-      //     ),
-      //   ),
-      // );
+
     });
     if (string.contains('Offline')) {
       Fluttertoast.showToast(
@@ -1271,8 +1356,33 @@ class _CreateValuationState extends State<CreateValuation> {
     prefs.setString(instructionlist, instructionsString!);
     print('instructionlist:');
     print(instructionsString!);
-    getInstructions();
+    if(instructionsString !=null || instructionsString !=""){
+      getInstructions();
+    }
+
   }
+  // getFleet() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   String auth = prefs.getString(fleetlist) as String;
+  //   List fleetList = auth.split(",");
+  //   print("getInstructions");
+  //
+  //   setState(() {
+  //     fleettList = fleetJson;
+  //     print(valuationsJson);
+  //   });
+  // }
+  //
+  // Future<void> saveFleet() async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   prefs.setString(fleetlist, fleetString!);
+  //   print('instructionlist:');
+  //   print(instructionsString!);
+  //   if(instructionsString !=null || instructionsString !=""){
+  //     getInstructions();
+  //   }
+  //
+  // }
 
   _fetchCustomers() async {
     String url = await Config.getBaseUrl();
@@ -1410,20 +1520,26 @@ class _CreateValuationState extends State<CreateValuation> {
     var status = await Permission.camera.status;
 
     if (status.isGranted) {
-      log('Camera Permission: GRANTED');
+      print('Camera Permission: GRANTED');
       setState(() {
         _isCameraPermissionGranted = true;
       });
       // Set and initialize the new camera
       onNewCameraSelected(cameras[0]);
     } else {
-      log('Camera Permission: DENIED');
+      print('Camera Permission: DENIED');
     }
   }
 
   @override
   void initState() {
+     random = new Random();
+
     _checkNetwork();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
     // if (string.contains('Online')) {
     //   // _fetchInstructions();
     //   List valuationsJson = [];
@@ -1570,6 +1686,9 @@ class _CreateValuationState extends State<CreateValuation> {
 
   bool _isEnable = false;
   var _selectedValue = null;
+  var _selectedFleet = null;
+  var _selectedInstruction = null;
+  var _selectedCustomer = null;
   var _selectedFuel = null;
   var _selectedInstaller = null;
   var _selectedAccount = 'Selected Value';
@@ -1786,7 +1905,15 @@ class _CreateValuationState extends State<CreateValuation> {
                             }
                             break;
                           case 4:
-                            _submit();
+                            if (newImagesList == null) {
+                              Fluttertoast.showToast(
+                                  msg: 'Please upload images');
+                            } else {
+                              setState(() {
+                                index = random.nextInt(1000000);
+                                _submit();
+                              });
+                            }
                         }
                       });
                     },
@@ -1934,7 +2061,7 @@ class _CreateValuationState extends State<CreateValuation> {
 
                                           isExpanded: true,
                                           onChanged: (value) {
-                                            _selectedValue = value;
+                                            _selectedCustomer = value;
                                             _custId = value != null
                                                 ? value['custid']
                                                 : null;
@@ -1955,7 +2082,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                             setState(() {
                                               // _selectedValue = value!;
                                             });
-                                            print(_selectedValue);
+                                            // print(_selectedValue);
                                             print(_instructionId);
                                             print(_custid);
                                             print(_custPhone);
@@ -1973,36 +2100,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                               value: val,
                                             );
                                           }).toList(),
-                                        ),
-                                        CheckboxListTile(
-                                          controlAffinity:
-                                              ListTileControlAffinity.trailing,
-                                          title: Text(
-                                            'Revised',
-                                            overflow: TextOverflow.ellipsis,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .subtitle2!
-                                                .copyWith(),
-                                          ),
-                                          value: revised,
-                                          activeColor: Colors.blue,
-                                          onChanged: (bool? value) {
-                                            setState(() {
-                                              if (_custId != null &&
-                                                  string.contains('Online')) {
-                                                _fetchInstructions();
-                                              } else {
-                                                Fluttertoast.showToast(
-                                                    msg: 'Select Customer');
-                                              }
-
-                                              revised = value!;
-                                            });
-                                          },
-                                        ),
-                                        SizedBox(
-                                          height: 20,
                                         ),
                                         SizedBox(
                                           height: 20,
@@ -2160,78 +2257,84 @@ class _CreateValuationState extends State<CreateValuation> {
                                             )
                                           ],
                                         ),
-                                        SearchableDropdown(
-                                          hint: Text(
-                                            "Attach Instruction",
-                                          ),
-
-                                          isExpanded: true,
-                                          onChanged: (value) {
-                                            // _location = (value != null
-                                            //     ? ['location']
-                                            //     : null);
-                                            // _chasisno = (value != null
-                                            //     ? ['chassisno']
-                                            //     : null) as String?;
-                                            setState(() {
-                                              _selectedValue = value;
-                                              _fleetId = 0;
-                                              _instructionId = value != null
-                                                  ? value['id']
-                                                  : null;
-                                              _make.text = value != null
-                                                  ? value['make']
-                                                  : null;
-                                              _chassisno.text = value != null
-                                                  ? value['chassisno']
-                                                  : null;
-                                              _policyno = value != null
-                                                  ? value['policyno']
-                                                  : null;
-                                              _claimno = value != null
-                                                  ? value['claimno']
-                                                  : null;
-                                              _model.text = value != null
-                                                  ? value['model']
-                                                  : null;
-
-                                              _location = value != null
-                                                  ? value['location']
-                                                  : null;
-                                              _owner = value != null
-                                                  ? value['owner']
-                                                  : null;
-                                              _insuredvalue = value != null
-                                                  ? value['insuredvalue']
-                                                  : null;
-                                              _reg.text = value != null
-                                                  ? value['regno']
-                                                  : null;
-                                              _excess = value != null
-                                                  ? value['excess']
-                                                  : null;
-                                              _claimString = value != null
-                                                  ? value['claimform']
-                                                  : null;
-                                            });
-                                            // print(_selectedValue);
-                                            // print(_custName);
-                                            // print(_custId);
-                                            // print(_custPhone);
-                                            _dropdownError = null;
+                                        InkWell(
+                                          onTap: () {
+                                            _checkIfInstructionIsSelected();
                                           },
+                                          child: SearchableDropdown(
+                                            hint: Text(
+                                              "Attach Instruction",
+                                            ),
 
-                                          // isCaseSensitiveSearch: true,
-                                          searchHint: Text(
-                                            'Attach Instruction',
-                                            style: TextStyle(fontSize: 20),
+                                            isExpanded: true,
+                                            onChanged: (value) {
+                                              // _location = (value != null
+                                              //     ? ['location']
+                                              //     : null);
+                                              // _chasisno = (value != null
+                                              //     ? ['chassisno']
+                                              //     : null) as String?;
+                                              setState(() {
+                                                _selectedInstruction = value;
+                                                _selectedFleet = null;
+                                                _fleetId = 0;
+                                                _instructionId = value != null
+                                                    ? value['id']
+                                                    : null;
+                                                _make.text = value != null
+                                                    ? value['make']
+                                                    : null;
+                                                _chassisno.text = value != null
+                                                    ? value['chassisno']
+                                                    : null;
+                                                _policyno = value != null
+                                                    ? value['policyno']
+                                                    : null;
+                                                _claimno = value != null
+                                                    ? value['claimno']
+                                                    : null;
+                                                _model.text = value != null
+                                                    ? value['model']
+                                                    : null;
+
+                                                _location = value != null
+                                                    ? value['location']
+                                                    : null;
+                                                _owner = value != null
+                                                    ? value['owner']
+                                                    : null;
+                                                _insuredvalue = value != null
+                                                    ? value['insuredvalue']
+                                                    : null;
+                                                _reg.text = value != null
+                                                    ? value['regno']
+                                                    : null;
+                                                _excess = value != null
+                                                    ? value['excess']
+                                                    : null;
+                                                _claimString = value != null
+                                                    ? value['claimform']
+                                                    : null;
+                                              });
+                                              // print(_selectedValue);
+                                              // print(_custName);
+                                              // print(_custId);
+                                              // print(_custPhone);
+                                              _dropdownError = null;
+                                            },
+
+                                            // isCaseSensitiveSearch: true,
+                                            searchHint: Text(
+                                              'Attach Instruction',
+                                              style: TextStyle(fontSize: 20),
+                                            ),
+                                            items: valuationsJson.map((val) {
+                                              return DropdownMenuItem(
+                                                child: getListTile1(val),
+                                                value: val,
+                                              );
+                                            }).toList(),
                                           ),
-                                          items: valuationsJson.map((val) {
-                                            return DropdownMenuItem(
-                                              child: getListTile1(val),
-                                              value: val,
-                                            );
-                                          }).toList(),
                                         ),
                                         SizedBox(
                                           height: 10,
@@ -2255,59 +2358,65 @@ class _CreateValuationState extends State<CreateValuation> {
                                             )
                                           ],
                                         ),
-                                        SearchableDropdown(
-                                          hint: Text(
-                                            "Attach Fleet",
-                                          ),
-
-                                          isExpanded: true,
-                                          onChanged: (value) {
-                                            // _location = (value != null
-                                            //     ? ['location']
-                                            //     : null);
-                                            // _chasisno = (value != null
-                                            //     ? ['chassisno']
-                                            //     : null) as String?;
-                                            setState(() {
-                                              _selectedValue = value;
-                                              _instructionId = 0;
-                                              _reg.clear();
-                                              _make.clear();
-                                              _model.clear();
-                                              _excess = "";
-
-                                              _fleetId = value != null
-                                                  ? value['id']
-                                                  : null;
-
-                                              _chassisno.clear();
-                                              _policyno = "";
-                                              _claimno = "";
-
-                                              _location = value != null
-                                                  ? value['location']
-                                                  : null;
-                                              _owner = "";
-                                              _insuredvalue = null;
-                                            });
-                                            // print(_selectedValue);
-                                            // print(_custName);
-                                            // print(_custId);
-                                            // print(_custPhone);
-                                            _dropdownError = null;
+                                        InkWell(
+                                          onTap: () {
+                                            _checkIfInstructionIsSelected();
                                           },
+                                          child: SearchableDropdown(
+                                            hint: Text(
+                                              "Attach Fleet",
+                                            ),
+                                            // readOnly: isInstructionSelected ==true?true:false,
+                                            isExpanded: true,
+                                            onChanged: (value) {
+                                              // _location = (value != null
+                                              //     ? ['location']
+                                              //     : null);
+                                              // _chasisno = (value != null
+                                              //     ? ['chassisno']
+                                              //     : null) as String?;
+                                              setState(() {
+                                                _selectedFleet = value;
+                                                _selectedInstruction = null;
+                                                _instructionId = 0;
+                                                _reg.clear();
+                                                _make.clear();
+                                                _model.clear();
+                                                _excess = "";
 
-                                          // isCaseSensitiveSearch: true,
-                                          searchHint: Text(
-                                            'Attach Fleet',
-                                            style: TextStyle(fontSize: 20),
+                                                _fleetId = value != null
+                                                    ? value['id']
+                                                    : null;
+
+                                                _chassisno.clear();
+                                                _policyno = "";
+                                                _claimno = "";
+
+                                                _location = value != null
+                                                    ? value['location']
+                                                    : null;
+                                                _owner = "";
+                                                _insuredvalue = null;
+                                              });
+                                              // print(_selectedValue);
+                                              // print(_custName);
+                                              // print(_custId);
+                                              // print(_custPhone);
+                                              _dropdownError = null;
+                                            },
+
+                                            // isCaseSensitiveSearch: true,
+                                            searchHint: Text(
+                                              'Attach Fleet',
+                                              style: TextStyle(fontSize: 20),
+                                            ),
+                                            items: fleetJson.map((val) {
+                                              return DropdownMenuItem(
+                                                child: getListTile2(val),
+                                                value: val,
+                                              );
+                                            }).toList(),
                                           ),
-                                          items: fleetJson.map((val) {
-                                            return DropdownMenuItem(
-                                              child: getListTile2(val),
-                                              value: val,
-                                            );
-                                          }).toList(),
                                         ),
                                         SizedBox(
                                           height: 10,
@@ -2386,6 +2495,135 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                           ],
                                         ),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Transmission type",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      SearchableDropdown(
+                                        hint: Text(
+                                          "Transmission type",
+                                        ),
+
+                                        isExpanded: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            transmissionid = value.id;
+
+                                          });
+                                          print(_instructionId);
+                                          _dropdownError = null;
+                                        },
+
+                                        // isCaseSensitiveSearch: true,
+                                        searchHint: Text(
+                                          'Transmission type',
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                        items: transmissiontype.map((val) {
+                                          return DropdownMenuItem(
+                                            child: Text(val.name),
+                                            value: val,
+                                          );
+                                        }).toList(),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Drive type",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      SearchableDropdown(
+                                        hint: Text(
+                                          "Drive type",
+                                        ),
+
+                                        isExpanded: true,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            drivetypeid = value.id;
+
+                                          });
+                                          print(_instructionId);
+                                          _dropdownError = null;
+                                        },
+
+                                        // isCaseSensitiveSearch: true,
+                                        searchHint: Text(
+                                          'Drive type',
+                                          style: TextStyle(fontSize: 20),
+                                        ),
+                                        items: drivetype.map((val) {
+                                          return DropdownMenuItem(
+                                            child: Text(val.name),
+                                            value: val,
+                                          );
+                                        }).toList(),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            "Transimission speed",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          Text(
+                                            "",
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(color: Colors.blue),
+                                          )
+                                        ],
+                                      ),
+                                      TextFormField(
+                                        readOnly: true,
+                                        initialValue: _owner,
+                                        style: TextStyle(color: Colors.blue),
+                                        onSaved: (value) => {vehicleReg},
+                                        keyboardType: TextInputType.name,
+                                        decoration: InputDecoration(
+                                            hintText: "Transimission speed"),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
                                       ),
                                       Row(
                                         children: [
@@ -2616,7 +2854,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2625,9 +2863,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         // initialValue: _chasisno,
                                         controller: _chassisno,
                                         onSaved: (value) => {engineNo},
@@ -2647,7 +2882,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2656,9 +2891,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         style: TextStyle(color: Colors.blue),
                                         // initialValue:
                                         //     _make != null ? _make : '',
@@ -2682,7 +2914,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2691,9 +2923,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         style: TextStyle(color: Colors.blue),
                                         // initialValue:
                                         //     _carmodel != null ? _carmodel : '',
@@ -2717,7 +2946,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2726,9 +2955,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _handdrivetype,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -2749,7 +2975,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2758,9 +2984,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _turbochargerdesc,
                                         onSaved: (value) => {vehicleColor},
                                         keyboardType: TextInputType.text,
@@ -2782,7 +3005,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2791,9 +3014,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _footbreakok,
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
@@ -2814,7 +3034,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2823,9 +3043,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _frontnearside1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -2846,7 +3063,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2855,9 +3072,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _frontoffside1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -2878,7 +3092,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2887,9 +3101,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearnearside1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -2910,7 +3121,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2919,14 +3130,12 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearnearsideouter1,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
                                         decoration: InputDecoration(
-                                            hintText: "Enter Load Capacity"),
+                                            hintText:
+                                                "Enter Rearnearsideouter1"),
                                       ),
                                       SizedBox(
                                         height: 10,
@@ -2942,7 +3151,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2951,9 +3160,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearoffsideinner1,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -2979,9 +3185,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearoffsideouter1,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -2999,7 +3202,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3008,9 +3211,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _sparetyre1,
                                         onSaved: (value) => {},
                                         keyboardType: TextInputType.text,
@@ -3031,7 +3231,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3040,9 +3240,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _frontnearside2,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3063,7 +3260,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3072,9 +3269,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _frontoffside2,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3095,7 +3289,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3104,9 +3298,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearnearside2,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3127,7 +3318,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3136,9 +3327,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearnearsideouter2,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3159,7 +3347,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3168,9 +3356,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearoffsideinner2,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3196,9 +3381,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _rearoffsideouter2,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3218,7 +3400,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3227,9 +3409,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _sparetyre2,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3250,7 +3429,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3259,9 +3438,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _steeringboxstatus,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3282,7 +3458,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3291,9 +3467,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _jointsdefect,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3317,7 +3490,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3326,9 +3499,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _bodyworkok,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3346,7 +3516,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3355,9 +3525,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _repairgoodstandard,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3377,7 +3544,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3386,9 +3553,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _windscreendoor,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3409,7 +3573,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3418,9 +3582,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _antitheftdevicedesc,
                                         onSaved: (value) => {remarks},
                                         keyboardType: TextInputType.text,
@@ -3584,7 +3745,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3593,9 +3754,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _mileage,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3616,7 +3774,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3625,9 +3783,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _color,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3680,7 +3835,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3689,9 +3844,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _bodytype,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3712,7 +3864,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3721,9 +3873,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _enginecap,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -3744,7 +3893,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "*",
+                                            "",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -3753,9 +3902,6 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        validator: (value) => value!.isEmpty
-                                            ? "This field is required"
-                                            : null,
                                         controller: _poi,
                                         onSaved: (value) => {engineNo},
                                         keyboardType: TextInputType.text,
@@ -4246,6 +4392,32 @@ class _CreateValuationState extends State<CreateValuation> {
                                             ),
                                           ),
                                         ]),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Any Other Feature",
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle2!
+                                              .copyWith(),
+                                        ),
+                                        Text(
+                                          "",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle2!
+                                              .copyWith(color: Colors.blue),
+                                        )
+                                      ],
+                                    ),
+                                    TextFormField(
+                                      // controller: _anyothermusicsystem,
+                                      onSaved: (value) => {vehicleReg},
+                                      keyboardType: TextInputType.name,
+                                      decoration: InputDecoration(
+                                          hintText: "Enter Any Other Feature"),
+                                    ),
                                   ],
                                 ),
                               )),
@@ -6712,6 +6884,35 @@ class _CreateValuationState extends State<CreateValuation> {
                                     SizedBox(
                                       height: 10,
                                     ),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    Row(
+                                      children: [
+                                        Text(
+                                          "Spare wheel size",
+                                          overflow: TextOverflow.ellipsis,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle2!
+                                              .copyWith(),
+                                        ),
+                                        Text(
+                                          "",
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .subtitle2!
+                                              .copyWith(color: Colors.blue),
+                                        )
+                                      ],
+                                    ),
+                                    TextFormField(
+                                      controller: _sparewheelsize,
+                                      onSaved: (value) => {vehicleReg},
+                                      keyboardType: TextInputType.name,
+                                      decoration: InputDecoration(
+                                          hintText: "Enter Body Condition"),
+                                    ),
                                     Row(
                                       children: [
                                         Text(
@@ -7143,545 +7344,10 @@ class _CreateValuationState extends State<CreateValuation> {
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              SingleChildScrollView(
-                                child: AspectRatio(
-                                  aspectRatio:
-                                      1 / controller!.value.aspectRatio,
-                                  child: Stack(
-                                    children: [
-                                      CameraPreview(
-                                        controller!,
-                                        child: LayoutBuilder(builder:
-                                            (BuildContext context,
-                                                BoxConstraints constraints) {
-                                          return GestureDetector(
-                                            behavior: HitTestBehavior.opaque,
-                                            onTapDown: (details) =>
-                                                onViewFinderTap(
-                                                    details, constraints),
-                                          );
-                                        }),
-                                      ),
-                                      // TODO: Uncomment to preview the overlay
-                                      // Center(
-                                      //   child: Image.asset(
-                                      //     'assets/camera_aim.png',
-                                      //     color: Colors.greenAccent,
-                                      //     width: 150,
-                                      //     height: 150,
-                                      //   ),
-                                      // ),
-                                      Padding(
-                                        padding: const EdgeInsets.fromLTRB(
-                                          16.0,
-                                          8.0,
-                                          16.0,
-                                          8.0,
-                                        ),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          children: [
-                                            Align(
-                                              alignment: Alignment.topRight,
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.black87,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                    left: 8.0,
-                                                    right: 8.0,
-                                                  ),
-                                                  child: DropdownButton<
-                                                      ResolutionPreset>(
-                                                    dropdownColor:
-                                                        Colors.black87,
-                                                    underline: Container(),
-                                                    value:
-                                                        currentResolutionPreset,
-                                                    items: [
-                                                      for (ResolutionPreset preset
-                                                          in resolutionPresets)
-                                                        DropdownMenuItem(
-                                                          child: Text(
-                                                            preset
-                                                                .toString()
-                                                                .split('.')[1]
-                                                                .toUpperCase(),
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .white),
-                                                          ),
-                                                          value: preset,
-                                                        )
-                                                    ],
-                                                    onChanged: (value) {
-                                                      setState(() {
-                                                        currentResolutionPreset =
-                                                            value!;
-                                                        _isCameraInitialized =
-                                                            false;
-                                                      });
-                                                      onNewCameraSelected(
-                                                          controller!
-                                                              .description);
-                                                    },
-                                                    hint: Text("Select item"),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            // Spacer(),
-                                            Padding(
-                                              padding: const EdgeInsets.only(
-                                                  right: 8.0, top: 16.0),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          10.0),
-                                                ),
-                                                child: Padding(
-                                                  padding:
-                                                      const EdgeInsets.all(8.0),
-                                                  child: Text(
-                                                    _currentExposureOffset
-                                                            .toStringAsFixed(
-                                                                1) +
-                                                        'x',
-                                                    style: TextStyle(
-                                                        color: Colors.black),
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              child: RotatedBox(
-                                                quarterTurns: 3,
-                                                child: Container(
-                                                  height: 30,
-                                                  child: Slider(
-                                                    value:
-                                                        _currentExposureOffset,
-                                                    min:
-                                                        _minAvailableExposureOffset,
-                                                    max:
-                                                        _maxAvailableExposureOffset,
-                                                    activeColor: Colors.white,
-                                                    inactiveColor:
-                                                        Colors.white30,
-                                                    onChanged: (value) async {
-                                                      setState(() {
-                                                        _currentExposureOffset =
-                                                            value;
-                                                      });
-                                                      await controller!
-                                                          .setExposureOffset(
-                                                              value);
-                                                    },
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: Slider(
-                                                    value: _currentZoomLevel,
-                                                    min: _minAvailableZoom,
-                                                    max: _maxAvailableZoom,
-                                                    activeColor: Colors.white,
-                                                    inactiveColor:
-                                                        Colors.white30,
-                                                    onChanged: (value) async {
-                                                      setState(() {
-                                                        _currentZoomLevel =
-                                                            value;
-                                                      });
-                                                      await controller!
-                                                          .setZoomLevel(value);
-                                                    },
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(
-                                                          right: 8.0),
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black87,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                    ),
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
-                                                      child: Text(
-                                                        _currentZoomLevel
-                                                                .toStringAsFixed(
-                                                                    1) +
-                                                            'x',
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                InkWell(
-                                                  onTap: () async {
-                                                    image = await takePicture();
-                                                    File image1 =
-                                                        File(image!.path);
-
-                                                    int currentUnix = DateTime
-                                                            .now()
-                                                        .millisecondsSinceEpoch;
-
-                                                    String fileFormat = image1
-                                                        .path
-                                                        .split('.')
-                                                        .last;
-                                                    setState(() {
-                                                      iscameraopen = false;
-                                                    });
-                                                    iscameraopen = false;
-                                                    // GallerySaver.saveImage(
-                                                    //         image!.path)
-                                                    // .then((path) {
-                                                    showDialog(
-                                                      context: context,
-                                                      builder: (BuildContext
-                                                          context) {
-                                                        return _SystemPadding(
-                                                          child: AlertDialog(
-                                                            contentPadding:
-                                                                const EdgeInsets
-                                                                    .all(16.0),
-                                                            content: Row(
-                                                              children: <
-                                                                  Widget>[
-                                                                Expanded(
-                                                                  child:
-                                                                      TextFormField(
-                                                                    controller:
-                                                                        _itemDescController,
-                                                                    keyboardType:
-                                                                        TextInputType
-                                                                            .text,
-                                                                    autofocus:
-                                                                        true,
-                                                                    decoration: const InputDecoration(
-                                                                        labelText:
-                                                                            'Enter Description',
-                                                                        hintText:
-                                                                            'Description'),
-                                                                  ),
-                                                                )
-                                                              ],
-                                                            ),
-                                                            actions: <Widget>[
-                                                              TextButton(
-                                                                  child: const Text(
-                                                                      'CANCEL'),
-                                                                  onPressed:
-                                                                      () {
-                                                                    Navigator.pop(
-                                                                        context);
-                                                                  }),
-                                                              TextButton(
-                                                                  child:
-                                                                      const Text(
-                                                                          'OKAY'),
-                                                                  onPressed:
-                                                                      () {
-                                                                    Navigator.pop(
-                                                                        context);
-                                                                    setState(
-                                                                        () {
-                                                                      String?
-                                                                          description =
-                                                                          _itemDescController
-                                                                              .text
-                                                                              .trim();
-                                                                      print(
-                                                                          description);
-                                                                      final bytes =
-                                                                          Io.File(image!.path)
-                                                                              .readAsBytesSync();
-
-                                                                      String
-                                                                          imageFile =
-                                                                          base64Encode(
-                                                                              bytes);
-                                                                      images = Images(
-                                                                          filename:
-                                                                              description,
-                                                                          attachment:
-                                                                              imageFile);
-                                                                      _addImage(
-                                                                          image!);
-                                                                      _addImages(
-                                                                          images!);
-                                                                      _addDescription(
-                                                                          description);
-                                                                    });
-                                                                  })
-                                                            ],
-                                                          ),
-                                                        );
-                                                      },
-                                                    );
-                                                    // });
-                                                    print(fileFormat);
-                                                  },
-                                                  child: Stack(
-                                                    alignment: Alignment.center,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.circle,
-                                                        color:
-                                                            _isVideoCameraSelected
-                                                                ? Colors.white
-                                                                : Colors
-                                                                    .white38,
-                                                        size: 80,
-                                                      ),
-                                                      Icon(
-                                                        Icons.circle,
-                                                        color:
-                                                            _isVideoCameraSelected
-                                                                ? Colors.blue
-                                                                : Colors.white,
-                                                        size: 65,
-                                                      ),
-                                                      _isVideoCameraSelected &&
-                                                              _isRecordingInProgress
-                                                          ? Icon(
-                                                              Icons
-                                                                  .stop_rounded,
-                                                              color:
-                                                                  Colors.white,
-                                                              size: 32,
-                                                            )
-                                                          : Container(),
-                                                    ],
-                                                  ),
-                                                ),
-                                                InkWell(
-                                                  onTap: image != null
-                                                      ? () {
-                                                          // Navigator.of(context)
-                                                          //     .push(
-                                                          //   MaterialPageRoute(
-                                                          //     builder: (context) =>
-                                                          //         PreviewScreen(
-                                                          //       image: image!,
-                                                          //       fileList:
-                                                          //           imageslist,
-                                                          //     ),
-                                                          //   ),
-                                                          // );
-                                                        }
-                                                      : null,
-                                                  child: Container(
-                                                    width: 60,
-                                                    height: 60,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10.0),
-                                                      border: Border.all(
-                                                        color: Colors.white,
-                                                        width: 2,
-                                                      ),
-                                                      image: image != null
-                                                          ? DecorationImage(
-                                                              image: FileImage(
-                                                                File(image!
-                                                                    .path),
-                                                              ),
-                                                              fit: BoxFit.cover,
-                                                            )
-                                                          : null,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
                               Expanded(
-                                child: Column(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 8.0),
-                                      child: Row(
-                                        children: [],
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                          16.0, 8.0, 16.0, 8.0),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: InkWell(
-                                              onTap: () async {
-                                                setState(() {
-                                                  _currentFlashMode =
-                                                      FlashMode.off;
-                                                });
-                                                await controller!.setFlashMode(
-                                                  FlashMode.off,
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.flash_off,
-                                                color: _currentFlashMode ==
-                                                        FlashMode.off
-                                                    ? Colors.amber
-                                                    : Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: InkWell(
-                                              onTap: () async {
-                                                setState(() {
-                                                  _currentFlashMode =
-                                                      FlashMode.auto;
-                                                });
-                                                await controller!.setFlashMode(
-                                                  FlashMode.auto,
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.flash_auto,
-                                                color: _currentFlashMode ==
-                                                        FlashMode.auto
-                                                    ? Colors.amber
-                                                    : Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: InkWell(
-                                              onTap: () async {
-                                                setState(() {
-                                                  _currentFlashMode =
-                                                      FlashMode.always;
-                                                });
-                                                await controller!.setFlashMode(
-                                                  FlashMode.always,
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.flash_on,
-                                                color: _currentFlashMode ==
-                                                        FlashMode.always
-                                                    ? Colors.amber
-                                                    : Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: InkWell(
-                                              onTap: () async {
-                                                setState(() {
-                                                  _currentFlashMode =
-                                                      FlashMode.torch;
-                                                });
-                                                await controller!.setFlashMode(
-                                                  FlashMode.torch,
-                                                );
-                                              },
-                                              child: Icon(
-                                                Icons.highlight,
-                                                color: _currentFlashMode ==
-                                                        FlashMode.torch
-                                                    ? Colors.amber
-                                                    : Colors.white,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ],
-                          )
-                        : Center(
-                            child: Text(
-                              'LOADING',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Row(),
-                          Text(
-                            'Permission denied',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                            ),
-                          ),
-                          SizedBox(height: 24),
-                          ElevatedButton(
-                            onPressed: () {
-                              getPermissionStatus();
-                            },
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                'Give permission',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-              )
-            : islogbookcameraopen == true
-                ? Scaffold(
-                    backgroundColor: Colors.black,
-                    body: _isCameraPermissionGranted
-                        ? _isCameraInitialized
-                            ? Column(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  SingleChildScrollView(
+                                flex: 6,
+                                child: SizedBox(
+                                  child: SingleChildScrollView(
                                     child: AspectRatio(
                                       aspectRatio:
                                           1 / controller!.value.aspectRatio,
@@ -7895,14 +7561,15 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 Row(
                                                   mainAxisAlignment:
                                                       MainAxisAlignment
-                                                          .spaceBetween,
+                                                          .spaceAround,
                                                   children: [
                                                     InkWell(
                                                       onTap: () async {
-                                                        logbbok =
+                                                        image =
                                                             await takePicture();
                                                         File image1 =
-                                                            File(logbbok!.path);
+                                                            File(image!.path);
+
                                                         int currentUnix = DateTime
                                                                 .now()
                                                             .millisecondsSinceEpoch;
@@ -7912,13 +7579,11 @@ class _CreateValuationState extends State<CreateValuation> {
                                                                 .split('.')
                                                                 .last;
                                                         setState(() {
-                                                          islogbookcameraopen =
-                                                              false;
+                                                          iscameraopen = false;
                                                         });
-                                                        islogbookcameraopen =
-                                                            false;
+                                                        iscameraopen = false;
                                                         // GallerySaver.saveImage(
-                                                        //         logbbok!.path)
+                                                        //         image!.path)
                                                         //     .then((path) {
                                                         showDialog(
                                                           context: context,
@@ -7938,7 +7603,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                                       child:
                                                                           TextFormField(
                                                                         controller:
-                                                                            _logBookDescController,
+                                                                            _itemDescController,
                                                                         keyboardType:
                                                                             TextInputType.text,
                                                                         autofocus:
@@ -7973,23 +7638,23 @@ class _CreateValuationState extends State<CreateValuation> {
                                                                             () {
                                                                           String?
                                                                               description =
-                                                                              _logBookDescController.text.trim();
+                                                                              _itemDescController.text.trim();
                                                                           print(
                                                                               description);
                                                                           final bytes =
-                                                                              Io.File(logbbok!.path).readAsBytesSync();
+                                                                              Io.File(image!.path).readAsBytesSync();
 
                                                                           String
                                                                               imageFile =
                                                                               base64Encode(bytes);
-                                                                          logbooks = Images(
+                                                                          images = Images(
                                                                               filename: description,
                                                                               attachment: imageFile);
-                                                                          _addLogBookImage(
-                                                                              logbbok!);
-                                                                          _addLogBookImages(
-                                                                              logbooks!);
-                                                                          _addLogBookDescription(
+                                                                          _addImage(
+                                                                              image!);
+                                                                          _addImages(
+                                                                              images!);
+                                                                          _addDescription(
                                                                               description);
                                                                         });
                                                                       })
@@ -8020,9 +7685,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                                             color:
                                                                 _isVideoCameraSelected
                                                                     ? Colors
-                                                                        .blue
+                                                                        .white
                                                                     : Colors
-                                                                        .white,
+                                                                        .blue,
                                                             size: 65,
                                                           ),
                                                           _isVideoCameraSelected &&
@@ -8038,50 +7703,45 @@ class _CreateValuationState extends State<CreateValuation> {
                                                         ],
                                                       ),
                                                     ),
-                                                    InkWell(
-                                                      onTap: logbbok != null
-                                                          ? () {
-                                                              // Navigator.of(context)
-                                                              //     .push(
-                                                              //   MaterialPageRoute(
-                                                              //     builder: (context) =>
-                                                              //         PreviewScreen(
-                                                              //       image: image!,
-                                                              //       fileList:
-                                                              //           imageslist,
-                                                              //     ),
-                                                              //   ),
-                                                              // );
-                                                            }
-                                                          : null,
-                                                      child: Container(
-                                                        width: 60,
-                                                        height: 60,
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color: Colors.black,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(
-                                                                      10.0),
-                                                          border: Border.all(
-                                                            color: Colors.white,
-                                                            width: 2,
-                                                          ),
-                                                          image: logbbok != null
-                                                              ? DecorationImage(
-                                                                  image:
-                                                                      FileImage(
-                                                                    File(logbbok!
-                                                                        .path),
-                                                                  ),
-                                                                  fit: BoxFit
-                                                                      .cover,
-                                                                )
-                                                              : null,
-                                                        ),
-                                                      ),
-                                                    ),
+                                                    // InkWell(
+                                                    //   onTap: image != null
+                                                    //       ? () {
+                                                    //           // Navigator.of(context)
+                                                    //           //     .push(
+                                                    //           //   MaterialPageRoute(
+                                                    //           //     builder: (context) =>
+                                                    //           //         PreviewScreen(
+                                                    //           //       image: image!,
+                                                    //           //       fileList:
+                                                    //           //           imageslist,
+                                                    //           //     ),
+                                                    //           //   ),
+                                                    //           // );
+                                                    //         }
+                                                    //       : null,
+                                                    //   child: Container(
+                                                    //     width: 60,
+                                                    //     height: 60,
+                                                    //     decoration: BoxDecoration(
+                                                    //       color: Colors.black,
+                                                    //       borderRadius:
+                                                    //           BorderRadius.circular(
+                                                    //               10.0),
+                                                    //       border: Border.all(
+                                                    //         color: Colors.white,
+                                                    //         width: 2,
+                                                    //       ),
+                                                    //       image: image != null
+                                                    //           ? DecorationImage(
+                                                    //               image: FileImage(
+                                                    //                 File(image!.path),
+                                                    //               ),
+                                                    //               fit: BoxFit.cover,
+                                                    //             )
+                                                    //           : null,
+                                                    //     ),
+                                                    //   ),
+                                                    // ),
                                                   ],
                                                 ),
                                               ],
@@ -8091,7 +7751,563 @@ class _CreateValuationState extends State<CreateValuation> {
                                       ),
                                     ),
                                   ),
+                                ),
+                              ),
+                              Flexible(
+                                child: Column(
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8.0),
+                                      child: Row(
+                                        children: [],
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          16.0, 8.0, 16.0, 8.0),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.off;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.off,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.flash_off,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.off
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.auto;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.auto,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.flash_auto,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.auto
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.always;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.always,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.flash_on,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.always
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: InkWell(
+                                              onTap: () async {
+                                                setState(() {
+                                                  _currentFlashMode =
+                                                      FlashMode.torch;
+                                                });
+                                                await controller!.setFlashMode(
+                                                  FlashMode.torch,
+                                                );
+                                              },
+                                              child: Icon(
+                                                Icons.highlight,
+                                                color: _currentFlashMode ==
+                                                        FlashMode.torch
+                                                    ? Colors.amber
+                                                    : Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Center(
+                            child: Text(
+                              'LOADING',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(),
+                          Text(
+                            'Permission denied',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                            ),
+                          ),
+                          SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () {
+                              getPermissionStatus();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                'Give permission',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+              )
+            : islogbookcameraopen == true
+                ? Scaffold(
+                    backgroundColor: Colors.black,
+                    body: _isCameraPermissionGranted
+                        ? _isCameraInitialized
+                            ? Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
                                   Expanded(
+                                    flex: 6,
+                                    child: SizedBox(
+                                      child: SingleChildScrollView(
+                                        child: AspectRatio(
+                                          aspectRatio:
+                                              1 / controller!.value.aspectRatio,
+                                          child: Stack(
+                                            children: [
+                                              CameraPreview(
+                                                controller!,
+                                                child: LayoutBuilder(builder:
+                                                    (BuildContext context,
+                                                        BoxConstraints
+                                                            constraints) {
+                                                  return GestureDetector(
+                                                    behavior:
+                                                        HitTestBehavior.opaque,
+                                                    onTapDown: (details) =>
+                                                        onViewFinderTap(details,
+                                                            constraints),
+                                                  );
+                                                }),
+                                              ),
+                                              // TODO: Uncomment to preview the overlay
+                                              // Center(
+                                              //   child: Image.asset(
+                                              //     'assets/camera_aim.png',
+                                              //     color: Colors.greenAccent,
+                                              //     width: 150,
+                                              //     height: 150,
+                                              //   ),
+                                              // ),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                  16.0,
+                                                  8.0,
+                                                  16.0,
+                                                  8.0,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.end,
+                                                  children: [
+                                                    Align(
+                                                      alignment:
+                                                          Alignment.topRight,
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black87,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      10.0),
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .only(
+                                                            left: 8.0,
+                                                            right: 8.0,
+                                                          ),
+                                                          child: DropdownButton<
+                                                              ResolutionPreset>(
+                                                            dropdownColor:
+                                                                Colors.black87,
+                                                            underline:
+                                                                Container(),
+                                                            value:
+                                                                currentResolutionPreset,
+                                                            items: [
+                                                              for (ResolutionPreset preset
+                                                                  in resolutionPresets)
+                                                                DropdownMenuItem(
+                                                                  child: Text(
+                                                                    preset
+                                                                        .toString()
+                                                                        .split(
+                                                                            '.')[1]
+                                                                        .toUpperCase(),
+                                                                    style: TextStyle(
+                                                                        color: Colors
+                                                                            .white),
+                                                                  ),
+                                                                  value: preset,
+                                                                )
+                                                            ],
+                                                            onChanged: (value) {
+                                                              setState(() {
+                                                                currentResolutionPreset =
+                                                                    value!;
+                                                                _isCameraInitialized =
+                                                                    false;
+                                                              });
+                                                              onNewCameraSelected(
+                                                                  controller!
+                                                                      .description);
+                                                            },
+                                                            hint: Text(
+                                                                "Select item"),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    // Spacer(),
+                                                    Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              right: 8.0,
+                                                              top: 16.0),
+                                                      child: Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.white,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      10.0),
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(8.0),
+                                                          child: Text(
+                                                            _currentExposureOffset
+                                                                    .toStringAsFixed(
+                                                                        1) +
+                                                                'x',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .black),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Expanded(
+                                                      child: RotatedBox(
+                                                        quarterTurns: 3,
+                                                        child: Container(
+                                                          height: 30,
+                                                          child: Slider(
+                                                            value:
+                                                                _currentExposureOffset,
+                                                            min:
+                                                                _minAvailableExposureOffset,
+                                                            max:
+                                                                _maxAvailableExposureOffset,
+                                                            activeColor:
+                                                                Colors.white,
+                                                            inactiveColor:
+                                                                Colors.white30,
+                                                            onChanged:
+                                                                (value) async {
+                                                              setState(() {
+                                                                _currentExposureOffset =
+                                                                    value;
+                                                              });
+                                                              await controller!
+                                                                  .setExposureOffset(
+                                                                      value);
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Slider(
+                                                            value:
+                                                                _currentZoomLevel,
+                                                            min:
+                                                                _minAvailableZoom,
+                                                            max:
+                                                                _maxAvailableZoom,
+                                                            activeColor:
+                                                                Colors.white,
+                                                            inactiveColor:
+                                                                Colors.white30,
+                                                            onChanged:
+                                                                (value) async {
+                                                              setState(() {
+                                                                _currentZoomLevel =
+                                                                    value;
+                                                              });
+                                                              await controller!
+                                                                  .setZoomLevel(
+                                                                      value);
+                                                            },
+                                                          ),
+                                                        ),
+                                                        Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                      .only(
+                                                                  right: 8.0),
+                                                          child: Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color: Colors
+                                                                  .black87,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          10.0),
+                                                            ),
+                                                            child: Padding(
+                                                              padding:
+                                                                  const EdgeInsets
+                                                                      .all(8.0),
+                                                              child: Text(
+                                                                _currentZoomLevel
+                                                                        .toStringAsFixed(
+                                                                            1) +
+                                                                    'x',
+                                                                style: TextStyle(
+                                                                    color: Colors
+                                                                        .white),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceAround,
+                                                      children: [
+                                                        InkWell(
+                                                          onTap: () async {
+                                                            logbbok =
+                                                                await takePicture();
+                                                            File image1 = File(
+                                                                logbbok!.path);
+                                                            int currentUnix =
+                                                                DateTime.now()
+                                                                    .millisecondsSinceEpoch;
+
+                                                            String fileFormat =
+                                                                image1.path
+                                                                    .split('.')
+                                                                    .last;
+                                                            setState(() {
+                                                              islogbookcameraopen =
+                                                                  false;
+                                                            });
+                                                            islogbookcameraopen =
+                                                                false;
+                                                            // GallerySaver.saveImage(
+                                                            //         logbbok!.path)
+                                                            //     .then((path) {
+                                                            showDialog(
+                                                              context: context,
+                                                              builder:
+                                                                  (BuildContext
+                                                                      context) {
+                                                                return _SystemPadding(
+                                                                  child:
+                                                                      AlertDialog(
+                                                                    contentPadding:
+                                                                        const EdgeInsets.all(
+                                                                            16.0),
+                                                                    content:
+                                                                        Row(
+                                                                      children: <
+                                                                          Widget>[
+                                                                        Expanded(
+                                                                          child:
+                                                                              TextFormField(
+                                                                            controller:
+                                                                                _logBookDescController,
+                                                                            keyboardType:
+                                                                                TextInputType.text,
+                                                                            autofocus:
+                                                                                true,
+                                                                            decoration:
+                                                                                const InputDecoration(labelText: 'Enter Description', hintText: 'Description'),
+                                                                          ),
+                                                                        )
+                                                                      ],
+                                                                    ),
+                                                                    actions: <
+                                                                        Widget>[
+                                                                      TextButton(
+                                                                          child: const Text(
+                                                                              'CANCEL'),
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.pop(context);
+                                                                          }),
+                                                                      TextButton(
+                                                                          child: const Text(
+                                                                              'OKAY'),
+                                                                          onPressed:
+                                                                              () {
+                                                                            Navigator.pop(context);
+                                                                            setState(() {
+                                                                              String? description = _logBookDescController.text.trim();
+                                                                              print(description);
+                                                                              final bytes = Io.File(logbbok!.path).readAsBytesSync();
+
+                                                                              String imageFile = base64Encode(bytes);
+                                                                              logbooks = Images(filename: description, attachment: imageFile);
+                                                                              _addLogBookImage(logbbok!);
+                                                                              _addLogBookImages(logbooks!);
+                                                                              _addLogBookDescription(description);
+                                                                            });
+                                                                          })
+                                                                    ],
+                                                                  ),
+                                                                );
+                                                              },
+                                                            );
+
+                                                            // });
+                                                            print(fileFormat);
+                                                          },
+                                                          child: Stack(
+                                                            alignment: Alignment
+                                                                .center,
+                                                            children: [
+                                                              Icon(
+                                                                Icons.circle,
+                                                                color: _isVideoCameraSelected
+                                                                    ? Colors
+                                                                        .white
+                                                                    : Colors
+                                                                        .white38,
+                                                                size: 80,
+                                                              ),
+                                                              Icon(
+                                                                Icons.circle,
+                                                                color: _isVideoCameraSelected
+                                                                    ? Colors
+                                                                        .white
+                                                                    : Colors
+                                                                        .blue,
+                                                                size: 65,
+                                                              ),
+                                                              _isVideoCameraSelected &&
+                                                                      _isRecordingInProgress
+                                                                  ? Icon(
+                                                                      Icons
+                                                                          .stop_rounded,
+                                                                      color: Colors
+                                                                          .white,
+                                                                      size: 32,
+                                                                    )
+                                                                  : Container(),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                        // InkWell(
+                                                        //   onTap: image != null
+                                                        //       ? () {
+                                                        //           // Navigator.of(context)
+                                                        //           //     .push(
+                                                        //           //   MaterialPageRoute(
+                                                        //           //     builder: (context) =>
+                                                        //           //         PreviewScreen(
+                                                        //           //       image: image!,
+                                                        //           //       fileList:
+                                                        //           //           imageslist,
+                                                        //           //     ),
+                                                        //           //   ),
+                                                        //           // );
+                                                        //         }
+                                                        //       : null,
+                                                        //   child: Container(
+                                                        //     width: 60,
+                                                        //     height: 60,
+                                                        //     decoration: BoxDecoration(
+                                                        //       color: Colors.black,
+                                                        //       borderRadius:
+                                                        //           BorderRadius.circular(
+                                                        //               10.0),
+                                                        //       border: Border.all(
+                                                        //         color: Colors.white,
+                                                        //         width: 2,
+                                                        //       ),
+                                                        //       image: image != null
+                                                        //           ? DecorationImage(
+                                                        //               image: FileImage(
+                                                        //                 File(image!.path),
+                                                        //               ),
+                                                        //               fit: BoxFit.cover,
+                                                        //             )
+                                                        //           : null,
+                                                        //     ),
+                                                        //   ),
+                                                        // ),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Flexible(
                                     child: Column(
                                       children: [
                                         Padding(
