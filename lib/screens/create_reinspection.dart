@@ -148,7 +148,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   double _currentExposureOffset = 0.0;
   FlashMode? _currentFlashMode;
   final resolutionPresets = ResolutionPreset.values;
-  ResolutionPreset currentResolutionPreset = ResolutionPreset.low;
+  ResolutionPreset currentResolutionPreset = ResolutionPreset.max;
 
   Map _source = {ConnectivityResult.none: false};
   final NetworkConnectivity _networkConnectivity = NetworkConnectivity.instance;
@@ -349,7 +349,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                     String RHR = _RHR.text;
                     String LHF = _LHF.text.trim();
                     String spare = _spare.text.trim();
-                    String transmissionspeed =_transmissionspeed.text.trim();
+                    String transmissionspeed = _transmissionspeed.text.trim();
                     String damagesobserved = _damagesobserved.text.trim();
                     ProgressDialog dial = new ProgressDialog(context,
                         type: ProgressDialogType.Normal);
@@ -358,7 +358,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                     );
                     dial.show();
                     setState(() {
-                      reinspectionString=(jsonEncode(<String, dynamic>{
+                      reinspectionString = (jsonEncode(<String, dynamic>{
                         "userid": _userid,
                         "custid": _custId,
                         "revised": revised,
@@ -379,9 +379,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                         "LHR": LHR,
                         "RHR": RHR,
                         "LHF": LHF,
-                        "transmissionspeed":transmissionspeed,
-                        "vehicletype":drivetypeid,
-                        "transmissiontype":transmissionid,
+                        "transmissionspeed": transmissionspeed,
+                        "vehicletype": drivetypeid,
+                        "transmissiontype": transmissionid,
                         "remarks": remarks,
                         "photolist": newImagesList,
                       }));
@@ -392,8 +392,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                       if (result.isNotEmpty &&
                           result[0].rawAddress.isNotEmpty) {
                         String demoUrl = await Config.getBaseUrl();
-                        Uri url = Uri.parse(
-                            demoUrl + 'valuation/reinspection/');
+                        Uri url =
+                            Uri.parse(demoUrl + 'valuation/reinspection/');
                         print(url);
 
                         final response = await http.post(url,
@@ -402,8 +402,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                             },
                             body: jsonEncode(<String, dynamic>{
                               "userid": _userid,
-                              "custid":
-                              widget.custID == null ? _custId : widget.custID,
+                              "custid": widget.custID == null
+                                  ? _custId
+                                  : widget.custID,
                               "revised": revised,
                               "instructionno": _instructionId,
                               "assessmentno": _assessmentId,
@@ -419,7 +420,6 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               "brakes": brakes,
                               "paintwork": paintwork,
                               "RHF": RHF,
-
                               "LHR": LHR,
                               "RHR": RHR,
                               "LHF": LHF,
@@ -427,16 +427,14 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               "photolist": newImagesList,
                             }));
 
-
                         if (response != null) {
                           dial.hide();
                           int statusCode = response.statusCode;
                           if (statusCode == 200) {
                             return _showDialog(this.context);
                           } else {
-                            print(
-                                "Submit Status code::" +
-                                    response.body.toString());
+                            print("Submit Status code::" +
+                                response.body.toString());
                             showAlertDialog(this.context, response.body);
                           }
                         } else {
@@ -445,7 +443,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               msg: 'There was no response from the server');
                         }
                       }
-                    }on SocketException catch (e) {
+                    } on SocketException catch (e) {
                       print('not connected2');
 
                       if (reinspectionString != null) {
@@ -562,10 +560,10 @@ class _CreateReinspectionState extends State<CreateReinspection> {
   @override
   void initState() {
     random = new Random();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // SystemChrome.setPreferredOrientations([
+    //   DeviceOrientation.portraitUp,
+    //   DeviceOrientation.portraitDown,
+    // ]);
     loadCamera();
     // _checkNetwork();
     if (string.contains('Online')) {
@@ -1011,9 +1009,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                 index = random.nextInt(1000000);
                                 _submit();
                               });
-
                             }
-
                         }
                       });
                     },
@@ -1448,7 +1444,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                   : null;
                                               _pav.text = (value != null
                                                   ? value["pav"].toString()
-                                                  : null)!;_pav.text = (value != null
+                                                  : null)!;
+                                              _pav.text = (value != null
                                                   ? value["pav"].toString()
                                                   : null)!;
                                               _salvage.text = (value != null
@@ -1705,7 +1702,6 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         onChanged: (value) {
                                           setState(() {
                                             transmissionid = value.id;
-
                                           });
                                           print(_instructionId);
                                           _dropdownError = null;
@@ -1754,7 +1750,6 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         onChanged: (value) {
                                           setState(() {
                                             drivetypeid = value.id;
-
                                           });
                                           print(_instructionId);
                                           _dropdownError = null;
@@ -1795,7 +1790,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         ],
                                       ),
                                       TextFormField(
-                                       controller: _transmissionspeed,
+                                        controller: _transmissionspeed,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
@@ -2901,32 +2896,33 @@ class _CreateReinspectionState extends State<CreateReinspection> {
               ),
             ))
         : Scaffold(
-            backgroundColor: Colors.black,
+            backgroundColor: Colors.transparent,
             body: _isCameraPermissionGranted
                 ? _isCameraInitialized
                     ? Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Expanded(
-                            flex: 6,
-                            child: SizedBox(
-
-                              child: SingleChildScrollView(
-                                child: AspectRatio(
-                                  aspectRatio:    1 / controller!.value.aspectRatio,
+                            flex: 2,
+                            child: SingleChildScrollView(
+                              child: Column(
+                                  children: [
+                                AspectRatio(
+                                  aspectRatio:
+                                      MediaQuery.of(context).size.width /
+                                          MediaQuery.of(context).size.height,
                                   child: Stack(
                                     children: [
                                       CameraPreview(
                                         controller!,
-                                        child: LayoutBuilder(builder:
-                                            (BuildContext context,
-                                                BoxConstraints constraints) {
-                                          return GestureDetector(
-                                            behavior: HitTestBehavior.opaque,
-                                            onTapDown: (details) => onViewFinderTap(
-                                                details, constraints),
-                                          );
-                                        }),
+                                        // child: LayoutBuilder(builder:
+                                        //     (BuildContext context,
+                                        //         BoxConstraints constraints) {
+                                        //   return GestureDetector(
+                                        //     behavior: HitTestBehavior.translucent,
+                                        //     onTapDown: (details) => onViewFinderTap(
+                                        //         details, constraints),
+                                        //   );
+                                        // }),
                                       ),
                                       // TODO: Uncomment to preview the overlay
                                       // Center(
@@ -2954,18 +2950,22 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 decoration: BoxDecoration(
                                                   color: Colors.black87,
                                                   borderRadius:
-                                                      BorderRadius.circular(10.0),
+                                                      BorderRadius.circular(
+                                                          10.0),
                                                 ),
                                                 child: Padding(
-                                                  padding: const EdgeInsets.only(
+                                                  padding:
+                                                      const EdgeInsets.only(
                                                     left: 8.0,
                                                     right: 8.0,
                                                   ),
                                                   child: DropdownButton<
                                                       ResolutionPreset>(
-                                                    dropdownColor: Colors.black87,
+                                                    dropdownColor:
+                                                        Colors.black87,
                                                     underline: Container(),
-                                                    value: currentResolutionPreset,
+                                                    value:
+                                                        currentResolutionPreset,
                                                     items: [
                                                       for (ResolutionPreset preset
                                                           in resolutionPresets)
@@ -2976,8 +2976,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                                 .split('.')[1]
                                                                 .toUpperCase(),
                                                             style: TextStyle(
-                                                                color:
-                                                                    Colors.white),
+                                                                color: Colors
+                                                                    .white),
                                                           ),
                                                           value: preset,
                                                         )
@@ -2990,7 +2990,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                             false;
                                                       });
                                                       onNewCameraSelected(
-                                                          controller!.description);
+                                                          controller!
+                                                              .description);
                                                     },
                                                     hint: Text("Select item"),
                                                   ),
@@ -3005,14 +3006,16 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 decoration: BoxDecoration(
                                                   color: Colors.white,
                                                   borderRadius:
-                                                      BorderRadius.circular(10.0),
+                                                      BorderRadius.circular(
+                                                          10.0),
                                                 ),
                                                 child: Padding(
                                                   padding:
                                                       const EdgeInsets.all(8.0),
                                                   child: Text(
                                                     _currentExposureOffset
-                                                            .toStringAsFixed(1) +
+                                                            .toStringAsFixed(
+                                                                1) +
                                                         'x',
                                                     style: TextStyle(
                                                         color: Colors.black),
@@ -3026,20 +3029,23 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 child: Container(
                                                   height: 30,
                                                   child: Slider(
-                                                    value: _currentExposureOffset,
+                                                    value:
+                                                        _currentExposureOffset,
                                                     min:
                                                         _minAvailableExposureOffset,
                                                     max:
                                                         _maxAvailableExposureOffset,
                                                     activeColor: Colors.white,
-                                                    inactiveColor: Colors.white30,
+                                                    inactiveColor:
+                                                        Colors.white30,
                                                     onChanged: (value) async {
                                                       setState(() {
                                                         _currentExposureOffset =
                                                             value;
                                                       });
                                                       await controller!
-                                                          .setExposureOffset(value);
+                                                          .setExposureOffset(
+                                                              value);
                                                     },
                                                   ),
                                                 ),
@@ -3053,10 +3059,12 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     min: _minAvailableZoom,
                                                     max: _maxAvailableZoom,
                                                     activeColor: Colors.white,
-                                                    inactiveColor: Colors.white30,
+                                                    inactiveColor:
+                                                        Colors.white30,
                                                     onChanged: (value) async {
                                                       setState(() {
-                                                        _currentZoomLevel = value;
+                                                        _currentZoomLevel =
+                                                            value;
                                                       });
                                                       await controller!
                                                           .setZoomLevel(value);
@@ -3064,8 +3072,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                   ),
                                                 ),
                                                 Padding(
-                                                  padding: const EdgeInsets.only(
-                                                      right: 8.0),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          right: 8.0),
                                                   child: Container(
                                                     decoration: BoxDecoration(
                                                       color: Colors.black87,
@@ -3075,15 +3084,105 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     ),
                                                     child: Padding(
                                                       padding:
-                                                          const EdgeInsets.all(8.0),
+                                                          const EdgeInsets.all(
+                                                              8.0),
                                                       child: Text(
                                                         _currentZoomLevel
                                                                 .toStringAsFixed(
                                                                     1) +
                                                             'x',
                                                         style: TextStyle(
-                                                            color: Colors.white),
+                                                            color:
+                                                                Colors.white),
                                                       ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Row(
+                                              children: [
+                                                Expanded(
+                                                  child: InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.off;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.off,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.flash_off,
+                                                      color: _currentFlashMode ==
+                                                          FlashMode.off
+                                                          ? Colors.amber
+                                                          : Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.auto;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.auto,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.flash_auto,
+                                                      color: _currentFlashMode ==
+                                                          FlashMode.auto
+                                                          ? Colors.amber
+                                                          : Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.always;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.always,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.flash_on,
+                                                      color: _currentFlashMode ==
+                                                          FlashMode.always
+                                                          ? Colors.amber
+                                                          : Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: InkWell(
+                                                    onTap: () async {
+                                                      setState(() {
+                                                        _currentFlashMode =
+                                                            FlashMode.torch;
+                                                      });
+                                                      await controller!
+                                                          .setFlashMode(
+                                                        FlashMode.torch,
+                                                      );
+                                                    },
+                                                    child: Icon(
+                                                      Icons.highlight,
+                                                      color: _currentFlashMode ==
+                                                          FlashMode.torch
+                                                          ? Colors.amber
+                                                          : Colors.white,
                                                     ),
                                                   ),
                                                 ),
@@ -3096,13 +3195,17 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 InkWell(
                                                   onTap: () async {
                                                     image = await takePicture();
-                                                    File image1 = File(image!.path);
+                                                    File image1 =
+                                                        File(image!.path);
 
-                                                    int currentUnix = DateTime.now()
+                                                    int currentUnix = DateTime
+                                                            .now()
                                                         .millisecondsSinceEpoch;
 
-                                                    String fileFormat =
-                                                        image1.path.split('.').last;
+                                                    String fileFormat = image1
+                                                        .path
+                                                        .split('.')
+                                                        .last;
                                                     setState(() {
                                                       iscameraopen = false;
                                                     });
@@ -3112,15 +3215,16 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                     //     .then((path) {
                                                     showDialog(
                                                       context: context,
-                                                      builder:
-                                                          (BuildContext context) {
+                                                      builder: (BuildContext
+                                                          context) {
                                                         return _SystemPadding(
                                                           child: AlertDialog(
                                                             contentPadding:
                                                                 const EdgeInsets
                                                                     .all(16.0),
                                                             content: Row(
-                                                              children: <Widget>[
+                                                              children: <
+                                                                  Widget>[
                                                                 Expanded(
                                                                   child:
                                                                       TextFormField(
@@ -3129,7 +3233,8 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                                     keyboardType:
                                                                         TextInputType
                                                                             .text,
-                                                                    autofocus: true,
+                                                                    autofocus:
+                                                                        true,
                                                                     decoration: const InputDecoration(
                                                                         labelText:
                                                                             'Enter Description',
@@ -3143,17 +3248,21 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                               TextButton(
                                                                   child: const Text(
                                                                       'CANCEL'),
-                                                                  onPressed: () {
+                                                                  onPressed:
+                                                                      () {
                                                                     Navigator.pop(
                                                                         context);
                                                                   }),
                                                               TextButton(
-                                                                  child: const Text(
-                                                                      'OKAY'),
-                                                                  onPressed: () {
+                                                                  child:
+                                                                      const Text(
+                                                                          'OKAY'),
+                                                                  onPressed:
+                                                                      () {
                                                                     Navigator.pop(
                                                                         context);
-                                                                    setState(() {
+                                                                    setState(
+                                                                        () {
                                                                       String?
                                                                           description =
                                                                           _itemDescController
@@ -3161,10 +3270,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                                               .trim();
                                                                       print(
                                                                           description);
-                                                                      final bytes = Io.File(
-                                                                              image!
-                                                                                  .path)
-                                                                          .readAsBytesSync();
+                                                                      final bytes =
+                                                                          Io.File(image!.path)
+                                                                              .readAsBytesSync();
 
                                                                       String
                                                                           imageFile =
@@ -3199,8 +3307,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                         color:
                                                             _isVideoCameraSelected
                                                                 ? Colors.white
-                                                                : Colors.white38,
-                                                        size: 80,
+                                                                : Colors
+                                                                    .white38,
+                                                        size: 95,
                                                       ),
                                                       Icon(
                                                         Icons.circle,
@@ -3208,168 +3317,31 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                             _isVideoCameraSelected
                                                                 ? Colors.white
                                                                 : Colors.blue,
-                                                        size: 65,
+                                                        size: 80,
                                                       ),
                                                       _isVideoCameraSelected &&
                                                               _isRecordingInProgress
                                                           ? Icon(
-                                                              Icons.stop_rounded,
-                                                              color: Colors.white,
+                                                              Icons
+                                                                  .stop_rounded,
+                                                              color:
+                                                                  Colors.white,
                                                               size: 32,
                                                             )
                                                           : Container(),
                                                     ],
                                                   ),
                                                 ),
-                                                // InkWell(
-                                                //   onTap: image != null
-                                                //       ? () {
-                                                //           // Navigator.of(context)
-                                                //           //     .push(
-                                                //           //   MaterialPageRoute(
-                                                //           //     builder: (context) =>
-                                                //           //         PreviewScreen(
-                                                //           //       image: image!,
-                                                //           //       fileList:
-                                                //           //           imageslist,
-                                                //           //     ),
-                                                //           //   ),
-                                                //           // );
-                                                //         }
-                                                //       : null,
-                                                //   child: Container(
-                                                //     width: 60,
-                                                //     height: 60,
-                                                //     decoration: BoxDecoration(
-                                                //       color: Colors.black,
-                                                //       borderRadius:
-                                                //           BorderRadius.circular(
-                                                //               10.0),
-                                                //       border: Border.all(
-                                                //         color: Colors.white,
-                                                //         width: 2,
-                                                //       ),
-                                                //       image: image != null
-                                                //           ? DecorationImage(
-                                                //               image: FileImage(
-                                                //                 File(image!.path),
-                                                //               ),
-                                                //               fit: BoxFit.cover,
-                                                //             )
-                                                //           : null,
-                                                //     ),
-                                                //   ),
-                                                // ),
                                               ],
                                             ),
+
                                           ],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-                          Flexible(
-                            child: Column(
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 8.0),
-                                  child: Row(
-                                    children: [],
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.fromLTRB(
-                                      16.0, 8.0, 16.0, 8.0),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: () async {
-                                            setState(() {
-                                              _currentFlashMode = FlashMode.off;
-                                            });
-                                            await controller!.setFlashMode(
-                                              FlashMode.off,
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.flash_off,
-                                            color: _currentFlashMode ==
-                                                    FlashMode.off
-                                                ? Colors.amber
-                                                : Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: () async {
-                                            setState(() {
-                                              _currentFlashMode =
-                                                  FlashMode.auto;
-                                            });
-                                            await controller!.setFlashMode(
-                                              FlashMode.auto,
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.flash_auto,
-                                            color: _currentFlashMode ==
-                                                    FlashMode.auto
-                                                ? Colors.amber
-                                                : Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: () async {
-                                            setState(() {
-                                              _currentFlashMode =
-                                                  FlashMode.always;
-                                            });
-                                            await controller!.setFlashMode(
-                                              FlashMode.always,
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.flash_on,
-                                            color: _currentFlashMode ==
-                                                    FlashMode.always
-                                                ? Colors.amber
-                                                : Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: InkWell(
-                                          onTap: () async {
-                                            setState(() {
-                                              _currentFlashMode =
-                                                  FlashMode.torch;
-                                            });
-                                            await controller!.setFlashMode(
-                                              FlashMode.torch,
-                                            );
-                                          },
-                                          child: Icon(
-                                            Icons.highlight,
-                                            color: _currentFlashMode ==
-                                                    FlashMode.torch
-                                                ? Colors.amber
-                                                : Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              ],
+                              ]),
                             ),
                           ),
                         ],
@@ -3434,6 +3406,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
     );
     //   context: context,
     showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return alert;

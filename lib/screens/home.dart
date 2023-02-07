@@ -79,10 +79,10 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     checkGps();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
+    // SystemChrome.setPreferredOrientations([
+    //   DeviceOrientation.portraitUp,
+    //   DeviceOrientation.portraitDown,
+    // ]);
     SessionPreferences().getLoggedInUser().then((user) {
       setState(() {
         _loggedInUser = user;
@@ -143,12 +143,6 @@ class _HomeState extends State<Home> {
     });
   }
 
-  _refresh() {
-    _fetchPendingassessment();
-    _fetchPendinginspection();
-    _fetchPendingvaluation();
-    _fetchSupplementary();
-  }
 
   getLocation() async {
     position = await Geolocator.getCurrentPosition(
@@ -179,10 +173,16 @@ class _HomeState extends State<Home> {
       lat = position.latitude.toString();
 
       // setState(() {
-        //refresh UI on update
-        postLocation();
+      //refresh UI on update
+      postLocation();
       // });
     });
+  }
+  _refresh() {
+    _fetchPendingassessment();
+    _fetchPendinginspection();
+    _fetchPendingvaluation();
+    _fetchSupplementary();
   }
 
   postLocation() async {
@@ -229,17 +229,17 @@ class _HomeState extends State<Home> {
             isReinspectionTapped == false &&
             isStandardValuationTapped == false
         ? Scaffold(
-      // floatingActionButton: IconButton(
-      //     icon: Icon(
-      //       Icons.save,
-      //       color: Colors.blue,
-      //     ),
-      //     onPressed: () async {
-      //       Navigator.pushReplacement(
-      //         context,
-      //         MaterialPageRoute(builder: (context) =>  SaveAssessments()),
-      //       );
-      //     }),
+            // floatingActionButton: IconButton(
+            //     icon: Icon(
+            //       Icons.save,
+            //       color: Colors.blue,
+            //     ),
+            //     onPressed: () async {
+            //       Navigator.pushReplacement(
+            //         context,
+            //         MaterialPageRoute(builder: (context) =>  SaveAssessments()),
+            //       );
+            //     }),
             backgroundColor: Colors.grey[200],
             drawer: SideMenu(),
             appBar: AppBar(
@@ -280,7 +280,6 @@ class _HomeState extends State<Home> {
                       print('----------------> CALLS MADE !!!!!!!!!!!');
                       dial.hide();
                     }),
-
               ],
               backgroundColor: Colors.white,
               elevation: 0.0,
@@ -303,115 +302,118 @@ class _HomeState extends State<Home> {
                       margin: EdgeInsets.all(12.0),
                       child: Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            SizedBox(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('TASKS TO DO',
-                                        style: TextStyle(
-                                          fontSize: 16.0,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                        )),
-                                    Icon(
-                                      Icons.notifications_active,
-                                      color: Colors.blue,
-                                    ),
-                                  ]),
-                            ),
-                            Divider(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    isAssessmentTapped = true;
-                                    _fetchPendingassessment();
-                                  });
-                                },
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.vertical,
+                          child: Column(
+                            children: [
+                              SizedBox(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
                                 child: Row(
-                                  children: <Widget>[
-                                    Icon(Icons.pending),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      assessmentCount != null
-                                          ? "Assessments:$assessmentCount"
-                                          : "Assessments:0",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2!
-                                          .copyWith(),
-                                    ),
-                                  ],
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('TASKS TO DO',
+                                          style: TextStyle(
+                                            fontSize: 16.0,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          )),
+                                      Icon(
+                                        Icons.notifications_active,
+                                        color: Colors.blue,
+                                      ),
+                                    ]),
+                              ),
+                              Divider(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      isAssessmentTapped = true;
+                                      _fetchPendingassessment();
+                                    });
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.pending),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        assessmentCount != null
+                                            ? "Assessments:$assessmentCount"
+                                            : "Assessments:0",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2!
+                                            .copyWith(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            Divider(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    isStandardValuationTapped = true;
-                                    _fetchPendingvaluation();
-                                  });
-                                },
-                                child: Row(
-                                  children: <Widget>[
-                                    Icon(Icons.pending),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      valuationCount != null
-                                          ? "Valuations:$valuationCount"
-                                          : "Valuations:0",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2!
-                                          .copyWith(),
-                                    ),
-                                  ],
+                              Divider(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      isStandardValuationTapped = true;
+                                      _fetchPendingvaluation();
+                                    });
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.pending),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        valuationCount != null
+                                            ? "Valuations:$valuationCount"
+                                            : "Valuations:0",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2!
+                                            .copyWith(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            Divider(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    isReinspectionTapped = true;
-                                    _fetchPendinginspection();
-                                  });
-                                },
-                                child: Row(
-                                  children: <Widget>[
-                                    Icon(Icons.pending),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      inspectionCount != null
-                                          ? "Reinspections:$inspectionCount"
-                                          : "Reinspections:0",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2!
-                                          .copyWith(),
-                                    ),
-                                  ],
+                              Divider(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      isReinspectionTapped = true;
+                                      _fetchPendinginspection();
+                                    });
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.pending),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        inspectionCount != null
+                                            ? "Reinspections:$inspectionCount"
+                                            : "Reinspections:0",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2!
+                                            .copyWith(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -651,121 +653,123 @@ class _HomeState extends State<Home> {
                       margin: EdgeInsets.all(12.0),
                       child: Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Column(
-                          children: [
-                            SizedBox(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text('HISTORY',
-                                        style: TextStyle(
-                                          fontSize: 16.0,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold,
-                                        )),
-                                    Icon(
-                                      Icons.history,
-                                      color: Colors.blue,
-                                    ),
-                                  ]),
-                            ),
-                            Divider(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              AssesssmentHistoryScreen()),
-                                    );
-                                  });
-                                },
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              SizedBox(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
                                 child: Row(
-                                  children: <Widget>[
-                                    Icon(Icons.history),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      "Assessments Histoy",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2!
-                                          .copyWith(),
-                                    ),
-                                  ],
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('HISTORY',
+                                          style: TextStyle(
+                                            fontSize: 16.0,
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          )),
+                                      Icon(
+                                        Icons.history,
+                                        color: Colors.blue,
+                                      ),
+                                    ]),
+                              ),
+                              Divider(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                AssesssmentHistoryScreen()),
+                                      );
+                                    });
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.history),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        "Assessments Histoy",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2!
+                                            .copyWith(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            Divider(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              ValuationHistoryScreen()),
-                                    );
-                                  });
-                                },
-                                child: Row(
-                                  children: <Widget>[
-                                    Icon(Icons.history),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      "Valuations History",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2!
-                                          .copyWith(),
-                                    ),
-                                  ],
+                              Divider(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                ValuationHistoryScreen()),
+                                      );
+                                    });
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.history),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        "Valuations History",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2!
+                                            .copyWith(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                            Divider(),
-                            Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              ReinspectionHistoryScreen()),
-                                    );
-                                  });
-                                },
-                                child: Row(
-                                  children: <Widget>[
-                                    Icon(Icons.history),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Text(
-                                      "Reinspections History",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .subtitle2!
-                                          .copyWith(),
-                                    ),
-                                  ],
+                              Divider(),
+                              Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                ReinspectionHistoryScreen()),
+                                      );
+                                    });
+                                  },
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(Icons.history),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Text(
+                                        "Reinspections History",
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .subtitle2!
+                                            .copyWith(),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
