@@ -574,6 +574,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
   final _formKey18 = GlobalKey<FormState>();
   bool isLoading = false;
   bool revised = false;
+  bool yardassessmentbool = false;
   bool revised2 = false;
   bool revised3 = false;
   bool? isBankSelected;
@@ -777,6 +778,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
                               "driven": isOther5,
                               "drivenby": drivenby,
                               "towed": isOther6,
+                              "transmissionspeed":transmissionspeed,
+                              "vehicletype":drivetypeid,
+                              "transmissiontype":transmissionid,
                               "remarks": remarks,
                               "make": make,
                               "model": model,
@@ -817,7 +821,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                         });
 
                         print('assessment json is:');
-                        print(assessmentsString);
+                        printWrapped(assessmentsString!);
 
                         if (response != null) {
                           dial.hide();
@@ -1076,35 +1080,6 @@ class _CreateAssesmentState extends State<CreateAssesment>
         _claimString = jsonResponse[0]["claimform"].toString();
         print(_claimString);
       });
-      // response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
-      //   var jsonResponse = jsonDecode(data);
-
-      // List<String> tags = jsonResponse != null ? List.from(jsonResponse) : null;
-      // print(jsonResponse);
-      // var list = jsonResponse as List;
-      // List<Instruction> result = list.map<Instruction>((json) {
-      //   return Instruction.fromJson(json);
-      // }).toList();
-      // if (result.isNotEmpty) {
-      //   setState(() {
-      //     result.sort((a, b) => a.chassisno!
-      //         .toLowerCase()
-      //         .compareTo(b.chassisno!.toLowerCase()));
-      //     _instruction = result;
-      //     if (_instruction != null && _instruction.isNotEmpty) {
-      //       _instruction.forEach((instruction) {
-      //         setState(() {});
-      //
-      //         print(_make);
-      //       });
-      //     }
-      //   });
-      // } else {
-      //   setState(() {
-      //     _message = 'You have not been assigned any customers';
-      //   });
-      // }
-      // });
     } else {
       print('response is null ');
     }
@@ -1489,35 +1464,35 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         SizedBox(
                                           height: 20,
                                         ),
-                                        // CheckboxListTile(
-                                        //   controlAffinity:
-                                        //       ListTileControlAffinity.trailing,
-                                        //   title: Text(
-                                        //     'Revised',
-                                        //     overflow: TextOverflow.ellipsis,
-                                        //     style: Theme.of(context)
-                                        //         .textTheme
-                                        //         .subtitle2!
-                                        //         .copyWith(),
-                                        //   ),
-                                        //   value: revised,
-                                        //   activeColor: Colors.blue,
-                                        //   onChanged: (bool? value) {
-                                        //     setState(() {
-                                        //       if (_custId != null) {
-                                        //         _fetchInstructions();
-                                        //       } else {
-                                        //         Fluttertoast.showToast(
-                                        //             msg: 'Select Customer');
-                                        //       }
-                                        //
-                                        //       revised = value!;
-                                        //     });
-                                        //   },
-                                        // ),
-                                        // SizedBox(
-                                        //   height: 20,
-                                        // ),
+                                        CheckboxListTile(
+                                          controlAffinity:
+                                              ListTileControlAffinity.trailing,
+                                          title: Text(
+                                            'Yard Assessment',
+                                            overflow: TextOverflow.ellipsis,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .subtitle2!
+                                                .copyWith(),
+                                          ),
+                                          value: _yardassessment,
+                                          activeColor: Colors.blue,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              if (_custId != null) {
+                                                _fetchInstructions();
+                                              } else {
+                                                Fluttertoast.showToast(
+                                                    msg: 'Select Customer');
+                                              }
+
+                                              _yardassessment = value!;
+                                            });
+                                          },
+                                        ),
+                                        SizedBox(
+                                          height: 20,
+                                        ),
                                         SizedBox(
                                           height: 20,
                                         ),
@@ -1845,7 +1820,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1857,7 +1832,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         hint: Text(
                                           "Transmission type",
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {
@@ -1895,7 +1870,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1907,7 +1882,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                         hint: Text(
                                           "Drive type",
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {
@@ -1944,7 +1919,7 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1954,6 +1929,9 @@ class _CreateAssesmentState extends State<CreateAssesment>
                                       ),
                                       TextFormField(
                                        controller: _transmissionspeed,
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,

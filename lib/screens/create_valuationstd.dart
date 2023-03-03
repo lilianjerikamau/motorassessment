@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:math';
+import 'package:motorassesmentapp/screens/create_assesment.dart';
 import 'package:motorassesmentapp/screens/save_valuations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -867,6 +868,7 @@ class _CreateValuationState extends State<CreateValuation> {
                         "antitheftdevicedesc": antitheftdevicedesc,
                       }));
                     });
+                    print(valuationString);
                     try {
 
                       final result = await InternetAddress.lookup(
@@ -896,6 +898,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                       _chasisno != null ? _chasisno : chasisno,
                                   "fuel": _selectedFuel,
                                   "manufactureyear": year,
+                                  "sparewheelsize":sparewheelsize,
                                   "origin": origin,
                                   "bodytype": bodytype,
                                   "mileage": mileage,
@@ -1131,6 +1134,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                   "wheelbalanced": wheelbalanced,
                                   "chassisok": chassisok,
                                   "fuelpumptank": fuelpumptank,
+                                  "transmissionspeed": transmissionspeed,
+                                  "vehicletype": drivetypeid,
+                                  "transmissiontype": transmissionid,
                                   "antitheftdevicefitted":
                                       antitheftdevicefitted,
                                   "vehiclefit": vehiclefit,
@@ -1167,6 +1173,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                   "antitheftdevicedesc": antitheftdevicedesc,
                                 }))
                             .timeout(
+
                           Duration(seconds: 45),
                           onTimeout: () {
                             // Time has run out, do what you wanted to do
@@ -1175,6 +1182,296 @@ class _CreateValuationState extends State<CreateValuation> {
                                 408); // Request Timeout response status code
                           },
                         );
+                        printWrapped(jsonEncode(<String, dynamic>{
+                          "userid": _userid,
+                          "custid": widget.custID == null
+                              ? _custId
+                              : widget.custID,
+                          "revised": revised,
+                          "fleetinstructionno": _fleetId,
+                          "instructionno": _instructionId,
+                          // "photolist": newImagesList,
+                          // "logbooklist": newLogBookList,
+                          "model":
+                          _carmodel != null ? _carmodel : model,
+                          "chassisno":
+                          _chasisno != null ? _chasisno : chasisno,
+                          "fuel": _selectedFuel,
+                          "manufactureyear": year,
+                          "sparewheelsize":sparewheelsize,
+                          "origin": origin,
+                          "bodytype": bodytype,
+                          "mileage": mileage,
+                          "enginecapacity": enginecap,
+                          "engineno": engineno,
+                          "make": make,
+                          "type": "",
+                          // "vehiclefit":"",
+                          "inspectionplace": inspectionplace,
+                          "musicsystemvalue": musicsystemval != ""
+                              ? musicsystemval
+                              : "0",
+                          "alloy": alloy,
+                          "regno":
+                          _vehiclereg != null ? _vehiclereg : reg,
+                          "location": _location,
+                          "suspensionspacers": true,
+                          "noofdiscs": "three",
+                          "registrationdate": registrationdate,
+                          "radiocassette": radiocassette,
+                          "cdplayer": cdplayer,
+                          "cdchanger": cdchanger,
+                          "roadworthy": roadworthy,
+                          // "alarm": alarm,
+                          "roadworthynotes": roadworthynotes,
+                          // "alarmtype": alarmtype,
+                          // "discs": discs,
+                          "validinsurance": validinsurance,
+                          "mechanicalcondition": mechanicalcondition,
+                          "bodycondition": bodycondition,
+                          "tyres": tyres,
+                          "generalcondition": generalcondition,
+                          "extras": extras,
+                          "notes": notes,
+                          "windscreenvalue": windscreenvalue,
+                          "antitheftvalue": antitheftvalue,
+                          "valuer": valuer,
+                          "assessedvalue": assessedvalue,
+                          "sparewheel": sparewheel,
+                          "tyresize": tyresize,
+                          "centrallocking": centrallocking,
+                          "powerwindowsrhf": powerwindowsrhf,
+                          "powerwindowslhf": powerwindowslhf,
+                          "powerwindowsrhr": powerwindowsrhr,
+                          "powerwindowslhr": powerwindowslhr,
+                          "powermirrors": powermirrors,
+                          "powersteering": powersteering,
+                          "airconditioner": airconditioner,
+                          "absbrakes": absbrakes,
+                          "foglights": foglights,
+                          "rearspoiler": rearspoiler,
+                          "sidesteps": sidesteps,
+                          "sunroof": sunroof,
+                          "frontgrilleguard": frontgrilleguard,
+                          "rearbumperguard": rearbumperguard,
+                          "sparewheelcover": sparewheelcover,
+                          "seatcovers": seatcovers,
+                          "turbotimer": turbotimer,
+                          "dashboardairbag": dashboardairbag,
+                          "steeringairbag": steeringairbag,
+                          "alloyrims": alloyrims,
+                          "steelrims": steelrims,
+                          "chromerims": chromerims,
+                          "assessedvalue": 1,
+                          "xenonheadlights": xenonheadlights,
+                          "heightadjustmentsystem":
+                          heightadjustmentsystem,
+                          "powerslidingrhfdoor": powerslidingrhfdoor,
+                          "powerslidinglhfdoor": powerslidinglhfdoor,
+                          "powerslidingrhrdoor": powerslidingrhrdoor,
+                          "powerslidinglhrdoor": powerslidinglhrdoor,
+                          "powerbootdoor": powerbootdoor,
+                          "uphostryleatherseat": uphostryleatherseat,
+                          "uphostryfabricseat": uphostryfabricseat,
+                          "uphostrytwotoneseat": uphostrytwotoneseat,
+                          "uphostrybucketseat": uphostrybucketseat,
+                          "powerseatrhfadjustment":
+                          powerseatrhfadjustment,
+                          "powerseatlhfadjustment":
+                          powerseatlhfadjustment,
+                          "powerseatrhradjustment":
+                          powerseatrhradjustment,
+                          "powersteeringadjustment":
+                          powersteeringadjustment,
+                          "powerseatlhradjustment":
+                          powerseatlhradjustment,
+                          "extralargerims": extralargerims,
+                          "rimsize": rimsize,
+                          "noofextracurtains": noofextracurtains != ""
+                              ? noofextracurtains
+                              : "0",
+                          "noofextraseats": noofextraseats != ""
+                              ? noofextraseats
+                              : "0",
+                          "noofextrakneebags": noofextrakneebags != ""
+                              ? noofextrakneebags
+                              : "0",
+                          "frontwindscreen": frontwindscreen != ""
+                              ? frontwindscreen
+                              : "none",
+                          "rearwindscreen": rearwindscreen != ""
+                              ? rearwindscreen
+                              : "none",
+                          "doors": doors,
+                          // "yombelts": "vgvgv",
+                          // "fromanyotherplace": "ggvgvhhh",
+                          // "vinplatedetails": "vinplatedetails",
+                          // "injectiontype": "injectiontype",
+                          // "noofcylinders": "noofcylinders",
+                          // "amfmonly": true,
+                          "crackedrearwindscreen":
+                          crackedrearwindscreen,
+                          "approxmatewindscreenvalue": 878.08,
+                          "rearwindscreenvalue": 878.08,
+                          "musicsystemmodel": musicsystemmodel,
+                          "musicsystemmake": musicsystemmake,
+                          "inbuiltcassette": inbuiltcassette,
+                          "inbuiltcd": inbuiltcd,
+                          "inbuiltdvd": inbuiltdvd,
+                          "inbuiltmapreader": inbuiltmapreader,
+                          "inbuilthddcardreader": inbuilthddcardreader,
+                          "inbuiltminidisc": inbuiltminidisc,
+                          "inbuiltusb": inbuiltusb,
+                          "inbuiltbluetooth": inbuiltbluetooth,
+                          "inbuilttvscreen": inbuilttvscreen,
+                          "inbuiltcdchanger": inbuiltcdchanger,
+                          "inbuiltsecuritydoorlock":
+                          inbuiltsecuritydoorlock,
+                          "inbuiltalarm": inbuiltalarm,
+                          "inbuiltimmobilizer": inbuiltimmobilizer,
+                          "keylessignition": keylessignition,
+                          "trackingdevice": trackingdevice,
+                          "gearleverlock": gearleverlock,
+                          "enginecutoff": enginecutoff,
+                          "anyotherantitheftfeature":
+                          anyotherantitheftfeature != ""
+                              ? anyotherantitheftfeature
+                              : "none",
+                          "anyotherextrafeature":
+                          anyotherextrafeature != ""
+                              ? anyotherextrafeature
+                              : "none",
+                          "anyothervehiclefeature":
+                          anyothervehiclefeature,
+                          "anyotheraddedfeature": "fcfccf",
+                          "anyothermusicsystem":
+                          anyothermusicsystem != ""
+                              ? anyothermusicsystem
+                              : "none",
+                          "noofdoorairbags": noofdoorairbags != ""
+                              ? noofdoorairbags
+                              : "0",
+                          "musicsystemdetachable":
+                          musicsystemdetachable,
+                          "musicsysteminbuilt": musicsysteminbuilt,
+                          "fittedwithamfmonly": fittedwithamfmonly,
+                          "fittedwithreversecamera":
+                          fittedwithreversecamera,
+                          "amfmonly": amfmonly,
+                          "locallyfittedalarm": locallyfittedalarm,
+                          "antitheftmake": antitheftmake,
+                          "roofcarrier": roofcarrier,
+                          "roofrails": true,
+                          "uphostryfabricleatherseat":
+                          uphostryfabricleatherseat,
+                          "dutypaid": dutypaid,
+                          "color": color,
+
+                          // new features
+                          "noofbattery": noofbatteries,
+                          "crawleeexcavator": crawleeexcavator,
+                          "backhoewheelloader": backhoewheelloader,
+                          "roller": roller,
+                          "fixedcrane": fixedcrane,
+                          "rollercrane": rollercrane,
+                          "mobilecrane": mobilecrane,
+                          "hiabfittedcranetruck": hiabfittedcranetruck,
+                          "primemover": primemover,
+                          "primemoverfilledwithrailercrane":
+                          primemoverfilledwithrailercrane,
+                          "lowloadertrailer": lowloadertrailer,
+                          "concretemixer": concretemixer,
+                          "topmacrollers": topmacrollers,
+                          "aircompressor": aircompressor,
+                          "forklift": forklift,
+                          "specialpurposeconstructionmachinery":
+                          specialpurposeconstructionmachinery,
+                          "batterypoweredlift": batterypoweredlift,
+                          "batterypoweredscissorlift":
+                          batterypoweredscissorlift,
+                          "boomlift": boomlift,
+                          "dumptruck": dumptruck,
+                          "backheeloader": backheeloader,
+                          "vaccumpumpsystem": vaccumpumpsystem,
+                          "dryaircompressor": dryaircompressor,
+                          "transformeroilpurifizatonplant":
+                          transformeroilpurifizatonplant,
+                          "dieselgenerator": dieselgenerator,
+                          "platecompactor": platecompactor,
+                          "twindrumroller": twindrumroller,
+                          "tractors": tractors,
+                          "plaughs": plaughs,
+                          "seeders": seeders,
+                          "combineharvester": combineharvester,
+                          "sprayers": sprayers,
+                          "culters": culters,
+                          "balers": balers,
+                          "ordinaryfueltankers": ordinaryfueltankers,
+                          "watertanker": watertanker,
+                          "exhauster": exhauster,
+                          "specializedfueltanker":
+                          specializedfueltanker,
+                          "opensidebody": opensidebody,
+                          "closedsidebody": closedsidebody,
+                          "trailers": trailers,
+                          "fuseboxbypassed": fuseboxbypassed,
+
+                          //other
+                          "turbocharger": turbocharger,
+                          "lightfitted": lightfitted,
+                          "lightfittedok": lightfittedok,
+                          "dipswitchok": dipswitchok,
+                          "lightdipok": lightdipok,
+                          "rearlightclean": rearlightclean,
+                          "handbrakeok": handbrakeok,
+                          "hydraulicsystemok": hydraulicsystemok,
+                          "servook": servook,
+                          "handbreakmarginok": handbreakmarginok,
+                          "footbreakmarginok": footbreakmarginok,
+                          "balljointsok": balljointsok,
+                          "jointsstatus": jointsstatus,
+                          "wheelalignment": wheelalignment,
+                          "wheelbalanced": wheelbalanced,
+                          "chassisok": chassisok,
+                          "fuelpumptank": fuelpumptank,
+                          "transmissionspeed": transmissionspeed,
+                          "vehicletype": drivetypeid,
+                          "transmissiontype": transmissionid,
+                          "antitheftdevicefitted":
+                          antitheftdevicefitted,
+                          "vehiclefit": vehiclefit,
+                          "vehicleconformrules": vehicleconformrules,
+                          "speedgovernorfitted": speedgovernorfitted,
+
+                          //double
+                          "loadcapacity": intloadcapacity,
+                          //int
+                          "seatingcapacity": doubleseatingcapacity,
+                          //dtring
+                          "handdrivetype": handdrivetype,
+                          "turbochargerdesc": turbochargerdesc,
+                          "footbreakok": footbreakok,
+                          "frontnearside1": frontnearside1,
+                          "frontoffside1": frontoffside1,
+                          "rearnearside1": rearnearside1,
+                          "rearnearsideouter1": rearnearsideouter1,
+                          "rearoffsideinner1": rearoffsideinner1,
+                          "rearoffsideouter1": rearoffsideouter1,
+                          "sparetyre1": sparetyre1,
+                          "frontnearside2": frontnearside2,
+                          "frontoffside2": frontoffside2,
+                          "rearnearside2": rearnearside2,
+                          "rearnearsideouter2": rearnearsideouter2,
+                          "rearoffsideinner2": rearoffsideinner2,
+                          "rearoffsideouter2": rearoffsideouter2,
+                          "sparetyre2": sparetyre2,
+                          "steeringboxstatus": steeringboxstatus,
+                          "jointsdefect": jointsdefect,
+                          "bodyworkok": bodyworkok,
+                          "repairgoodstandard": repairgoodstandard,
+                          "windscreendoor": windscreendoor,
+                          "antitheftdevicedesc": antitheftdevicedesc,
+                        }));
                         if (response != null) {
 
                           int statusCode = response.statusCode;
@@ -2506,7 +2803,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2518,7 +2815,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         hint: Text(
                                           "Transmission type",
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {
@@ -2555,7 +2852,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2567,7 +2864,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         hint: Text(
                                           "Drive type",
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {
@@ -2604,7 +2901,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -2613,8 +2910,10 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
-                                        readOnly: true,
-                                        initialValue: _owner,
+                                        controller: _transmissionspeed,
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,
@@ -3610,6 +3909,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
+                                          inputFormatters: <TextInputFormatter>[
+                                          FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z]")),
+                                        ],
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
@@ -3642,6 +3944,9 @@ class _CreateValuationState extends State<CreateValuation> {
                                         ],
                                       ),
                                       TextFormField(
+                                          inputFormatters: <TextInputFormatter>[
+                                          FilteringTextInputFormatter.allow(RegExp("[0-9a-zA-Z]")),
+                                        ],
                                         validator: (value) => value!.isEmpty
                                             ? "This field is required"
                                             : null,
@@ -3933,7 +4238,7 @@ class _CreateValuationState extends State<CreateValuation> {
                                         hint: Text(
                                           'Select Fuel ',
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {

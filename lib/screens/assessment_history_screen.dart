@@ -14,6 +14,8 @@ import 'package:motorassesmentapp/utils/config.dart' as Config;
 import 'package:progress_dialog/progress_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'add_photos.dart';
+
 class AssesssmentHistoryScreen extends StatefulWidget {
   @override
   _AssesssmentHistoryScreenState createState() =>
@@ -32,6 +34,7 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
   // ignore: unused_field
   BuildContext? _context;
   String? _policyno;
+  int? _assessmentId;
   String? _chasisno;
   String? _make;
   String? _custName;
@@ -88,96 +91,105 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
           ),
           title: Text('Assessment History')),
       body: _selectedItem != null
-          ? Container(
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  children: <Widget>[
-                    Card(
-                      margin: EdgeInsets.all(10),
-                      color: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(color: Colors.blue, width: 0),
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 8,
-                      child: Padding(
-                        padding: EdgeInsets.only(left: 15, right: 15, top: 10),
+          ? InkWell(
+        onTap: (){
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+                builder: (context) => AddPhotos(userid: _userid, instructionid: _assessmentId,)),
+          );
+        },
+            child: Container(
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    children: <Widget>[
+                      Card(
+                        margin: EdgeInsets.all(10),
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          side: BorderSide(color: Colors.blue, width: 0),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 8,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 15, right: 15, top: 10),
 
-                        // padding:  EdgeInsets.all(10.0),
-                        child: Container(
-                          child: ListTile(
-                            leading: Icon(
-                              Icons.history,
-                              color: Colors.blue,
-                            ),
-                            title: InkWell(
-                              onTap: () {},
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Date : ' + _selectedItem!.date!,
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold)),
+                          // padding:  EdgeInsets.all(10.0),
+                          child: Container(
+                            child: ListTile(
+                              leading: Icon(
+                                Icons.history,
+                                color: Colors.blue,
+                              ),
+                              title: InkWell(
+                                onTap: () {},
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text('Date : ' + _selectedItem!.date!,
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Divider(),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        _selectedItem!.make != null
+                                            ? 'Make: $_make'
+                                            : 'Chassis No: Chassis No',
+                                        style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                  Divider(),
+                                  Text(
+                                    _selectedItem!.model != null
+                                        ? 'Car Model: $_carmodel'
+                                        : 'Car Model',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Divider(),
+                                  Text(
+                                    _selectedItem!.custname != null
+                                        ? 'Customer Name: $_custName'
+                                        : 'Customer Name',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Divider(),
+                                  Text(
+                                    _selectedItem!.regno != null
+                                        ? 'Registration No: $_regno'
+                                        : 'Registration No',
+                                    style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold),
+                                  ),
                                 ],
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Divider(),
-                                Row(
-                                  children: [
-                                    Text(
-                                      _selectedItem!.make != null
-                                          ? 'Make: $_make'
-                                          : 'Chassis No: Chassis No',
-                                      style: TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ],
-                                ),
-                                Divider(),
-                                Text(
-                                  _selectedItem!.model != null
-                                      ? 'Car Model: $_carmodel'
-                                      : 'Car Model',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                Divider(),
-                                Text(
-                                  _selectedItem!.custname != null
-                                      ? 'Customer Name: $_custName'
-                                      : 'Customer Name',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                                Divider(),
-                                Text(
-                                  _selectedItem!.regno != null
-                                      ? 'Registration No: $_regno'
-                                      : 'Registration No',
-                                  style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
                           ),
                         ),
-                      ),
-                    )
-                  ],
+                      )
+                    ],
+                  ),
                 ),
               ),
-            )
+          )
           : Container(
               color: Colors.white,
               padding: EdgeInsets.all(20.0),
@@ -381,6 +393,7 @@ class _AssesssmentHistoryScreenState extends State<AssesssmentHistoryScreen> {
                 onTap: () {
                   setState(() {
                     _selectedItem = reqHistory;
+                    _assessmentId = _selectedItem!.id;
                     _policyno = _selectedItem!.policyno;
                     _chasisno = _selectedItem!.chassisno;
                     _make = _selectedItem!.make;

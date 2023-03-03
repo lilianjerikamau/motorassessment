@@ -415,6 +415,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                               "color": color,
                               "engineno": engineno,
                               "chassisno": _chasisno,
+                              "transmissionspeed": transmissionspeed,
+                              "vehicletype": drivetypeid,
+                              "transmissiontype": transmissionid,
                               "pav": pav != "null" ? pav : "0.00",
                               "salvage": salvage != "null" ? pav : "0.00",
                               "brakes": brakes,
@@ -1685,7 +1688,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1697,7 +1700,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         hint: Text(
                                           "Transmission type",
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {
@@ -1733,7 +1736,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1745,7 +1748,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                         hint: Text(
                                           "Drive type",
                                         ),
-
+                                        validator: (value) => value == null ? 'field required' : null,
                                         isExpanded: true,
                                         onChanged: (value) {
                                           setState(() {
@@ -1781,7 +1784,7 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                                 .copyWith(),
                                           ),
                                           Text(
-                                            "",
+                                            "*",
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .subtitle2!
@@ -1791,6 +1794,9 @@ class _CreateReinspectionState extends State<CreateReinspection> {
                                       ),
                                       TextFormField(
                                         controller: _transmissionspeed,
+                                        validator: (value) => value!.isEmpty
+                                            ? "This field is required"
+                                            : null,
                                         style: TextStyle(color: Colors.blue),
                                         onSaved: (value) => {vehicleReg},
                                         keyboardType: TextInputType.name,

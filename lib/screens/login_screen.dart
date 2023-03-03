@@ -81,15 +81,12 @@ class _State extends State<LoginPage> {
         }
       }
     });
-
     _companySettingsDone = false;
     _companyURL = "";
     _companyDomainUrl = "";
     _passwordVisible = false;
-
     super.initState();
   }
-
   @override
   Widget build(BuildContext context) {
     if (_companySettingsDone != null) {

@@ -643,7 +643,6 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
                               "assessmentid": _assessmentId,
                               "photolist": newImagesList,
                             }));
-
                         printWrapped(jsonEncode(<String, dynamic>{
                           "photolist": newImagesList,
                         }));
@@ -705,7 +704,7 @@ class _CreateSupplementaryState extends State<CreateSupplementary> {
     String url = await Config.getBaseUrl();
 
     HttpClientResponse response = await Config.getRequestObject(
-        url + 'trackerjobcard/customer/?type=1&param=', Config.get);
+        url + 'customer/allcustomer/', Config.get);
     if (response != null) {
       print(response);
       response.transform(utf8.decoder).transform(LineSplitter()).listen((data) {
